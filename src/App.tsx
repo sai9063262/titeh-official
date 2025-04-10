@@ -21,6 +21,7 @@ import LicenseProcedureEnhanced from "./pages/rto-exam/LicenseProcedureEnhanced"
 import RtoOffices from "./pages/rto-exam/RtoOffices";
 import DrivingLaws from "./pages/rto-exam/DrivingLaws";
 import Documents from "./pages/rto-exam/Documents";
+import PayChallan from "./pages/traffic-safety/PayChallan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,9 @@ const App = () => (
           <Route path="/rto-exam/offices" element={<RtoOffices />} />
           <Route path="/rto-exam/documents" element={<Documents />} />
           <Route path="/rto-exam/laws" element={<DrivingLaws />} />
+          
+          {/* Traffic Safety sub-pages */}
+          <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
           
           {/* 404 page for undefined routes */}
           <Route path="*" element={<NotFound />} />
