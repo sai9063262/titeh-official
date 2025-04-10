@@ -1,9 +1,20 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Vehicle from "./pages/Vehicle";
+import RtoExam from "./pages/RtoExam";
+import TrafficSafety from "./pages/TrafficSafety";
+import Attendance from "./pages/Attendance";
+import Settings from "./pages/Settings";
+import DriverDetails from "./pages/DriverDetails";
+import TrafficSigns from "./pages/TrafficSigns";
+import Language from "./pages/settings/Language";
+import PaymentMethods from "./pages/settings/PaymentMethods";
+import LicenseProcedure from "./pages/rto-exam/LicenseProcedure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,7 +27,22 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/vehicle" element={<Vehicle />} />
+          <Route path="/rto-exam" element={<RtoExam />} />
+          <Route path="/traffic-safety" element={<TrafficSafety />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/driver-details" element={<DriverDetails />} />
+          <Route path="/traffic-signs" element={<TrafficSigns />} />
+          
+          {/* Settings sub-pages */}
+          <Route path="/settings/language" element={<Language />} />
+          <Route path="/settings/payment" element={<PaymentMethods />} />
+          
+          {/* RTO Exam sub-pages */}
+          <Route path="/rto-exam/license-procedure" element={<LicenseProcedure />} />
+          
+          {/* 404 page for undefined routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

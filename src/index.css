@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 210 79.2% 45.9%; /* Adjusted to match TITEH blue (#1976D2) */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -97,5 +98,33 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for TITEH app */
+.module-tile {
+  @apply flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer h-36;
+}
+
+.module-icon {
+  @apply text-titeh-primary text-4xl mb-3;
+}
+
+.nav-icon {
+  @apply text-titeh-primary text-xl;
+}
+
+.titeh-card {
+  @apply bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-300;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .module-icon {
+    @apply text-3xl;
+  }
+  
+  .module-tile {
+    @apply h-28 p-2;
   }
 }
