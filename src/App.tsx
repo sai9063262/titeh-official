@@ -15,6 +15,10 @@ import TrafficSigns from "./pages/TrafficSigns";
 import Language from "./pages/settings/Language";
 import PaymentMethods from "./pages/settings/PaymentMethods";
 import LicenseProcedure from "./pages/rto-exam/LicenseProcedure";
+import PracticeExam from "./pages/rto-exam/PracticeExam";
+import QuestionBank from "./pages/rto-exam/QuestionBank";
+import LicenseProcedureEnhanced from "./pages/rto-exam/LicenseProcedureEnhanced";
+import RtoOffices from "./pages/rto-exam/RtoOffices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +44,10 @@ const App = () => (
           <Route path="/settings/payment" element={<PaymentMethods />} />
           
           {/* RTO Exam sub-pages */}
-          <Route path="/rto-exam/license-procedure" element={<LicenseProcedure />} />
+          <Route path="/rto-exam/license-procedure" element={<LicenseProcedureEnhanced />} />
+          <Route path="/rto-exam/practice" element={<PracticeExam />} />
+          <Route path="/rto-exam/questions" element={<QuestionBank />} />
+          <Route path="/rto-exam/offices" element={<RtoOffices />} />
           
           {/* 404 page for undefined routes */}
           <Route path="*" element={<NotFound />} />

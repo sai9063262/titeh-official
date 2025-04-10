@@ -1,6 +1,6 @@
 
 import Layout from "@/components/Layout";
-import { School, BookOpen, FileText, PlayCircle, Store, FileDescription, Building, ListChecks, Gavel } from "lucide-react";
+import { School, BookOpen, FileText, PlayCircle, Store, FileInfo, Building, ListChecks, Gavel } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
@@ -11,7 +11,7 @@ const RtoExam = () => {
     { icon: <FileText className="text-titeh-primary text-xl" />, label: "DL Que. & Sign", link: "/traffic-signs" },
     { icon: <PlayCircle className="text-titeh-primary text-xl" />, label: "Exam Preparation", link: "/rto-exam/preparation" },
     { icon: <Store className="text-titeh-primary text-xl" />, label: "Driving Schools", link: "/rto-exam/schools" },
-    { icon: <FileDescription className="text-titeh-primary text-xl" />, label: "License Procedure", link: "/rto-exam/license-procedure" },
+    { icon: <FileInfo className="text-titeh-primary text-xl" />, label: "License Procedure", link: "/rto-exam/license-procedure" },
     { icon: <Building className="text-titeh-primary text-xl" />, label: "RTO Offices", link: "/rto-exam/offices" },
     { icon: <ListChecks className="text-titeh-primary text-xl" />, label: "Valid Document List", link: "/rto-exam/documents" },
     { icon: <Gavel className="text-titeh-primary text-xl" />, label: "Driving Laws", link: "/rto-exam/laws" },
