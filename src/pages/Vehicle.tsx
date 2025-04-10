@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { Check, Search, Info, Car, Gavel, DollarSign, FileHistory, Shield, Bike, CreditCard, Zap, Clock } from "lucide-react";
+import { Check, Search, Info, Car, Gavel, DollarSign, FileText, Shield, Bike, CreditCard, Zap, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";

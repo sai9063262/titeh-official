@@ -1,207 +1,221 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import { ChevronLeft, Search, BookOpen, Filter, Check, ArrowUpDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, Search, BookOpen, AlertTriangle, Bookmark, BookmarkPlus, Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-interface Question {
-  id: number;
-  category: string;
-  text: string;
-  options: { id: string; text: string }[];
-  answer: string;
-  explanation: string;
-  bookmarked?: boolean;
-}
-
-const categories = [
-  "Traffic Rules",
-  "Road Signs",
-  "Vehicle Safety",
-  "Telangana Laws",
-  "General Knowledge"
-];
-
-// Sample questions - in a real app, this would come from a database
-const questionsData: Question[] = [
+// Sample question bank
+const allQuestions = [
+  // Traffic Rules Category
   {
     id: 1,
+    question: "What is the maximum speed limit in urban areas of Telangana?",
+    answer: "50 km/h unless otherwise specified",
     category: "Traffic Rules",
-    text: "What is the minimum age to apply for a learner's license to drive a motorcycle without gear in Telangana?",
-    options: [
-      { id: "a", text: "16 years" },
-      { id: "b", text: "18 years" },
-      { id: "c", text: "21 years" }
-    ],
-    answer: "a",
-    explanation: "In Telangana, you can apply for a learner's license for a motorcycle without gear at the age of 16 years."
+    difficulty: "Easy"
   },
   {
     id: 2,
+    question: "When can you overtake a vehicle in Telangana?",
+    answer: "From the right side when it is safe to do so and not prohibited by signs",
     category: "Traffic Rules",
-    text: "What should you do when approaching an unguarded railway crossing in Telangana?",
-    options: [
-      { id: "a", text: "Sound the horn and cross quickly" },
-      { id: "b", text: "Stop, check for trains, and proceed safely" },
-      { id: "c", text: "Wait until a train passes" }
-    ],
-    answer: "b",
-    explanation: "Always stop at unguarded railway crossings, look in both directions for approaching trains, and proceed only when it's safe."
+    difficulty: "Medium"
   },
   {
     id: 3,
+    question: "What should you do when an ambulance approaches?",
+    answer: "Slow down and pull over to the side to give way",
     category: "Traffic Rules",
-    text: "What is the maximum speed limit in urban areas of Telangana?",
-    options: [
-      { id: "a", text: "40 km/h" },
-      { id: "b", text: "50 km/h" },
-      { id: "c", text: "60 km/h" }
-    ],
-    answer: "b",
-    explanation: "The maximum speed limit in urban areas of Telangana is 50 km/h unless otherwise specified by road signs."
+    difficulty: "Easy"
   },
   {
     id: 4,
-    category: "Vehicle Safety",
-    text: "When turning left on a two-wheeler, what should you do?",
-    options: [
-      { id: "a", text: "Signal and slow down" },
-      { id: "b", text: "Increase speed and turn" },
-      { id: "c", text: "Turn without signaling" }
-    ],
-    answer: "a",
-    explanation: "Always signal your intention to turn left, slow down, and check traffic before making the turn safely."
+    question: "What is the penalty for driving without a valid license in Telangana?",
+    answer: "Fine of ₹5,000 or imprisonment, or both",
+    category: "Traffic Rules",
+    difficulty: "Medium"
   },
   {
     id: 5,
-    category: "Road Signs",
-    text: "What does a red octagonal sign indicate?",
-    options: [
-      { id: "a", text: "Yield" },
-      { id: "b", text: "Stop" },
-      { id: "c", text: "No entry" }
-    ],
-    answer: "b",
-    explanation: "A red octagonal sign means 'STOP'. You must come to a complete halt at the stop line or before entering the intersection."
+    question: "What is the minimum following distance to maintain in normal conditions?",
+    answer: "Two-second gap from the vehicle ahead",
+    category: "Traffic Rules",
+    difficulty: "Easy"
   },
+  
+  // Road Signs Category
   {
     id: 6,
-    category: "Telangana Laws",
-    text: "What is the validity period of a learner's license in Telangana?",
-    options: [
-      { id: "a", text: "6 months" },
-      { id: "b", text: "1 year" },
-      { id: "c", text: "2 years" }
-    ],
-    answer: "a",
-    explanation: "A learner's license in Telangana is valid for 6 months from the date of issue."
+    question: "What does a triangular sign with a red border indicate?",
+    answer: "Warning or caution for a potential hazard ahead",
+    category: "Road Signs",
+    difficulty: "Easy"
   },
   {
     id: 7,
-    category: "Vehicle Safety",
-    text: "What should you do if your vehicle breaks down on a highway?",
-    options: [
-      { id: "a", text: "Leave it and walk away" },
-      { id: "b", text: "Place a warning triangle and inform authorities" },
-      { id: "c", text: "Ignore it and continue" }
-    ],
-    answer: "b",
-    explanation: "If your vehicle breaks down on a highway, place a warning triangle about 50 meters behind your vehicle and contact authorities for assistance."
+    question: "What does a circular sign with a red border indicate?",
+    answer: "Prohibitory sign - indicates an action that is not allowed",
+    category: "Road Signs",
+    difficulty: "Medium"
   },
   {
     id: 8,
-    category: "Telangana Laws",
-    text: "What is the penalty for driving without a valid license in Telangana?",
-    options: [
-      { id: "a", text: "₹500 fine" },
-      { id: "b", text: "₹5,000 fine or imprisonment" },
-      { id: "c", text: "₹1,000 fine" }
-    ],
-    answer: "b",
-    explanation: "Driving without a valid license in Telangana can result in a fine of ₹5,000 or imprisonment or both."
+    question: "What does a blue circular sign indicate?",
+    answer: "Mandatory sign - indicates an action that must be taken",
+    category: "Road Signs",
+    difficulty: "Medium"
   },
   {
     id: 9,
-    category: "Traffic Rules",
-    text: "Which side of the road should pedestrians walk on if there is no footpath?",
-    options: [
-      { id: "a", text: "Right side" },
-      { id: "b", text: "Left side" },
-      { id: "c", text: "Either side" }
-    ],
-    answer: "a",
-    explanation: "Pedestrians should walk on the right side of the road facing oncoming traffic when there is no footpath."
+    question: "What does a yellow diamond-shaped sign indicate?",
+    answer: "Warning sign for specific conditions ahead",
+    category: "Road Signs",
+    difficulty: "Easy"
   },
   {
     id: 10,
+    question: "What does an octagonal red sign indicate?",
+    answer: "Stop sign - requires a complete stop",
     category: "Road Signs",
-    text: "What does a triangular road sign with a red border indicate?",
-    options: [
-      { id: "a", text: "Mandatory instruction" },
-      { id: "b", text: "Warning" },
-      { id: "c", text: "Informatory sign" }
-    ],
-    answer: "b",
-    explanation: "A triangular road sign with a red border is a warning sign, alerting drivers to potential hazards ahead."
+    difficulty: "Easy"
   },
+  
+  // Vehicle Safety Category
   {
     id: 11,
-    category: "General Knowledge",
-    text: "What should you check in your vehicle before a long journey?",
-    options: [
-      { id: "a", text: "Only fuel level" },
-      { id: "b", text: "Oil, coolant, tires, and brakes" },
-      { id: "c", text: "Just tires" }
-    ],
-    answer: "b",
-    explanation: "Before a long journey, you should check oil levels, coolant, tire pressure, and brakes to ensure your vehicle is safe for travel."
+    question: "How often should you check your tire pressure?",
+    answer: "At least once a month and before long trips",
+    category: "Vehicle Safety",
+    difficulty: "Medium"
   },
   {
     id: 12,
-    category: "Telangana Laws",
-    text: "What is the fine for jumping a red light in Hyderabad?",
-    options: [
-      { id: "a", text: "₹500" },
-      { id: "b", text: "₹1,000" },
-      { id: "c", text: "₹2,000" }
-    ],
-    answer: "b",
-    explanation: "In Hyderabad and other parts of Telangana, jumping a red light will result in a fine of ₹1,000."
+    question: "What should you do if your vehicle's brake fails while driving?",
+    answer: "Pump the brake pedal rapidly, shift to lower gear, use handbrake gradually, and steer to safety",
+    category: "Vehicle Safety",
+    difficulty: "Hard"
   },
-  // Add more questions as needed
+  {
+    id: 13,
+    question: "Why is it important to use a child safety seat?",
+    answer: "It protects children from serious injury in case of a collision",
+    category: "Vehicle Safety",
+    difficulty: "Easy"
+  },
+  {
+    id: 14,
+    question: "When should you replace your vehicle's wiper blades?",
+    answer: "When they leave streaks, skip areas, or make noise during operation",
+    category: "Vehicle Safety",
+    difficulty: "Medium"
+  },
+  {
+    id: 15,
+    question: "What are the components that should be checked regularly in a vehicle?",
+    answer: "Brakes, tires, lights, oil, coolant, windshield wipers, and battery",
+    category: "Vehicle Safety",
+    difficulty: "Medium"
+  },
+  
+  // Telangana-Specific Laws Category
+  {
+    id: 16,
+    question: "What is the legal blood alcohol concentration (BAC) limit for driving in Telangana?",
+    answer: "0.00% (zero tolerance)",
+    category: "Telangana-Specific Laws",
+    difficulty: "Medium"
+  },
+  {
+    id: 17,
+    question: "What is the penalty for using a mobile phone while driving in Telangana?",
+    answer: "₹1,000 fine for first offense, ₹5,000 for subsequent offenses",
+    category: "Telangana-Specific Laws",
+    difficulty: "Medium"
+  },
+  {
+    id: 18,
+    question: "What is the helmet law in Telangana for two-wheeler riders?",
+    answer: "Both rider and pillion passenger must wear helmets; fine of ₹1,000 and license suspension for violations",
+    category: "Telangana-Specific Laws",
+    difficulty: "Easy"
+  },
+  {
+    id: 19,
+    question: "What is the validity period of a PUC (Pollution Under Control) certificate in Telangana?",
+    answer: "6 months for all vehicles",
+    category: "Telangana-Specific Laws",
+    difficulty: "Easy"
+  },
+  {
+    id: 20,
+    question: "What is the rule for parking in no-parking zones in Hyderabad?",
+    answer: "Fine of ₹500 and possible towing of the vehicle",
+    category: "Telangana-Specific Laws",
+    difficulty: "Medium"
+  },
+  
+  // Additional categories can be added as needed
 ];
 
 const QuestionBank = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [questions, setQuestions] = useState<Question[]>(questionsData);
-  const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
+  const [visibleAnswers, setVisibleAnswers] = useState<number[]>([]);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [sortAlphabetically, setSortAlphabetically] = useState(false);
   
-  // Filter questions based on search term and category
-  const filteredQuestions = questions.filter(question => {
-    const matchesSearch = question.text.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = activeCategory === "All" || question.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
-  
-  // Toggle question expansion
-  const toggleExpand = (id: number) => {
-    setExpandedQuestionId(expandedQuestionId === id ? null : id);
+  const toggleAnswer = (id: number) => {
+    if (visibleAnswers.includes(id)) {
+      setVisibleAnswers(visibleAnswers.filter(answerId => answerId !== id));
+    } else {
+      setVisibleAnswers([...visibleAnswers, id]);
+    }
   };
   
-  // Toggle bookmark
-  const toggleBookmark = (id: number) => {
-    setQuestions(questions.map(q => 
-      q.id === id ? { ...q, bookmarked: !q.bookmarked } : q
-    ));
+  const filterByDifficulty = (questions: typeof allQuestions) => {
+    if (!selectedDifficulty) return questions;
+    return questions.filter(q => q.difficulty === selectedDifficulty);
   };
   
-  // Get bookmarked questions
-  const bookmarkedQuestions = questions.filter(q => q.bookmarked);
+  const sortQuestions = (questions: typeof allQuestions) => {
+    if (!sortAlphabetically) return questions;
+    return [...questions].sort((a, b) => a.question.localeCompare(b.question));
+  };
+  
+  // Filter questions by search term and category
+  const getFilteredQuestions = (category: string | null) => {
+    let filtered = allQuestions;
+    
+    if (category && category !== "All") {
+      filtered = filtered.filter(q => q.category === category);
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(q => 
+        q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.answer.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    filtered = filterByDifficulty(filtered);
+    return sortQuestions(filtered);
+  };
+  
+  const trafficRulesQuestions = getFilteredQuestions("Traffic Rules");
+  const roadSignsQuestions = getFilteredQuestions("Road Signs");
+  const vehicleSafetyQuestions = getFilteredQuestions("Vehicle Safety");
+  const telanganaLawsQuestions = getFilteredQuestions("Telangana-Specific Laws");
+  const allFilteredQuestions = getFilteredQuestions(null);
+  
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedDifficulty(null);
+    setSortAlphabetically(false);
+  };
   
   return (
     <Layout>
@@ -225,179 +239,212 @@ const QuestionBank = () => {
           </div>
         </div>
         
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Button 
+            variant={selectedDifficulty === "Easy" ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setSelectedDifficulty(selectedDifficulty === "Easy" ? null : "Easy")}
+          >
+            Easy
+          </Button>
+          <Button 
+            variant={selectedDifficulty === "Medium" ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setSelectedDifficulty(selectedDifficulty === "Medium" ? null : "Medium")}
+          >
+            Medium
+          </Button>
+          <Button 
+            variant={selectedDifficulty === "Hard" ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setSelectedDifficulty(selectedDifficulty === "Hard" ? null : "Hard")}
+          >
+            Hard
+          </Button>
+          <Button 
+            variant={sortAlphabetically ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setSortAlphabetically(!sortAlphabetically)}
+            className="ml-auto"
+          >
+            <ArrowUpDown className="h-4 w-4 mr-1" />
+            Sort A-Z
+          </Button>
+          {(searchTerm || selectedDifficulty || sortAlphabetically) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={resetFilters}
+            >
+              Reset
+            </Button>
+          )}
+        </div>
+        
         <Tabs defaultValue="all" className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <TabsList>
-              <TabsTrigger value="all">All Questions</TabsTrigger>
-              <TabsTrigger value="bookmarked">Bookmarked</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select 
-                className="border rounded px-2 py-1 text-sm"
-                value={activeCategory}
-                onChange={(e) => setActiveCategory(e.target.value)}
-              >
-                <option value="All">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All ({allFilteredQuestions.length})</TabsTrigger>
+            <TabsTrigger value="traffic">Traffic Rules ({trafficRulesQuestions.length})</TabsTrigger>
+            <TabsTrigger value="signs">Road Signs ({roadSignsQuestions.length})</TabsTrigger>
+            <TabsTrigger value="safety">Vehicle Safety ({vehicleSafetyQuestions.length})</TabsTrigger>
+            <TabsTrigger value="laws">Telangana Laws ({telanganaLawsQuestions.length})</TabsTrigger>
+          </TabsList>
           
-          <TabsContent value="all">
-            {filteredQuestions.length > 0 ? (
-              <div className="space-y-4">
-                {filteredQuestions.map(question => (
-                  <Card key={question.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">{question.category}</span>
-                        </div>
-                        <p className="font-medium mb-2">{question.text}</p>
-                      </div>
-                      <button 
-                        onClick={() => toggleBookmark(question.id)}
-                        className="ml-2 text-gray-400 hover:text-titeh-primary"
-                      >
-                        {question.bookmarked ? (
-                          <Bookmark className="h-5 w-5 fill-titeh-primary text-titeh-primary" />
-                        ) : (
-                          <BookmarkPlus className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => toggleExpand(question.id)}
-                      className="mt-2"
-                    >
-                      {expandedQuestionId === question.id ? "Hide Answer" : "Show Answer"}
-                    </Button>
-                    
-                    {expandedQuestionId === question.id && (
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="space-y-2 mb-4">
-                          {question.options.map(option => (
-                            <div 
-                              key={option.id}
-                              className={`p-2 border rounded ${
-                                option.id === question.answer ? 'bg-green-100 border-green-500' : ''
-                              }`}
-                            >
-                              <span className="font-medium mr-2">{option.id})</span>
-                              <span>{option.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="border-t pt-3">
-                          <h4 className="font-medium mb-2">Explanation:</h4>
-                          <p className="text-sm text-gray-600">{question.explanation}</p>
-                        </div>
-                      </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
+          <TabsContent value="all" className="space-y-4 mt-4">
+            {allFilteredQuestions.length > 0 ? (
+              allFilteredQuestions.map(q => (
+                <QuestionCard 
+                  key={q.id} 
+                  question={q} 
+                  isAnswerVisible={visibleAnswers.includes(q.id)} 
+                  toggleAnswer={() => toggleAnswer(q.id)} 
+                />
+              ))
             ) : (
               <Card className="p-6 text-center">
-                <AlertTriangle className="h-10 w-10 text-yellow-500 mx-auto mb-2" />
+                <BookOpen className="h-10 w-10 text-gray-400 mx-auto mb-2" />
                 <p className="text-lg font-medium">No questions found</p>
-                <p className="text-sm text-gray-600">Try changing your search term or category filter</p>
+                <p className="text-sm text-gray-600">Try a different search term or filter</p>
               </Card>
             )}
           </TabsContent>
           
-          <TabsContent value="bookmarked">
-            {bookmarkedQuestions.length > 0 ? (
-              <div className="space-y-4">
-                {bookmarkedQuestions.map(question => (
-                  <Card key={question.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">{question.category}</span>
-                        </div>
-                        <p className="font-medium mb-2">{question.text}</p>
-                      </div>
-                      <button 
-                        onClick={() => toggleBookmark(question.id)}
-                        className="ml-2 text-gray-400 hover:text-titeh-primary"
-                      >
-                        <Bookmark className="h-5 w-5 fill-titeh-primary text-titeh-primary" />
-                      </button>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => toggleExpand(question.id)}
-                      className="mt-2"
-                    >
-                      {expandedQuestionId === question.id ? "Hide Answer" : "Show Answer"}
-                    </Button>
-                    
-                    {expandedQuestionId === question.id && (
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="space-y-2 mb-4">
-                          {question.options.map(option => (
-                            <div 
-                              key={option.id}
-                              className={`p-2 border rounded ${
-                                option.id === question.answer ? 'bg-green-100 border-green-500' : ''
-                              }`}
-                            >
-                              <span className="font-medium mr-2">{option.id})</span>
-                              <span>{option.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="border-t pt-3">
-                          <h4 className="font-medium mb-2">Explanation:</h4>
-                          <p className="text-sm text-gray-600">{question.explanation}</p>
-                        </div>
-                      </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
+          <TabsContent value="traffic" className="space-y-4 mt-4">
+            {trafficRulesQuestions.length > 0 ? (
+              trafficRulesQuestions.map(q => (
+                <QuestionCard 
+                  key={q.id} 
+                  question={q} 
+                  isAnswerVisible={visibleAnswers.includes(q.id)} 
+                  toggleAnswer={() => toggleAnswer(q.id)} 
+                />
+              ))
             ) : (
               <Card className="p-6 text-center">
-                <BookOpen className="h-10 w-10 text-titeh-primary mx-auto mb-2" />
-                <p className="text-lg font-medium">No bookmarked questions</p>
-                <p className="text-sm text-gray-600">Bookmark questions to save them for later</p>
+                <BookOpen className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-lg font-medium">No traffic rule questions found</p>
+                <p className="text-sm text-gray-600">Try a different search term or filter</p>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="signs" className="space-y-4 mt-4">
+            {roadSignsQuestions.length > 0 ? (
+              roadSignsQuestions.map(q => (
+                <QuestionCard 
+                  key={q.id} 
+                  question={q} 
+                  isAnswerVisible={visibleAnswers.includes(q.id)} 
+                  toggleAnswer={() => toggleAnswer(q.id)} 
+                />
+              ))
+            ) : (
+              <Card className="p-6 text-center">
+                <BookOpen className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-lg font-medium">No road sign questions found</p>
+                <p className="text-sm text-gray-600">Try a different search term or filter</p>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="safety" className="space-y-4 mt-4">
+            {vehicleSafetyQuestions.length > 0 ? (
+              vehicleSafetyQuestions.map(q => (
+                <QuestionCard 
+                  key={q.id} 
+                  question={q} 
+                  isAnswerVisible={visibleAnswers.includes(q.id)} 
+                  toggleAnswer={() => toggleAnswer(q.id)} 
+                />
+              ))
+            ) : (
+              <Card className="p-6 text-center">
+                <BookOpen className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-lg font-medium">No vehicle safety questions found</p>
+                <p className="text-sm text-gray-600">Try a different search term or filter</p>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="laws" className="space-y-4 mt-4">
+            {telanganaLawsQuestions.length > 0 ? (
+              telanganaLawsQuestions.map(q => (
+                <QuestionCard 
+                  key={q.id} 
+                  question={q} 
+                  isAnswerVisible={visibleAnswers.includes(q.id)} 
+                  toggleAnswer={() => toggleAnswer(q.id)} 
+                />
+              ))
+            ) : (
+              <Card className="p-6 text-center">
+                <BookOpen className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-lg font-medium">No Telangana law questions found</p>
+                <p className="text-sm text-gray-600">Try a different search term or filter</p>
               </Card>
             )}
           </TabsContent>
         </Tabs>
         
-        <Card className="p-4 bg-blue-50 mb-6">
+        <Card className="p-4 bg-blue-50">
           <div className="flex items-start">
-            <AlertTriangle className="text-titeh-primary mr-3 mt-1 flex-shrink-0" />
+            <Filter className="text-titeh-primary mr-3 mt-1 flex-shrink-0" />
             <div>
               <h3 className="font-medium">Study Tips</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 mt-2">
-                <li>Bookmark important questions for quick access later</li>
-                <li>Review explanations to understand the reasoning behind each answer</li>
-                <li>Focus on categories where you're less confident</li>
-                <li>Take the practice exam when you feel ready</li>
-              </ul>
+              <p className="text-sm text-gray-600 mt-1">
+                Focus on understanding concepts rather than memorizing answers. 
+                Practice regularly with different question categories. 
+                Take the Practice Exam after studying to test your knowledge.
+              </p>
             </div>
           </div>
         </Card>
-        
-        <div className="text-center">
-          <Button asChild>
-            <Link to="/rto-exam/practice">Take Practice Exam</Link>
-          </Button>
-        </div>
       </div>
     </Layout>
+  );
+};
+
+// Question Card Component
+const QuestionCard = ({ 
+  question, 
+  isAnswerVisible, 
+  toggleAnswer 
+}: { 
+  question: typeof allQuestions[0], 
+  isAnswerVisible: boolean, 
+  toggleAnswer: () => void 
+}) => {
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium">{question.question}</h3>
+        <Badge variant={
+          question.difficulty === "Easy" ? "outline" : 
+          question.difficulty === "Medium" ? "secondary" : 
+          "destructive"
+        }>
+          {question.difficulty}
+        </Badge>
+      </div>
+      
+      <div className="mt-3">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={toggleAnswer}
+          className="w-full flex justify-between items-center"
+        >
+          <span>{isAnswerVisible ? "Hide Answer" : "Show Answer"}</span>
+          <Check className={`h-4 w-4 ${isAnswerVisible ? 'opacity-100' : 'opacity-0'}`} />
+        </Button>
+        
+        {isAnswerVisible && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-md">
+            <p className="text-sm">{question.answer}</p>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 };
 

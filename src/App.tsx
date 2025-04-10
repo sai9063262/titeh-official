@@ -19,6 +19,8 @@ import PracticeExam from "./pages/rto-exam/PracticeExam";
 import QuestionBank from "./pages/rto-exam/QuestionBank";
 import LicenseProcedureEnhanced from "./pages/rto-exam/LicenseProcedureEnhanced";
 import RtoOffices from "./pages/rto-exam/RtoOffices";
+import DrivingLaws from "./pages/rto-exam/DrivingLaws";
+import Documents from "./pages/rto-exam/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
           <Route path="/rto-exam/practice" element={<PracticeExam />} />
           <Route path="/rto-exam/questions" element={<QuestionBank />} />
           <Route path="/rto-exam/offices" element={<RtoOffices />} />
+          <Route path="/rto-exam/documents" element={<Documents />} />
+          <Route path="/rto-exam/laws" element={<DrivingLaws />} />
           
           {/* 404 page for undefined routes */}
           <Route path="*" element={<NotFound />} />
