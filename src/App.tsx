@@ -25,6 +25,12 @@ import Documents from "./pages/rto-exam/Documents";
 import PayChallan from "./pages/traffic-safety/PayChallan";
 import NotFound from "./pages/NotFound";
 
+// Calculator pages
+import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
+import LoanCalculator from "./pages/vehicle/calculators/LoanCalculator";
+import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
+import VehicleAgeCalculator from "./pages/vehicle/calculators/VehicleAgeCalculator";
+
 // Create a new instance of QueryClient
 const queryClient = new QueryClient();
 
@@ -61,6 +67,12 @@ const App = () => {
               
               {/* Traffic Safety sub-pages */}
               <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
+              
+              {/* Vehicle Calculator sub-pages */}
+              <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />
+              <Route path="/vehicle/calculators/loan" element={<LoanCalculator />} />
+              <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />
+              <Route path="/vehicle/calculators/vehicle-age" element={<VehicleAgeCalculator />} />
               
               {/* 404 page for undefined routes */}
               <Route path="*" element={<NotFound />} />
