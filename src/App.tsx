@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,45 +25,51 @@ import Documents from "./pages/rto-exam/Documents";
 import PayChallan from "./pages/traffic-safety/PayChallan";
 import NotFound from "./pages/NotFound";
 
+// Create a new instance of QueryClient
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/vehicle" element={<Vehicle />} />
-          <Route path="/rto-exam" element={<RtoExam />} />
-          <Route path="/traffic-safety" element={<TrafficSafety />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/driver-details" element={<DriverDetails />} />
-          <Route path="/traffic-signs" element={<TrafficSigns />} />
-          
-          {/* Settings sub-pages */}
-          <Route path="/settings/language" element={<Language />} />
-          <Route path="/settings/payment" element={<PaymentMethods />} />
-          
-          {/* RTO Exam sub-pages */}
-          <Route path="/rto-exam/license-procedure" element={<LicenseProcedureEnhanced />} />
-          <Route path="/rto-exam/practice" element={<PracticeExam />} />
-          <Route path="/rto-exam/questions" element={<QuestionBank />} />
-          <Route path="/rto-exam/offices" element={<RtoOffices />} />
-          <Route path="/rto-exam/documents" element={<Documents />} />
-          <Route path="/rto-exam/laws" element={<DrivingLaws />} />
-          
-          {/* Traffic Safety sub-pages */}
-          <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
-          
-          {/* 404 page for undefined routes */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// Make sure App is declared as a function component explicitly
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/vehicle" element={<Vehicle />} />
+              <Route path="/rto-exam" element={<RtoExam />} />
+              <Route path="/traffic-safety" element={<TrafficSafety />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/driver-details" element={<DriverDetails />} />
+              <Route path="/traffic-signs" element={<TrafficSigns />} />
+              
+              {/* Settings sub-pages */}
+              <Route path="/settings/language" element={<Language />} />
+              <Route path="/settings/payment" element={<PaymentMethods />} />
+              
+              {/* RTO Exam sub-pages */}
+              <Route path="/rto-exam/license-procedure" element={<LicenseProcedureEnhanced />} />
+              <Route path="/rto-exam/practice" element={<PracticeExam />} />
+              <Route path="/rto-exam/questions" element={<QuestionBank />} />
+              <Route path="/rto-exam/offices" element={<RtoOffices />} />
+              <Route path="/rto-exam/documents" element={<Documents />} />
+              <Route path="/rto-exam/laws" element={<DrivingLaws />} />
+              
+              {/* Traffic Safety sub-pages */}
+              <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
+              
+              {/* 404 page for undefined routes */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
