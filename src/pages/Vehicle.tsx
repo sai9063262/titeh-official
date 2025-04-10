@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { Check, Search, Info, Car, Gavel, DollarSign, FileText, Shield, Bike, CreditCard, Zap, Clock, User } from "lucide-react";
+import { Check, Search, Info, Car, Gavel, DollarSign, FileText, Shield, Bike, CreditCard, Zap, Clock, User, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -109,7 +109,7 @@ const Vehicle = () => {
               </Card>
               
               <Card className="p-4 flex flex-col items-center justify-center h-28">
-                <FileHistory className="text-titeh-primary mb-2" />
+                <History className="text-titeh-primary mb-2" />
                 <span className="text-sm text-center">Car History Report</span>
               </Card>
               
@@ -146,7 +146,7 @@ const Vehicle = () => {
               </Card>
               
               <Card className="p-4 flex flex-col items-center justify-center h-28">
-                <FileHistory className="text-titeh-primary mb-2" />
+                <History className="text-titeh-primary mb-2" />
                 <span className="text-sm text-center">Bike History Report</span>
               </Card>
               
