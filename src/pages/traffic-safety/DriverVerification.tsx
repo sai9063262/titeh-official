@@ -3,11 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, UserCheck, Scan, RefreshCw, AlertCircle, CheckCircle, X, Info, Shield, FileSpreadsheet } from "lucide-react";
+import { Camera, UserCheck, Scan, RefreshCw, AlertCircle, CheckCircle, X, Info, Shield, FileSpreadsheet, MapPin, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface DriverData {
   name: string;
@@ -16,6 +18,15 @@ interface DriverData {
   vehicleClass: string;
   photoUrl: string;
   status: "valid" | "expired" | "suspended" | "not_found";
+}
+
+interface GeolocationPosition {
+  coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+  timestamp: number;
 }
 
 const DriverVerification = () => {
@@ -33,6 +44,9 @@ const DriverVerification = () => {
   const [activeTab, setActiveTab] = useState("camera");
   const [manualSearch, setManualSearch] = useState("");
   const [driverData, setDriverData] = useState<DriverData | null>(null);
+  const [facing, setFacing] = useState<"user" | "environment">("environment");
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
   
   const dummyDrivers: DriverData[] = [
     {
@@ -69,16 +83,64 @@ const DriverVerification = () => {
     }
   ];
 
+  // Request location access
+  useEffect(() => {
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position: GeolocationPosition) => {
+            setCurrentLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+            setLocationGranted(true);
+            toast({
+              title: "Location Access Granted",
+              description: "Location services are now available for verification",
+            });
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            toast({
+              title: "Location Access Denied",
+              description: "Please enable location for complete verification",
+              variant: "destructive",
+            });
+            setLocationGranted(false);
+          }
+        );
+      } else {
+        toast({
+          title: "Location Not Supported",
+          description: "Your device doesn't support location services",
+          variant: "destructive",
+        });
+      }
+    };
+
+    getLocation();
+  }, [toast]);
+
   // Effect to handle camera access
   useEffect(() => {
     if (isCameraOpen) {
       const enableCamera = async () => {
         try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: facing 
+            } 
+          });
+          
           if (videoRef.current) {
             videoRef.current.srcObject = mediaStream;
             setStream(mediaStream);
           }
+          
+          toast({
+            title: "Camera Access Granted",
+            description: "Camera is now active for verification",
+          });
         } catch (err) {
           console.error("Error accessing camera:", err);
           toast({
@@ -100,7 +162,26 @@ const DriverVerification = () => {
         }
       };
     }
-  }, [isCameraOpen, toast]);
+  }, [isCameraOpen, facing, toast]);
+  
+  // Toggle camera facing mode
+  const toggleCameraFacing = () => {
+    // Stop current stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Toggle facing mode
+    setFacing(prev => prev === "user" ? "environment" : "user");
+    
+    // Re-enable camera with new facing mode
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
+    setIsCameraOpen(false);
+    setTimeout(() => setIsCameraOpen(true), 100);
+  };
   
   // Function to simulate camera if access fails
   const simulateCamera = () => {
@@ -145,6 +226,20 @@ const DriverVerification = () => {
     setProgress(0);
     setIsProcessing(false);
     setIsCameraOpen(true);
+  };
+
+  // Open map with current location
+  const openMap = () => {
+    if (currentLocation) {
+      const mapUrl = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+      window.open(mapUrl, '_blank');
+    } else {
+      toast({
+        title: "Location Not Available",
+        description: "Please enable location services to view on map",
+        variant: "destructive",
+      });
+    }
   };
   
   // Run verification process with progress bar
@@ -236,6 +331,68 @@ const DriverVerification = () => {
         <h1 className="text-2xl font-semibold text-titeh-primary mb-2">Driver Verification</h1>
         <p className="text-gray-500 mb-6">Verify driver's identity and license status</p>
         
+        {/* Location Permission Banner */}
+        <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${locationGranted ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+          <div className={`p-2 rounded-full ${locationGranted ? 'bg-green-100' : 'bg-yellow-100'}`}>
+            <MapPin className={`h-5 w-5 ${locationGranted ? 'text-green-600' : 'text-yellow-600'}`} />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-sm">
+              {locationGranted ? 'Location Access Granted' : 'Location Access Required'}
+            </h3>
+            <p className="text-xs text-gray-600">
+              {locationGranted 
+                ? 'Your location is being used for verification purposes' 
+                : 'Enable location services for complete verification'
+              }
+            </p>
+          </div>
+          {locationGranted && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={openMap}
+              className="ml-auto"
+            >
+              <Map className="h-4 w-4 mr-1" />
+              View Map
+            </Button>
+          )}
+          {!locationGranted && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position: GeolocationPosition) => {
+                      setCurrentLocation({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                      });
+                      setLocationGranted(true);
+                      toast({
+                        title: "Location Access Granted",
+                        description: "Location services are now available",
+                      });
+                    },
+                    (error) => {
+                      toast({
+                        title: "Location Access Denied",
+                        description: "Please enable location in your browser settings",
+                        variant: "destructive",
+                      });
+                    }
+                  );
+                }
+              }}
+              className="ml-auto"
+            >
+              Enable Location
+            </Button>
+          )}
+        </div>
+        
         <Tabs 
           defaultValue="camera" 
           className="mb-6"
@@ -257,7 +414,19 @@ const DriverVerification = () => {
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="overflow-hidden">
                 <CardHeader>
-                  <CardTitle>Face Verification</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Face Verification</CardTitle>
+                    {isCameraOpen && !isPhotoTaken && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleCameraFacing}
+                      >
+                        <Smartphone className="h-4 w-4 mr-1" />
+                        {facing === "user" ? "Switch to Back Camera" : "Switch to Front Camera"}
+                      </Button>
+                    )}
+                  </div>
                   <CardDescription>
                     Take a clear photo of the driver for instant verification
                   </CardDescription>
@@ -310,6 +479,13 @@ const DriverVerification = () => {
                               </div>
                             </div>
                           )}
+                          
+                          {locationGranted && currentLocation && (
+                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              Location: Verified
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex gap-2">
@@ -349,6 +525,13 @@ const DriverVerification = () => {
                               Position the face clearly in the frame
                             </p>
                           </div>
+                          
+                          {locationGranted && currentLocation && (
+                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                              <MapPin className="h-3 w-3 inline mr-1" />
+                              Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex gap-2">
@@ -455,9 +638,9 @@ const DriverVerification = () => {
                 <div className="space-y-4">
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="space-y-2">
-                      <label htmlFor="license" className="block text-sm font-medium">
+                      <Label htmlFor="license" className="block text-sm font-medium">
                         Driver's License Number
-                      </label>
+                      </Label>
                       <input 
                         id="license"
                         type="text"
@@ -589,6 +772,14 @@ const DriverVerification = () => {
                     <span className="text-sm text-gray-600">Vehicle Class</span>
                     <span className="text-sm font-medium">{driverData.vehicleClass}</span>
                   </div>
+                  {locationGranted && currentLocation && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Verification Location</span>
+                      <span className="text-sm font-medium text-blue-600 underline cursor-pointer" onClick={openMap}>
+                        View on Map
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 {driverData.status !== "valid" && (

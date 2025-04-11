@@ -33,6 +33,7 @@ import PayChallan from "./pages/traffic-safety/PayChallan";
 import IncidentReporting from "./pages/traffic-safety/IncidentReporting";
 import DriverVerification from "./pages/traffic-safety/DriverVerification";
 import TrafficCameraFeed from "./pages/traffic-safety/TrafficCameraFeed";
+import VoiceComplaint from "./pages/traffic-safety/VoiceComplaint";
 import NotFound from "./pages/NotFound";
 import ParivhanServices from "./pages/ParivhanServices";
 import Dashboard from "./pages/Dashboard";
@@ -99,6 +100,7 @@ const App = () => {
               <Route path="/traffic-safety/incident-reporting" element={<IncidentReporting />} />
               <Route path="/traffic-safety/driver-verification" element={<DriverVerification />} />
               <Route path="/traffic-safety/camera-feed" element={<TrafficCameraFeed />} />
+              <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
               
               {/* Vehicle Calculator sub-pages */}
               <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />

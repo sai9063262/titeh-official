@@ -127,17 +127,13 @@ const TrafficSafety = () => {
             </div>
           </Link>
           
-          {/* Coming soon services */}
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* Voice/Mobile Complaint - new link */}
+          <Link to="/traffic-safety/voice-complaint" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <MessageSquare className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">Voice/Mobile Complaint</span>
             </div>
-          </Button>
+          </Link>
           
           <Button 
             variant="ghost" 
