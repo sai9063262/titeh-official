@@ -6,32 +6,53 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input"; 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const paymentSchema = z.object({
+  challanNumber: z.string().min(1, "Challan number is required")
+});
+
+type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 const EChallanServices = () => {
   const { toast } = useToast();
-  const [challanNumber, setChallanNumber] = useState("");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [challanData, setChallanData] = useState({
+    challanNumber: "",
+    violation: "Speeding",
+    date: "10/04/2025",
+    amount: 1000,
+    lateFee: 0,
+    total: 1000
+  });
   
-  const handleSubmit = () => {
-    if (!challanNumber.trim()) {
-      toast({
-        title: "Please enter challan number",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const form = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      challanNumber: "",
+    },
+  });
+
+  const onSubmit = (data: PaymentFormValues) => {
+    setChallanData({
+      ...challanData,
+      challanNumber: data.challanNumber
+    });
     setIsPaymentDialogOpen(true);
   };
   
   const handlePayment = () => {
     toast({
       title: "Payment successful",
-      description: `Challan ${challanNumber} has been paid successfully`,
+      description: `Challan ${challanData.challanNumber} has been paid successfully`,
       variant: "default",
     });
     setIsPaymentDialogOpen(false);
-    setChallanNumber("");
+    form.reset();
   };
 
   const eServices = [
@@ -65,17 +86,27 @@ const EChallanServices = () => {
         </CardHeader>
         <CardContent>
           <CardDescription className="mb-4">Pay your traffic violation challan online. Enter the challan number below.</CardDescription>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input 
-              placeholder="Enter Challan Number (e.g., TG12345678)" 
-              className="flex-1"
-              value={challanNumber}
-              onChange={(e) => setChallanNumber(e.target.value)}
-            />
-            <Button onClick={handleSubmit} className="bg-titeh-primary hover:bg-blue-600">
-              Pay Now
-            </Button>
-          </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-2">
+              <FormField
+                control={form.control}
+                name="challanNumber"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input 
+                        placeholder="Enter Challan Number (e.g., TG12345678)" 
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="bg-titeh-primary hover:bg-blue-600">
+                Pay Now
+              </Button>
+            </form>
+          </Form>
           <p className="mt-2 text-xs text-red-500">Avoid late fees! Pay your challan on time.</p>
         </CardContent>
       </Card>
@@ -118,12 +149,12 @@ const EChallanServices = () => {
             <div className="rounded-lg bg-gray-50 p-4 mb-4">
               <h4 className="font-medium text-sm mb-2">Challan Details</h4>
               <div className="text-sm space-y-1">
-                <p><span className="font-medium">Challan Number:</span> {challanNumber}</p>
-                <p><span className="font-medium">Violation:</span> Speeding</p>
-                <p><span className="font-medium">Date:</span> 10/04/2025</p>
-                <p><span className="font-medium">Amount:</span> ₹1,000</p>
-                <p><span className="font-medium">Late Fee:</span> ₹0</p>
-                <p><span className="font-medium">Total:</span> ₹1,000</p>
+                <p><span className="font-medium">Challan Number:</span> {challanData.challanNumber}</p>
+                <p><span className="font-medium">Violation:</span> {challanData.violation}</p>
+                <p><span className="font-medium">Date:</span> {challanData.date}</p>
+                <p><span className="font-medium">Amount:</span> ₹{challanData.amount}</p>
+                <p><span className="font-medium">Late Fee:</span> ₹{challanData.lateFee}</p>
+                <p><span className="font-medium">Total:</span> ₹{challanData.total}</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -137,7 +168,7 @@ const EChallanServices = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handlePayment} className="bg-titeh-primary hover:bg-blue-600">Pay ₹1,000</Button>
+            <Button onClick={handlePayment} className="bg-titeh-primary hover:bg-blue-600">Pay ₹{challanData.total}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

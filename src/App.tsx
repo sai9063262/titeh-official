@@ -30,6 +30,9 @@ import RtoOffices from "./pages/rto-exam/RtoOffices";
 import DrivingLaws from "./pages/rto-exam/DrivingLaws";
 import Documents from "./pages/rto-exam/Documents";
 import PayChallan from "./pages/traffic-safety/PayChallan";
+import IncidentReporting from "./pages/traffic-safety/IncidentReporting";
+import DriverVerification from "./pages/traffic-safety/DriverVerification";
+import TrafficCameraFeed from "./pages/traffic-safety/TrafficCameraFeed";
 import NotFound from "./pages/NotFound";
 import ParivhanServices from "./pages/ParivhanServices";
 import Dashboard from "./pages/Dashboard";
@@ -93,6 +96,9 @@ const App = () => {
               
               {/* Traffic Safety sub-pages */}
               <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
+              <Route path="/traffic-safety/incident-reporting" element={<IncidentReporting />} />
+              <Route path="/traffic-safety/driver-verification" element={<DriverVerification />} />
+              <Route path="/traffic-safety/camera-feed" element={<TrafficCameraFeed />} />
               
               {/* Vehicle Calculator sub-pages */}
               <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />
