@@ -36,8 +36,8 @@ const Settings = () => {
         </div>
         
         <Card className="p-4 bg-blue-50">
-          <h2 className="font-semibold mb-2">Future Feature</h2>
-          <p className="text-sm text-gray-600">Support for user registration and OTP to be added later.</p>
+          <h2 className="font-semibold mb-2">Coming Soon</h2>
+          <p className="text-sm text-gray-600">Support for user registration and OTP verification will be available in the next update.</p>
         </Card>
       </div>
     </Layout>

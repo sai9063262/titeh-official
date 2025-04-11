@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Info, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const FourWheelersSection = () => {
+const BikesSection = () => {
   const { toast } = useToast();
   
   const showComingSoon = () => {
@@ -15,41 +15,41 @@ const FourWheelersSection = () => {
     });
   };
 
-  const carModels = [
+  const bikeModels = [
     {
-      name: "Hyundai i20",
-      image: "https://images.unsplash.com/photo-1583267746897-2cf415887172?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹7.46 - 11.88 Lakh",
+      name: "Honda CB Shine",
+      image: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹78,536 - 83,336",
     },
     {
-      name: "Maruti Swift",
-      image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹6.49 - 9.45 Lakh",
+      name: "Hero Splendor Plus",
+      image: "https://images.unsplash.com/photo-1560869713-2cc18418dd44?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹72,076 - 76,346",
     },
     {
-      name: "Mahindra XUV700",
-      image: "https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹13.45 - 24.95 Lakh",
+      name: "Royal Enfield Classic 350",
+      image: "https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹1.93 - 2.21 Lakh",
     },
     {
-      name: "Tata Nexon",
-      image: "https://images.unsplash.com/photo-1609521263047-f8f205293f24?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹8.10 - 15.50 Lakh",
+      name: "Bajaj Pulsar NS200",
+      image: "https://images.unsplash.com/photo-1626266061368-46a8632bac35?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹1.40 - 1.42 Lakh",
     }
   ];
 
   return (
     <div className="mb-6">
-      <h3 className="text-md font-semibold mb-3">Trending New Cars</h3>
+      <h3 className="text-md font-semibold mb-3">Popular Bikes</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        {carModels.map((car, index) => (
+        {bikeModels.map((bike, index) => (
           <Card key={index} className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative">
-              <img src={car.image} alt={car.name} className="w-full h-40 object-cover" />
+              <img src={bike.image} alt={bike.name} className="w-full h-40 object-cover" />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                <h4 className="text-white font-semibold">{car.name}</h4>
-                <p className="text-white text-sm">{car.price}</p>
+                <h4 className="text-white font-semibold">{bike.name}</h4>
+                <p className="text-white text-sm">{bike.price}</p>
               </div>
             </div>
             <CardContent className="p-3">
@@ -59,7 +59,7 @@ const FourWheelersSection = () => {
                   Details
                 </Button>
                 <Button size="sm" className="bg-titeh-primary hover:bg-blue-600" onClick={showComingSoon}>
-                  Book Now
+                  Book Test Ride
                 </Button>
               </div>
             </CardContent>
@@ -69,7 +69,7 @@ const FourWheelersSection = () => {
       
       <div className="flex justify-center">
         <Button variant="outline" className="text-titeh-primary" onClick={showComingSoon}>
-          View All Cars
+          View All Bikes
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -77,4 +77,4 @@ const FourWheelersSection = () => {
   );
 };
 
-export default FourWheelersSection;
+export default BikesSection;

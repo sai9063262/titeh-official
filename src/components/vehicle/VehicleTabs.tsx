@@ -1,6 +1,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FourWheelersSection from "./FourWheelersSection";
+import BikesSection from "./BikesSection";
+import TrucksSection from "./TrucksSection";
 import LoansSection from "./LoansSection";
 import CalculatorsSection from "./CalculatorsSection";
 import FindNearbySection from "./FindNearbySection";
@@ -28,13 +30,13 @@ const VehicleTabs = ({ defaultValue = "cars" }: VehicleTabsProps) => {
         </TabsContent>
         
         <TabsContent value="bikes">
-          {/* Bikes specific content */}
+          <BikesSection />
           <LoansSection />
           <CalculatorsSection />
         </TabsContent>
         
         <TabsContent value="trucks">
-          {/* Trucks specific content */}
+          <TrucksSection />
           <FindNearbySection />
         </TabsContent>
       </Tabs>

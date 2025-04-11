@@ -15,6 +15,13 @@ import DriverDetails from "./pages/DriverDetails";
 import TrafficSigns from "./pages/TrafficSigns";
 import Language from "./pages/settings/Language";
 import PaymentMethods from "./pages/settings/PaymentMethods";
+import Location from "./pages/settings/Location";
+import AlertPreferences from "./pages/settings/AlertPreferences";
+import DataSync from "./pages/settings/DataSync";
+import BackupOptions from "./pages/settings/BackupOptions";
+import UserRoles from "./pages/settings/UserRoles";
+import HistoryManagement from "./pages/settings/HistoryManagement";
+import VehicleManagement from "./pages/settings/VehicleManagement";
 import LicenseProcedure from "./pages/rto-exam/LicenseProcedure";
 import PracticeExam from "./pages/rto-exam/PracticeExam";
 import QuestionBank from "./pages/rto-exam/QuestionBank";
@@ -63,7 +70,14 @@ const App = () => {
               
               {/* Settings sub-pages */}
               <Route path="/settings/language" element={<Language />} />
+              <Route path="/settings/location" element={<Location />} />
               <Route path="/settings/payment" element={<PaymentMethods />} />
+              <Route path="/settings/alerts" element={<AlertPreferences />} />
+              <Route path="/settings/sync" element={<DataSync />} />
+              <Route path="/settings/backup" element={<BackupOptions />} />
+              <Route path="/settings/roles" element={<UserRoles />} />
+              <Route path="/settings/history" element={<HistoryManagement />} />
+              <Route path="/settings/vehicle" element={<VehicleManagement />} />
               
               {/* RTO Exam sub-pages */}
               <Route path="/rto-exam/license-procedure" element={<LicenseProcedureEnhanced />} />

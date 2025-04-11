@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Info, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const FourWheelersSection = () => {
+const TrucksSection = () => {
   const { toast } = useToast();
   
   const showComingSoon = () => {
@@ -15,51 +15,51 @@ const FourWheelersSection = () => {
     });
   };
 
-  const carModels = [
+  const truckModels = [
     {
-      name: "Hyundai i20",
-      image: "https://images.unsplash.com/photo-1583267746897-2cf415887172?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹7.46 - 11.88 Lakh",
+      name: "Tata Prima",
+      image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹24.28 - 54.73 Lakh",
     },
     {
-      name: "Maruti Swift",
-      image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹6.49 - 9.45 Lakh",
+      name: "Mahindra Bolero Pickup",
+      image: "https://images.unsplash.com/photo-1616789682173-99c81e7b633e?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹8.82 - 9.61 Lakh",
     },
     {
-      name: "Mahindra XUV700",
-      image: "https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹13.45 - 24.95 Lakh",
+      name: "BharatBenz 3723R",
+      image: "https://images.unsplash.com/photo-1566431970283-2db5cf68fef7?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹42.91 - 46.15 Lakh",
     },
     {
-      name: "Tata Nexon",
-      image: "https://images.unsplash.com/photo-1609521263047-f8f205293f24?auto=format&fit=crop&q=80&w=300&h=200",
-      price: "₹8.10 - 15.50 Lakh",
+      name: "Eicher Pro 3015",
+      image: "https://images.unsplash.com/photo-1563729517443-6c764d8029f4?auto=format&fit=crop&q=80&w=300&h=200",
+      price: "₹17.74 - 18.32 Lakh",
     }
   ];
 
   return (
     <div className="mb-6">
-      <h3 className="text-md font-semibold mb-3">Trending New Cars</h3>
+      <h3 className="text-md font-semibold mb-3">Commercial Vehicles</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        {carModels.map((car, index) => (
+        {truckModels.map((truck, index) => (
           <Card key={index} className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative">
-              <img src={car.image} alt={car.name} className="w-full h-40 object-cover" />
+              <img src={truck.image} alt={truck.name} className="w-full h-40 object-cover" />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                <h4 className="text-white font-semibold">{car.name}</h4>
-                <p className="text-white text-sm">{car.price}</p>
+                <h4 className="text-white font-semibold">{truck.name}</h4>
+                <p className="text-white text-sm">{truck.price}</p>
               </div>
             </div>
             <CardContent className="p-3">
               <div className="flex justify-between items-center">
                 <Button variant="outline" size="sm" onClick={showComingSoon}>
                   <Info className="h-4 w-4 mr-1" />
-                  Details
+                  Specifications
                 </Button>
                 <Button size="sm" className="bg-titeh-primary hover:bg-blue-600" onClick={showComingSoon}>
-                  Book Now
+                  Inquire Now
                 </Button>
               </div>
             </CardContent>
@@ -69,7 +69,7 @@ const FourWheelersSection = () => {
       
       <div className="flex justify-center">
         <Button variant="outline" className="text-titeh-primary" onClick={showComingSoon}>
-          View All Cars
+          View All Commercial Vehicles
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -77,4 +77,4 @@ const FourWheelersSection = () => {
   );
 };
 
-export default FourWheelersSection;
+export default TrucksSection;
