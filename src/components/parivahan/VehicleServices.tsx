@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, FileText, Copy, MapPin, Transfer, Bank, RefreshCw, Check, Clock, ClipboardCheck } from "lucide-react";
+import { Calendar, FileText, Copy, MapPin, ArrowLeftRight, BanknoteIcon, RefreshCw, Check, Clock, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const VehicleServices = () => {
@@ -37,12 +37,12 @@ const VehicleServices = () => {
       description: "Update address on RC"
     },
     { 
-      icon: <Transfer className="h-5 w-5 text-titeh-primary" />, 
+      icon: <ArrowLeftRight className="h-5 w-5 text-titeh-primary" />, 
       title: "Transfer Ownership", 
       description: "Transfer vehicle ownership"
     },
     { 
-      icon: <Bank className="h-5 w-5 text-titeh-primary" />, 
+      icon: <BanknoteIcon className="h-5 w-5 text-titeh-primary" />, 
       title: "Hypothecation", 
       description: "Add or remove hypothecation"
     },

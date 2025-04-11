@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, FileText, Newsletter as NewsletterIcon, Bell } from "lucide-react";
+import { Mail, FileText, Bell, Newspaper } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -190,7 +190,7 @@ const Newsletter = () => {
         
         <Card className="p-6 bg-blue-50 mb-8">
           <div className="flex items-start gap-4">
-            <NewsletterIcon className="h-10 w-10 text-titeh-primary" />
+            <Newspaper className="h-10 w-10 text-titeh-primary" />
             <div>
               <h3 className="font-semibold text-lg mb-1">About Our Newsletter</h3>
               <p className="text-gray-700 mb-3">
