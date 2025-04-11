@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   FileText,
   Gauge,
-  CircleDashed
+  CircleDashed,
+  AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -24,10 +25,10 @@ const TrafficSafety = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const showComingSoon = () => {
+  const showComingSoon = (feature: string) => {
     toast({
       title: "Coming Soon",
-      description: "This feature will be available shortly",
+      description: `The ${feature} feature will be available shortly`,
       variant: "default",
     });
   };
@@ -135,60 +136,60 @@ const TrafficSafety = () => {
             </div>
           </Link>
           
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* Black Spot Map - actual implementation instead of coming soon */}
+          <Link to="/traffic-safety/black-spot-map" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <Map className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">Black Spot Map</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
             </div>
-          </Button>
+          </Link>
           
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* T-Safe Monitoring - actual implementation instead of coming soon */}
+          <Link to="/traffic-safety/t-safe-monitoring" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <Bell className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">T-Safe Monitoring</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
             </div>
-          </Button>
+          </Link>
           
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* Document Display - actual implementation instead of coming soon */}
+          <Link to="/traffic-safety/document-display" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <FileText className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">Document Display</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
             </div>
-          </Button>
+          </Link>
           
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* Speedometer Alerts - actual implementation instead of coming soon */}
+          <Link to="/traffic-safety/speed-alerts" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <Gauge className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">Speedometer Alerts</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
             </div>
-          </Button>
+          </Link>
           
-          <Button 
-            variant="ghost" 
-            className="block border rounded-lg p-4 h-full w-full"
-            onClick={showComingSoon}
-          >
-            <div className="flex flex-col items-center w-full">
+          {/* No Parking Zones - actual implementation instead of coming soon */}
+          <Link to="/traffic-safety/no-parking-zones" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
               <MapPin className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">No Parking Zones</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
             </div>
-          </Button>
+          </Link>
         </div>
         
         {/* Statistics */}
@@ -254,6 +255,45 @@ const TrafficSafety = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+        
+        {/* Safety Alerts */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Latest Safety Alerts</h2>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="p-4 bg-red-50 border-b border-red-100 flex items-start gap-3">
+              <div className="bg-red-100 p-2 rounded-full">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-medium text-red-800">Heavy Rain Alert</h3>
+                <p className="text-sm text-red-700">Potential flooding on Mehdipatnam-Gachibowli route. Avoid if possible.</p>
+                <p className="text-xs text-red-600 mt-1">Posted 35 minutes ago</p>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex items-start gap-3">
+              <div className="bg-yellow-100 p-2 rounded-full">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-yellow-800">Road Construction</h3>
+                <p className="text-sm text-yellow-700">Lane closure on Hitech City Road near Cyber Towers. Expect delays.</p>
+                <p className="text-xs text-yellow-600 mt-1">Posted 2 hours ago</p>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-blue-50 flex items-start gap-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <Bell className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-blue-800">Special Traffic Arrangements</h3>
+                <p className="text-sm text-blue-700">One-way traffic implemented at Tank Bund for weekend festival. Follow diversions.</p>
+                <p className="text-xs text-blue-600 mt-1">Posted 1 day ago</p>
+              </div>
+            </div>
           </div>
         </div>
         

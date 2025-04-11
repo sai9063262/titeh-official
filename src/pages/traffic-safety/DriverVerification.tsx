@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, UserCheck, Scan, RefreshCw, AlertCircle, CheckCircle, X, Info, Shield, FileSpreadsheet, MapPin, Smartphone } from "lucide-react";
+import { Camera, UserCheck, Scan, RefreshCw, AlertCircle, CheckCircle, X, Info, Shield, FileSpreadsheet, MapPin, Smartphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -47,6 +47,8 @@ const DriverVerification = () => {
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [locationGranted, setLocationGranted] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
   
   const dummyDrivers: DriverData[] = [
     {
@@ -121,16 +123,35 @@ const DriverVerification = () => {
     getLocation();
   }, [toast]);
 
-  // Effect to handle camera access
+  // Effect to handle camera access with improved mobile detection and handling
   useEffect(() => {
     if (isCameraOpen) {
       const enableCamera = async () => {
         try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              facingMode: facing 
-            } 
-          });
+          setIsCameraLoading(true);
+          setCameraError(null);
+          
+          // Check if this is likely a mobile device
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          
+          // Define constraints with proper handling for mobile devices
+          const constraints: MediaStreamConstraints = {
+            video: isMobile 
+              ? { 
+                  facingMode: { exact: facing },
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 }
+                } 
+              : { 
+                  facingMode: facing,
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 }
+                }
+          };
+          
+          console.log("Requesting camera with constraints:", constraints);
+          
+          const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
           
           if (videoRef.current) {
             videoRef.current.srcObject = mediaStream;
@@ -139,18 +160,42 @@ const DriverVerification = () => {
           
           toast({
             title: "Camera Access Granted",
-            description: "Camera is now active for verification",
+            description: `${facing === "user" ? "Front" : "Back"} camera is now active for verification`,
           });
+          
+          setIsCameraLoading(false);
         } catch (err) {
           console.error("Error accessing camera:", err);
+          
+          // Try again without the 'exact' constraint if we're on mobile
+          if (facing === "environment") {
+            try {
+              const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: facing }
+              });
+              
+              if (videoRef.current) {
+                videoRef.current.srcObject = fallbackStream;
+                setStream(fallbackStream);
+                setIsCameraLoading(false);
+                return;
+              }
+            } catch (fallbackErr) {
+              console.error("Fallback camera access failed:", fallbackErr);
+            }
+          }
+          
+          setCameraError(`Could not access ${facing === "user" ? "front" : "back"} camera. Please check permissions.`);
           toast({
             title: "Camera Access Failed",
-            description: "Could not access your camera. Please check permissions.",
+            description: `Could not access ${facing === "user" ? "front" : "back"} camera. Please check permissions.`,
             variant: "destructive",
           });
           
-          // Fallback to simulation mode
-          simulateCamera();
+          setIsCameraLoading(false);
+          
+          // Fallback to simulation mode after a short delay
+          setTimeout(simulateCamera, 1500);
         }
       };
       
@@ -164,7 +209,7 @@ const DriverVerification = () => {
     }
   }, [isCameraOpen, facing, toast]);
   
-  // Toggle camera facing mode
+  // Toggle camera facing mode with improved handling
   const toggleCameraFacing = () => {
     // Stop current stream
     if (stream) {
@@ -174,13 +219,16 @@ const DriverVerification = () => {
     // Toggle facing mode
     setFacing(prev => prev === "user" ? "environment" : "user");
     
-    // Re-enable camera with new facing mode
+    // Reset video element
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     
+    setCameraError(null);
     setIsCameraOpen(false);
-    setTimeout(() => setIsCameraOpen(true), 100);
+    
+    // Small delay before reopening camera
+    setTimeout(() => setIsCameraOpen(true), 300);
   };
   
   // Function to simulate camera if access fails
@@ -190,28 +238,58 @@ const DriverVerification = () => {
     runVerification();
   };
   
-  // Handle taking a photo from camera stream
+  // Handle taking a photo from camera stream with enhanced error handling
   const takePhoto = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx && videoRef.current) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        setImageSrc(dataUrl);
-        setIsPhotoTaken(true);
-        
-        // Stop camera stream after taking photo
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+    if (videoRef.current && stream && stream.active) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth || 640;
+        canvas.height = videoRef.current.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        if (ctx && videoRef.current) {
+          // Draw video frame to canvas
+          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+          
+          // Get image as data URL
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setImageSrc(dataUrl);
+          setIsPhotoTaken(true);
+          
+          // Stop camera stream after taking photo
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+          
+          toast({
+            title: "Photo Captured",
+            description: "Processing driver verification...",
+          });
+          
+          runVerification();
+        } else {
+          toast({
+            title: "Error Taking Photo",
+            description: "Could not process the image. Please try again.",
+            variant: "destructive",
+          });
+          simulateCamera();
         }
-        
-        runVerification();
+      } catch (err) {
+        console.error("Error taking photo:", err);
+        toast({
+          title: "Error Taking Photo",
+          description: "Could not capture image. Using simulation mode instead.",
+          variant: "destructive",
+        });
+        simulateCamera();
       }
     } else {
       // Fallback for testing
+      toast({
+        title: "Camera Not Available",
+        description: "Using simulation mode instead.",
+        variant: "default",
+      });
       simulateCamera();
     }
   };
@@ -421,6 +499,7 @@ const DriverVerification = () => {
                         variant="outline" 
                         size="sm" 
                         onClick={toggleCameraFacing}
+                        disabled={isCameraLoading}
                       >
                         <Smartphone className="h-4 w-4 mr-1" />
                         {facing === "user" ? "Switch to Back Camera" : "Switch to Front Camera"}
@@ -481,8 +560,8 @@ const DriverVerification = () => {
                           )}
                           
                           {locationGranted && currentLocation && (
-                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
-                              <MapPin className="h-3 w-3 inline mr-1" />
+                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs flex items-center">
+                              <MapPin className="h-3 w-3 mr-1" />
                               Location: Verified
                             </div>
                           )}
@@ -513,13 +592,40 @@ const DriverVerification = () => {
                     ) : (
                       <div className="space-y-4">
                         <div className="relative border rounded-lg overflow-hidden h-64">
+                          {isCameraLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                              <div className="text-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-titeh-primary mx-auto mb-2" />
+                                <p className="text-sm text-gray-600">Accessing {facing === "user" ? "front" : "back"} camera...</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {cameraError && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-red-50">
+                              <div className="text-center p-4">
+                                <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                                <p className="text-sm font-medium text-red-800">{cameraError}</p>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="mt-3"
+                                  onClick={toggleCameraFacing}
+                                >
+                                  Try {facing === "user" ? "Back" : "Front"} Camera
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          
                           <video 
                             ref={videoRef}
                             autoPlay 
                             muted 
                             playsInline
-                            className="w-full h-full object-cover"
+                            className={`w-full h-full object-cover ${isCameraLoading || cameraError ? 'opacity-0' : 'opacity-100'}`}
                           />
+                          
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                             <p className="text-white text-sm">
                               Position the face clearly in the frame
@@ -527,9 +633,23 @@ const DriverVerification = () => {
                           </div>
                           
                           {locationGranted && currentLocation && (
-                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
-                              <MapPin className="h-3 w-3 inline mr-1" />
+                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs flex items-center">
+                              <MapPin className="h-3 w-3 mr-1" />
                               Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+                            </div>
+                          )}
+                          
+                          {facing === "user" && (
+                            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                              <Smartphone className="h-3 w-3 inline mr-1" />
+                              Front Camera
+                            </div>
+                          )}
+                          
+                          {facing === "environment" && (
+                            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                              <Camera className="h-3 w-3 inline mr-1" />
+                              Back Camera
                             </div>
                           )}
                         </div>
@@ -544,6 +664,7 @@ const DriverVerification = () => {
                               setIsCameraOpen(false);
                             }}
                             className="flex-1"
+                            disabled={isCameraLoading}
                           >
                             <X className="h-4 w-4 mr-1" />
                             Cancel
@@ -552,6 +673,7 @@ const DriverVerification = () => {
                           <Button 
                             onClick={takePhoto} 
                             className="bg-titeh-primary flex-1"
+                            disabled={isCameraLoading || !!cameraError}
                           >
                             <Camera className="h-4 w-4 mr-1" />
                             Take Photo
@@ -616,6 +738,19 @@ const DriverVerification = () => {
                           <p className="text-xs text-yellow-700">
                             Only authorized personnel should perform driver verification. 
                             Unauthorized access to driver data is punishable under data protection laws.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h3 className="font-medium text-sm text-blue-800">Device Requirements</h3>
+                          <p className="text-xs text-blue-700">
+                            For optimal verification, use a device with a working camera and location services enabled.
+                            Both front and back cameras can be used for verification purposes.
                           </p>
                         </div>
                       </div>
