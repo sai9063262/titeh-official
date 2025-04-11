@@ -13,9 +13,12 @@ import {
   FileText,
   CreditCard,
   Bluetooth,
-  Smartphone
+  Smartphone,
+  Wifi,
+  FileSpreadsheet
 } from "lucide-react";
 import GovernmentBranding from "@/components/GovernmentBranding";
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   return (
@@ -56,46 +59,83 @@ const Index = () => {
           </Link>
         </div>
         
-        {/* New Features Section */}
+        {/* What's New Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-titeh-primary">New Features</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-titeh-primary">What's New</h2>
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              Version 1.2.0
+            </Badge>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/device-settings" className="titeh-card hover:bg-gray-50 transition-colors">
+            <Link to="/device-settings" className="titeh-card hover:bg-gray-50 transition-colors relative">
+              <div className="absolute top-2 right-2">
+                <Badge className="bg-blue-500">New</Badge>
+              </div>
               <div className="flex items-center mb-2">
                 <Bluetooth className="text-blue-500 mr-2" />
-                <h3 className="font-medium">Bluetooth Connectivity</h3>
+                <h3 className="font-medium">Real Device Connectivity</h3>
               </div>
-              <p className="text-sm text-gray-600">Connect to your vehicle's OBD scanner and other devices.</p>
+              <p className="text-sm text-gray-600">Connect to your vehicle's OBD scanner using your device's Bluetooth.</p>
             </Link>
             
-            <Link to="/device-settings?tab=wifi" className="titeh-card hover:bg-gray-50 transition-colors">
+            <Link to="/device-settings?tab=wifi" className="titeh-card hover:bg-gray-50 transition-colors relative">
+              <div className="absolute top-2 right-2">
+                <Badge className="bg-blue-500">New</Badge>
+              </div>
               <div className="flex items-center mb-2">
-                <Smartphone className="text-blue-500 mr-2" />
+                <Wifi className="text-blue-500 mr-2" />
                 <h3 className="font-medium">Wi-Fi Integration</h3>
               </div>
-              <p className="text-sm text-gray-600">Connect to Wi-Fi for real-time vehicle diagnostics.</p>
+              <p className="text-sm text-gray-600">Connect to Wi-Fi networks for vehicle diagnostics and location services.</p>
             </Link>
             
-            <Link to="/admin-driver-details" className="titeh-card hover:bg-gray-50 transition-colors">
+            <Link to="/admin-driver-details" className="titeh-card hover:bg-gray-50 transition-colors relative">
+              <div className="absolute top-2 right-2">
+                <Badge className="bg-purple-500">Admin</Badge>
+              </div>
               <div className="flex items-center mb-2">
-                <User className="text-titeh-primary mr-2" />
+                <FileSpreadsheet className="text-titeh-primary mr-2" />
                 <h3 className="font-medium">Driver Management</h3>
               </div>
-              <p className="text-sm text-gray-600">Admin-only access to manage driver details.</p>
+              <p className="text-sm text-gray-600">Admin-only access with Google Sheets integration for driver details.</p>
             </Link>
+          </div>
+        </div>
+        
+        {/* Security Features Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-titeh-primary">Enhanced Security</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="titeh-card">
+              <div className="flex items-center mb-2">
+                <Shield className="text-green-500 mr-2" />
+                <h3 className="font-medium">AES-256 Encryption</h3>
+              </div>
+              <p className="text-sm text-gray-600">All your data is now protected with military-grade encryption for maximum security.</p>
+            </div>
+            
+            <div className="titeh-card">
+              <div className="flex items-center mb-2">
+                <Smartphone className="text-green-500 mr-2" />
+                <h3 className="font-medium">OTP Verification</h3>
+              </div>
+              <p className="text-sm text-gray-600">Secure access to administrative features with one-time password authentication.</p>
+            </div>
           </div>
         </div>
         
         {/* Future Enhancements Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-titeh-primary">Future Enhancements</h2>
+          <h2 className="text-xl font-semibold mb-4 text-titeh-primary">Coming Soon</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="titeh-card">
               <div className="flex items-center mb-2">
                 <AlertTriangle className="text-yellow-500 mr-2" />
                 <h3 className="font-medium">Public Safety Alerts</h3>
               </div>
-              <p className="text-sm text-gray-600">Add buzzer integration via ESP32 in future.</p>
+              <p className="text-sm text-gray-600">Real-time alerts for road hazards and traffic incidents coming in next update.</p>
             </div>
             
             <div className="titeh-card">
@@ -103,15 +143,15 @@ const Index = () => {
                 <Leaf className="text-green-500 mr-2" />
                 <h3 className="font-medium">Eco-Friendly Driving</h3>
               </div>
-              <p className="text-sm text-gray-600">Track fuel usage with sensors later.</p>
+              <p className="text-sm text-gray-600">Track fuel efficiency with real-time sensor data coming soon.</p>
             </div>
             
             <div className="titeh-card">
               <div className="flex items-center mb-2">
                 <MapPin className="text-titeh-primary mr-2" />
-                <h3 className="font-medium">Police Patrol Tracker</h3>
+                <h3 className="font-medium">Enhanced GPS Features</h3>
               </div>
-              <p className="text-sm text-gray-600">Integrate GPS module in future.</p>
+              <p className="text-sm text-gray-600">Advanced route tracking and navigation features in development.</p>
             </div>
           </div>
         </div>

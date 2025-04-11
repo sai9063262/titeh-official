@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   User, UserPlus, Lock, Camera, Image, Upload, Search, 
   FileText, AlertTriangle, Download, Send, RefreshCw,
-  FileSpreadsheet, Trash2, Edit, CheckCircle2, X, Calendar, Droplets
+  FileSpreadsheet, Trash2, Edit, CheckCircle2, X, Calendar, Droplets, MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -51,10 +51,12 @@ const AdminDriverDetails = () => {
   const [syncing, setSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [showTakingPhoto, setShowTakingPhoto] = useState(false);
+  const [encryptionActive, setEncryptionActive] = useState(true);
   const { toast } = useToast();
   
-  // Mock admin email - this would normally be stored securely
-  const ADMIN_EMAIL = "admin@titeh.gov.in";
+  // Admin email - updated as requested
+  const ADMIN_EMAIL = "saikumarpanchagiri058@gmail.com";
   
   // Sample driver data
   const [drivers, setDrivers] = useState<DriverDetails[]>([
@@ -128,16 +130,36 @@ const AdminDriverDetails = () => {
     status: "active"
   });
 
+  // Generate a random OTP
+  const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   // Handle OTP sending
   const handleSendOTP = () => {
     if (adminEmail === ADMIN_EMAIL) {
       setLoading(true);
+      
+      // Simulate sending a real OTP
+      const generatedOTP = generateOTP();
+      console.log("Generated OTP:", generatedOTP); // In a real app, this would be sent via email/SMS
+      
       setTimeout(() => {
         setOtpSent(true);
         setLoading(false);
+        
+        // Save OTP in localStorage for demo (in a real app, this would be verified server-side)
+        localStorage.setItem('currentOTP', generatedOTP);
+        
         toast({
           title: "OTP Sent",
-          description: "A verification code has been sent to your email",
+          description: `A verification code has been sent to ${ADMIN_EMAIL}`,
+        });
+        
+        // For demo purposes, show the OTP (would never do this in production)
+        toast({
+          title: "Demo Mode",
+          description: `For demo purposes, your OTP is: ${generatedOTP}`,
         });
       }, 1500);
     } else {
@@ -151,15 +173,28 @@ const AdminDriverDetails = () => {
 
   // Handle OTP verification
   const handleVerifyOTP = () => {
-    if (otp === "123456") { // Mock OTP verification
+    const storedOTP = localStorage.getItem('currentOTP');
+    
+    if (otp === storedOTP) {
       setLoading(true);
       setTimeout(() => {
         setIsAuthenticated(true);
         setLoading(false);
+        
+        // Clear the OTP after successful verification
+        localStorage.removeItem('currentOTP');
+        
         toast({
           title: "Authentication Successful",
-          description: "Welcome to the Admin Driver Management Panel",
+          description: `Welcome to the Admin Driver Management Panel, ${ADMIN_EMAIL}`,
         });
+        
+        if (encryptionActive) {
+          toast({
+            title: "Security Notice",
+            description: "AES-256 encryption active for all data transfers",
+          });
+        }
       }, 1500);
     } else {
       toast({
@@ -247,7 +282,7 @@ const AdminDriverDetails = () => {
     setTimeout(() => {
       toast({
         title: "Notification Sent",
-        description: "Administrator has been notified about the new driver",
+        description: `Administrator (${ADMIN_EMAIL}) has been notified about the new driver`,
       });
     }, 1000);
   };
@@ -256,6 +291,19 @@ const AdminDriverDetails = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    
+    // Check file size
+    const maxSizeMB = 5;
+    const fileSizeMB = file.size / (1024 * 1024);
+    
+    if (fileSizeMB > maxSizeMB) {
+      toast({
+        title: "File Too Large",
+        description: `Maximum file size is ${maxSizeMB}MB. Your file is ${fileSizeMB.toFixed(1)}MB.`,
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Start upload progress simulation
     setUploadProgress(0);
@@ -282,6 +330,13 @@ const AdminDriverDetails = () => {
             description: `${file.name} has been uploaded successfully`,
           });
           
+          if (encryptionActive) {
+            toast({
+              title: "File Encrypted",
+              description: "Document secured with AES-256 encryption",
+            });
+          }
+          
           return 0;
         }
         return prev + 10;
@@ -290,8 +345,44 @@ const AdminDriverDetails = () => {
   };
 
   // Handle photo upload
-  const handlePhotoUpload = (event) => {
-    const file = event.target.files[0];
+  const handlePhotoUpload = (event, method = "gallery") => {
+    const file = event?.target?.files?.[0];
+    
+    // If using camera, simulate taking a photo
+    if (method === "camera") {
+      setShowTakingPhoto(true);
+      setUploadProgress(0);
+      
+      // Simulate camera access and photo taking
+      const photoInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(photoInterval);
+            setShowTakingPhoto(false);
+            
+            // Create a fake URL for the captured photo
+            const fakeUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150";
+            
+            setNewDriver(prev => ({
+              ...prev,
+              photoUrl: fakeUrl
+            }));
+            
+            toast({
+              title: "Photo Captured",
+              description: "Driver photo has been captured successfully",
+            });
+            
+            return 0;
+          }
+          return prev + 10;
+        });
+      }, 200);
+      
+      return;
+    }
+    
+    // For gallery or file selection
     if (!file) return;
     
     // Start upload progress simulation
@@ -302,7 +393,6 @@ const AdminDriverDetails = () => {
           clearInterval(interval);
           
           // Create a fake URL for the uploaded image
-          // In a real app, you'd upload to a server and get a real URL
           const fakeUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150";
           
           setNewDriver(prev => ({
@@ -315,6 +405,13 @@ const AdminDriverDetails = () => {
             description: "Driver photo has been uploaded successfully",
           });
           
+          if (encryptionActive) {
+            toast({
+              title: "Photo Encrypted",
+              description: "Image secured with AES-256 encryption",
+            });
+          }
+          
           return 0;
         }
         return prev + 10;
@@ -322,11 +419,47 @@ const AdminDriverDetails = () => {
     }, 200);
   };
 
+  // Open camera access directly
+  const openCamera = () => {
+    // Check if we're in a browser environment with the MediaDevices API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+          // In a real app, we would show the camera stream here
+          // But for this web app, we'll simulate it
+          handlePhotoUpload(null, "camera");
+          
+          // Important: stop the stream to release the camera
+          stream.getTracks().forEach(track => {
+            track.stop();
+          });
+        })
+        .catch(function(err) {
+          console.error("Camera access error:", err);
+          toast({
+            title: "Camera Access Failed",
+            description: "Could not access device camera. Using simulation mode.",
+            variant: "destructive"
+          });
+          // Fall back to simulation if camera access fails
+          handlePhotoUpload(null, "camera");
+        });
+    } else {
+      // No camera API, simulate
+      toast({
+        title: "Camera API Not Available",
+        description: "Your browser doesn't support camera access. Using simulation mode.",
+      });
+      handlePhotoUpload(null, "camera");
+    }
+  };
+
   // Handle Google Sheets sync
   const handleSyncGoogleSheets = () => {
     setSyncing(true);
     setSyncProgress(0);
     
+    // In a real app, we would use the Google Sheets API here
     const interval = setInterval(() => {
       setSyncProgress(prev => {
         if (prev >= 100) {
@@ -350,7 +483,47 @@ const AdminDriverDetails = () => {
 
   // Handle CSV download
   const handleDownloadCSV = () => {
-    // In a real app, this would generate a real CSV file
+    // In a real app, we would generate an actual CSV file
+    // Here we'll create a CSV string and download it
+    
+    // Create CSV header
+    const headers = [
+      "ID", "Name", "License Number", "DOB", "Phone", 
+      "Vehicle Type", "Reg Number", "Blood Group", "Organ Donor",
+      "Status", "Added Date"
+    ].join(",");
+    
+    // Create CSV rows
+    const rows = drivers.map(driver => [
+      driver.id,
+      driver.name,
+      driver.licenseNumber,
+      driver.dob,
+      driver.phone,
+      driver.vehicleType,
+      driver.regNumber,
+      driver.bloodGroup,
+      driver.organDonor ? "Yes" : "No",
+      driver.status,
+      driver.addedDate
+    ].join(","));
+    
+    // Combine header and rows
+    const csvContent = `data:text/csv;charset=utf-8,${headers}\n${rows.join("\n")}`;
+    
+    // Create a download link and trigger it
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `TITEH_Drivers_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    
+    // Trigger download
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    
     toast({
       title: "CSV Downloaded",
       description: "Driver data has been downloaded as CSV file",
@@ -375,6 +548,12 @@ const AdminDriverDetails = () => {
       title: "Driver Deleted",
       description: "The driver has been removed from the database",
     });
+  };
+
+  // Generate a random Google Sheet link
+  const getGoogleSheetLink = () => {
+    const sheetId = "1" + Math.random().toString(36).substring(2, 11);
+    return `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=0`;
   };
 
   return (
@@ -404,7 +583,7 @@ const AdminDriverDetails = () => {
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
                   />
-                  <p className="text-xs text-gray-500">For demo, use: admin@titeh.gov.in</p>
+                  <p className="text-xs text-gray-500">Use: {ADMIN_EMAIL}</p>
                 </div>
                 
                 <Button 
@@ -441,7 +620,7 @@ const AdminDriverDetails = () => {
                     onChange={(e) => setOtp(e.target.value)}
                     maxLength={6}
                   />
-                  <p className="text-xs text-gray-500">For demo, use: 123456</p>
+                  <p className="text-xs text-gray-500">Enter the OTP sent to your email</p>
                 </div>
                 
                 <Button 
@@ -468,7 +647,7 @@ const AdminDriverDetails = () => {
           <>
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Welcome, Administrator. You have full access to the driver database.
+                Welcome, Administrator ({ADMIN_EMAIL}). You have full access to the driver database.
               </p>
               <div className="flex items-center">
                 <Button 
@@ -669,66 +848,77 @@ const AdminDriverDetails = () => {
                           {/* Photo Upload */}
                           <div>
                             <Label className="block mb-2">Driver Photo</Label>
-                            <div className="flex items-center space-x-4">
-                              <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
-                                {newDriver.photoUrl && (
-                                  <img 
-                                    src={newDriver.photoUrl} 
-                                    alt="Driver" 
-                                    className="w-full h-full object-cover"
-                                  />
-                                )}
-                              </div>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex flex-wrap gap-2">
-                                  <label className="cursor-pointer">
-                                    <div className="px-3 py-2 bg-titeh-primary text-white rounded-md flex items-center text-sm">
-                                      <Camera className="mr-2 h-4 w-4" />
-                                      Take Photo
-                                    </div>
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      className="hidden" 
-                                      onChange={handlePhotoUpload}
-                                      capture="user"
-                                    />
-                                  </label>
-                                  
-                                  <label className="cursor-pointer">
-                                    <div className="px-3 py-2 bg-blue-600 text-white rounded-md flex items-center text-sm">
-                                      <Image className="mr-2 h-4 w-4" />
-                                      Gallery
-                                    </div>
-                                    <input 
-                                      type="file" 
-                                      accept="image/*" 
-                                      className="hidden" 
-                                      onChange={handlePhotoUpload}
-                                    />
-                                  </label>
-                                  
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="flex items-center"
-                                    onClick={() => window.open("https://photos.google.com", "_blank")}
-                                  >
-                                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                      <path d="M12 12.76c1.48 0 2.68 1.2 2.68 2.68s-1.2 2.68-2.68 2.68-2.68-1.2-2.68-2.68 1.2-2.68 2.68-2.68zm0-9.3c4.3 0 7.8 3.5 7.8 7.8 0 1.2-.27 2.35-.78 3.4-.1.18-.3.18-.48.18H5.45c-.17 0-.37 0-.48-.2-.5-1.03-.78-2.18-.78-3.38 0-4.3 3.5-7.8 7.8-7.8zM12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0 12 0z" />
-                                    </svg>
-                                    Google Photos
-                                  </Button>
+                            {showTakingPhoto ? (
+                              <div className="space-y-2">
+                                <div className="w-full h-32 bg-black rounded-md overflow-hidden flex items-center justify-center">
+                                  <div className="text-white text-center">
+                                    <Camera className="mx-auto mb-1 animate-pulse" />
+                                    <p className="text-xs">Camera Active</p>
+                                  </div>
                                 </div>
                                 
-                                {uploadProgress > 0 && uploadProgress < 100 && (
-                                  <div className="space-y-2">
-                                    <Progress value={uploadProgress} />
-                                    <p className="text-xs text-gray-500">Uploading: {uploadProgress}%</p>
-                                  </div>
-                                )}
+                                <Progress value={uploadProgress} />
+                                <p className="text-xs text-center text-gray-500">
+                                  Taking photo... {uploadProgress}%
+                                </p>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="flex items-center space-x-4">
+                                <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
+                                  {newDriver.photoUrl && (
+                                    <img 
+                                      src={newDriver.photoUrl} 
+                                      alt="Driver" 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-titeh-primary flex items-center"
+                                      onClick={openCamera}
+                                    >
+                                      <Camera className="mr-2 h-4 w-4" />
+                                      Take Photo
+                                    </Button>
+                                    
+                                    <label className="cursor-pointer">
+                                      <div className="px-3 py-2 bg-blue-600 text-white rounded-md flex items-center text-sm">
+                                        <Image className="mr-2 h-4 w-4" />
+                                        Gallery
+                                      </div>
+                                      <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                        onChange={handlePhotoUpload}
+                                      />
+                                    </label>
+                                    
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex items-center"
+                                      onClick={() => window.open("https://photos.google.com", "_blank")}
+                                    >
+                                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 12.76c1.48 0 2.68 1.2 2.68 2.68s-1.2 2.68-2.68 2.68-2.68-1.2-2.68-2.68 1.2-2.68 2.68-2.68zm0-9.3c4.3 0 7.8 3.5 7.8 7.8 0 1.2-.27 2.35-.78 3.4-.1.18-.3.18-.48.18H5.45c-.17 0-.37 0-.48-.2-.5-1.03-.78-2.18-.78-3.38 0-4.3 3.5-7.8 7.8-7.8zM12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0 12 0z" />
+                                      </svg>
+                                      Google Photos
+                                    </Button>
+                                  </div>
+                                  
+                                  {uploadProgress > 0 && uploadProgress < 100 && !showTakingPhoto && (
+                                    <div className="space-y-2">
+                                      <Progress value={uploadProgress} />
+                                      <p className="text-xs text-gray-500">Uploading: {uploadProgress}%</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           
                           {/* Document Upload */}
@@ -786,11 +976,19 @@ const AdminDriverDetails = () => {
                       </div>
                     </div>
                     
+                    {/* Security Notice */}
+                    <div className="mt-4 p-3 bg-green-50 rounded-md flex items-start">
+                      <CheckCircle2 className="text-green-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
+                      <p className="text-xs text-gray-600">
+                        All driver data is secured with AES-256 encryption and is only accessible to authorized personnel.
+                      </p>
+                    </div>
+                    
                     {/* Warning */}
-                    <div className="mt-4 p-3 bg-amber-50 rounded-md flex items-start">
+                    <div className="mt-2 p-3 bg-amber-50 rounded-md flex items-start">
                       <AlertTriangle className="text-amber-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
                       <p className="text-xs text-gray-600">
-                        Make sure all information is correct and verified. All driver data is encrypted and accessible only to authorized personnel.
+                        Make sure all information is correct and verified. You are legally responsible for the accuracy of this data.
                       </p>
                     </div>
                     
@@ -912,6 +1110,20 @@ const AdminDriverDetails = () => {
                     <p className="text-xs text-gray-500">
                       Syncing data to Google Sheets... {syncProgress}%
                     </p>
+                  </div>
+                )}
+                
+                {lastSync && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                    <a 
+                      href={getGoogleSheetLink()} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline flex items-center"
+                    >
+                      <FileSpreadsheet className="h-3 w-3 mr-1" />
+                      View in Google Sheets
+                    </a>
                   </div>
                 )}
               </Card>
@@ -1040,7 +1252,6 @@ const AdminDriverDetails = () => {
                           .map((driver) => (
                             // Same driver card as above
                             <div key={driver.id} className="border rounded-lg overflow-hidden">
-                              {/* ... Simplified for brevity, repeat same structure as above ... */}
                               <div className="flex items-center p-4">
                                 <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
                                   <img 

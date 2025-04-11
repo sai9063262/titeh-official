@@ -5,10 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Bluetooth, Smartphone, Wifi, WifiOff, Zap, AlertTriangle, X, RefreshCw, CheckCircle2 } from "lucide-react";
+import { 
+  Bluetooth, Smartphone, Wifi, WifiOff, Zap, AlertTriangle, 
+  X, RefreshCw, CheckCircle2, Settings, MapPin
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
