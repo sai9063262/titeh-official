@@ -11,7 +11,9 @@ import {
   Leaf, 
   MapPin,
   FileText,
-  CreditCard
+  CreditCard,
+  Bluetooth,
+  Smartphone
 } from "lucide-react";
 import GovernmentBranding from "@/components/GovernmentBranding";
 
@@ -52,6 +54,36 @@ const Index = () => {
             <Settings className="module-icon" />
             <span className="text-sm font-medium text-center">Settings</span>
           </Link>
+        </div>
+        
+        {/* New Features Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-titeh-primary">New Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link to="/device-settings" className="titeh-card hover:bg-gray-50 transition-colors">
+              <div className="flex items-center mb-2">
+                <Bluetooth className="text-blue-500 mr-2" />
+                <h3 className="font-medium">Bluetooth Connectivity</h3>
+              </div>
+              <p className="text-sm text-gray-600">Connect to your vehicle's OBD scanner and other devices.</p>
+            </Link>
+            
+            <Link to="/device-settings?tab=wifi" className="titeh-card hover:bg-gray-50 transition-colors">
+              <div className="flex items-center mb-2">
+                <Smartphone className="text-blue-500 mr-2" />
+                <h3 className="font-medium">Wi-Fi Integration</h3>
+              </div>
+              <p className="text-sm text-gray-600">Connect to Wi-Fi for real-time vehicle diagnostics.</p>
+            </Link>
+            
+            <Link to="/admin-driver-details" className="titeh-card hover:bg-gray-50 transition-colors">
+              <div className="flex items-center mb-2">
+                <User className="text-titeh-primary mr-2" />
+                <h3 className="font-medium">Driver Management</h3>
+              </div>
+              <p className="text-sm text-gray-600">Admin-only access to manage driver details.</p>
+            </Link>
+          </div>
         </div>
         
         {/* Future Enhancements Section */}

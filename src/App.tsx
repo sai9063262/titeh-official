@@ -35,6 +35,8 @@ import ParivhanServices from "./pages/ParivhanServices";
 import Dashboard from "./pages/Dashboard";
 import FAQ from "./pages/FAQ";
 import Newsletter from "./pages/Newsletter";
+import DeviceSettings from "./pages/DeviceSettings";
+import AdminDriverDetails from "./pages/AdminDriverDetails";
 
 // Calculator pages
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
@@ -67,6 +69,8 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/newsletter" element={<Newsletter />} />
+              <Route path="/device-settings" element={<DeviceSettings />} />
+              <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
               
               {/* Settings sub-pages */}
               <Route path="/settings/language" element={<Language />} />
