@@ -24,6 +24,10 @@ import DrivingLaws from "./pages/rto-exam/DrivingLaws";
 import Documents from "./pages/rto-exam/Documents";
 import PayChallan from "./pages/traffic-safety/PayChallan";
 import NotFound from "./pages/NotFound";
+import ParivhanServices from "./pages/ParivhanServices";
+import Dashboard from "./pages/Dashboard";
+import FAQ from "./pages/FAQ";
+import Newsletter from "./pages/Newsletter";
 
 // Calculator pages
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
@@ -52,6 +56,10 @@ const App = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/driver-details" element={<DriverDetails />} />
               <Route path="/traffic-signs" element={<TrafficSigns />} />
+              <Route path="/parivahan-services" element={<ParivhanServices />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/newsletter" element={<Newsletter />} />
               
               {/* Settings sub-pages */}
               <Route path="/settings/language" element={<Language />} />

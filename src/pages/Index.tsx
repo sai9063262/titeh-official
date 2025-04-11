@@ -1,7 +1,19 @@
 
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { Car, School, Shield, User, Settings, AlertTriangle, Leaf, MapPin } from "lucide-react";
+import { 
+  Car, 
+  School, 
+  Shield, 
+  User, 
+  Settings, 
+  AlertTriangle, 
+  Leaf, 
+  MapPin,
+  FileText,
+  CreditCard
+} from "lucide-react";
+import GovernmentBranding from "@/components/GovernmentBranding";
 
 const Index = () => {
   return (
@@ -31,14 +43,14 @@ const Index = () => {
             <span className="text-sm font-medium text-center">Attendance Tracking</span>
           </Link>
           
+          <Link to="/parivahan-services" className="module-tile">
+            <CreditCard className="module-icon" />
+            <span className="text-sm font-medium text-center">Parivahan Services</span>
+          </Link>
+          
           <Link to="/settings" className="module-tile">
             <Settings className="module-icon" />
             <span className="text-sm font-medium text-center">Settings</span>
-          </Link>
-          
-          <Link to="/driver-details" className="module-tile">
-            <User className="module-icon" />
-            <span className="text-sm font-medium text-center">Driver Details</span>
           </Link>
         </div>
         
@@ -71,6 +83,8 @@ const Index = () => {
             </div>
           </div>
         </div>
+        
+        <GovernmentBranding />
       </div>
     </Layout>
   );
