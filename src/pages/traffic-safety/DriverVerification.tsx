@@ -4,20 +4,26 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, UserCheck, Scan, RefreshCw, AlertCircle, CheckCircle, X, Info, Shield, FileSpreadsheet, MapPin, Smartphone, Loader2 } from "lucide-react";
+import FlashLight from "@/components/icons/FlashLight";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { facialMatchSimulation } from "@/lib/verification-utils";
 
 interface DriverData {
+  id: string;
   name: string;
   licenseNumber: string;
   validUntil: string;
   vehicleClass: string;
   photoUrl: string;
   status: "valid" | "expired" | "suspended" | "not_found";
+  address?: string;
+  age?: string;
+  notes?: string;
 }
 
 interface GeolocationPosition {
@@ -49,9 +55,26 @@ const DriverVerification = () => {
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const [adminStoredDrivers, setAdminStoredDrivers] = useState<DriverData[]>([]);
   
+  // Get admin stored drivers from localStorage
+  useEffect(() => {
+    const storedDrivers = localStorage.getItem('adminDriverRecords');
+    if (storedDrivers) {
+      try {
+        const parsedDrivers = JSON.parse(storedDrivers);
+        setAdminStoredDrivers(parsedDrivers);
+      } catch (error) {
+        console.error("Error parsing stored drivers:", error);
+      }
+    }
+  }, []);
+  
+  // Backup dummy drivers in case no admin drivers are stored
   const dummyDrivers: DriverData[] = [
     {
+      id: "dummy1",
       name: "Raj Kumar Singh",
       licenseNumber: "TG0220210123456",
       validUntil: "2030-06-15",
@@ -60,6 +83,7 @@ const DriverVerification = () => {
       status: "valid"
     },
     {
+      id: "dummy2",
       name: "Priya Sharma",
       licenseNumber: "TG0420200789012",
       validUntil: "2025-11-30",
@@ -68,6 +92,7 @@ const DriverVerification = () => {
       status: "valid"
     },
     {
+      id: "dummy3",
       name: "Mohammad Farhan",
       licenseNumber: "TG0120183456789",
       validUntil: "2023-05-20",
@@ -76,6 +101,7 @@ const DriverVerification = () => {
       status: "expired"
     },
     {
+      id: "dummy4",
       name: "Anjali Reddy",
       licenseNumber: "TG0320190234567",
       validUntil: "2029-08-10",
@@ -84,6 +110,9 @@ const DriverVerification = () => {
       status: "suspended"
     }
   ];
+
+  // Combined drivers - admin stored + dummy
+  const allDrivers = [...adminStoredDrivers, ...(adminStoredDrivers.length > 0 ? [] : dummyDrivers)];
 
   // Request location access
   useEffect(() => {
@@ -156,6 +185,24 @@ const DriverVerification = () => {
           if (videoRef.current) {
             videoRef.current.srcObject = mediaStream;
             setStream(mediaStream);
+            
+            // Try to access flashlight if environment camera
+            if (facing === "environment") {
+              try {
+                const track = mediaStream.getVideoTracks()[0];
+                if (track && 'getCapabilities' in track) {
+                  const capabilities = track.getCapabilities();
+                  if (capabilities && 'torch' in capabilities) {
+                    // Initialize flashlight state (off by default)
+                    await track.applyConstraints({
+                      advanced: [{ torch: isFlashlightOn }]
+                    });
+                  }
+                }
+              } catch (flashlightError) {
+                console.error("Flashlight access error:", flashlightError);
+              }
+            }
           }
           
           toast({
@@ -218,6 +265,10 @@ const DriverVerification = () => {
     
     // Toggle facing mode
     setFacing(prev => prev === "user" ? "environment" : "user");
+    // Reset flashlight when switching to front camera
+    if (facing === "environment") {
+      setIsFlashlightOn(false);
+    }
     
     // Reset video element
     if (videoRef.current) {
@@ -229,6 +280,52 @@ const DriverVerification = () => {
     
     // Small delay before reopening camera
     setTimeout(() => setIsCameraOpen(true), 300);
+  };
+  
+  // Toggle flashlight on/off
+  const toggleFlashlight = async () => {
+    if (!stream || facing !== "environment") return;
+    
+    try {
+      const track = stream.getVideoTracks()[0];
+      if (!track || !('getCapabilities' in track)) {
+        toast({
+          title: "Flashlight Unavailable",
+          description: "Your device doesn't support flashlight control",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const capabilities = track.getCapabilities();
+      if (!capabilities || !('torch' in capabilities)) {
+        toast({
+          title: "Flashlight Unavailable",
+          description: "This device doesn't support flashlight control",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const newFlashlightState = !isFlashlightOn;
+      await track.applyConstraints({
+        advanced: [{ torch: newFlashlightState }]
+      });
+      
+      setIsFlashlightOn(newFlashlightState);
+      
+      toast({
+        title: newFlashlightState ? "Night Vision Activated" : "Night Vision Deactivated",
+        description: newFlashlightState ? "Flashlight turned on" : "Flashlight turned off",
+      });
+    } catch (err) {
+      console.error("Error toggling flashlight:", err);
+      toast({
+        title: "Flashlight Error",
+        description: "Could not control the flashlight",
+        variant: "destructive",
+      });
+    }
   };
   
   // Function to simulate camera if access fails
@@ -331,28 +428,49 @@ const DriverVerification = () => {
           clearInterval(interval);
           setIsProcessing(false);
           
-          // Simulate a match with 75% probability for demo
-          const isMatch = Math.random() < 0.75;
-          setMatchFound(isMatch);
-          
-          if (isMatch) {
-            // Pick a random driver from our dummy data
-            const randomDriver = dummyDrivers[Math.floor(Math.random() * dummyDrivers.length)];
-            setDriverData(randomDriver);
+          // First check if we have admin stored drivers
+          if (adminStoredDrivers.length > 0) {
+            // Simulate matching using admin stored drivers with 75% match probability for demo
+            const matchResult = facialMatchSimulation(adminStoredDrivers);
+            setMatchFound(matchResult.matched);
             
-            // Show result dialog
-            setIsDialogOpen(true);
-            
-            toast({
-              title: "Driver Identified",
-              description: `Match found: ${randomDriver.name}`,
-            });
+            if (matchResult.matched && matchResult.driver) {
+              setDriverData(matchResult.driver);
+              setIsDialogOpen(true);
+              
+              toast({
+                title: "Driver Identified",
+                description: `Match found: ${matchResult.driver.name}`,
+              });
+            } else {
+              toast({
+                title: "No Match Found",
+                description: "Could not identify driver in our database",
+                variant: "destructive",
+              });
+            }
           } else {
-            toast({
-              title: "No Match Found",
-              description: "Could not identify driver in our database",
-              variant: "destructive",
-            });
+            // Fallback to dummy data if no admin drivers
+            const isMatch = Math.random() < 0.75;
+            setMatchFound(isMatch);
+            
+            if (isMatch) {
+              // Pick a random driver from our dummy data
+              const randomDriver = dummyDrivers[Math.floor(Math.random() * dummyDrivers.length)];
+              setDriverData(randomDriver);
+              setIsDialogOpen(true);
+              
+              toast({
+                title: "Driver Identified",
+                description: `Match found: ${randomDriver.name}`,
+              });
+            } else {
+              toast({
+                title: "No Match Found",
+                description: "Could not identify driver in our database",
+                variant: "destructive",
+              });
+            }
           }
           
           return 100;
@@ -376,7 +494,8 @@ const DriverVerification = () => {
     setIsLoading(true);
     
     setTimeout(() => {
-      const foundDriver = dummyDrivers.find(
+      // Search in both admin stored drivers and dummy data
+      const foundDriver = allDrivers.find(
         driver => driver.licenseNumber.toLowerCase() === manualSearch.toLowerCase()
       );
       
@@ -649,7 +768,7 @@ const DriverVerification = () => {
                           {facing === "environment" && (
                             <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
                               <Camera className="h-3 w-3 inline mr-1" />
-                              Back Camera
+                              Back Camera {isFlashlightOn ? '(Light ON)' : ''}
                             </div>
                           )}
                         </div>
@@ -662,6 +781,7 @@ const DriverVerification = () => {
                                 stream.getTracks().forEach(track => track.stop());
                               }
                               setIsCameraOpen(false);
+                              setIsFlashlightOn(false);
                             }}
                             className="flex-1"
                             disabled={isCameraLoading}
@@ -669,6 +789,18 @@ const DriverVerification = () => {
                             <X className="h-4 w-4 mr-1" />
                             Cancel
                           </Button>
+                          
+                          {facing === "environment" && (
+                            <Button 
+                              variant="outline" 
+                              onClick={toggleFlashlight}
+                              className={`flex-1 ${isFlashlightOn ? 'bg-yellow-50 border-yellow-300' : ''}`}
+                              disabled={isCameraLoading}
+                            >
+                              <FlashLight className={`h-4 w-4 mr-1 ${isFlashlightOn ? 'text-yellow-500' : ''}`} />
+                              {isFlashlightOn ? 'Light Off' : 'Night Vision'}
+                            </Button>
+                          )}
                           
                           <Button 
                             onClick={takePhoto} 
@@ -752,6 +884,9 @@ const DriverVerification = () => {
                             For optimal verification, use a device with a working camera and location services enabled.
                             Both front and back cameras can be used for verification purposes.
                           </p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Night vision mode (flashlight) is available with back camera for low-light situations.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -827,7 +962,7 @@ const DriverVerification = () => {
                           For testing, use one of these license numbers:
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {dummyDrivers.map((driver, index) => (
+                          {allDrivers.slice(0, 4).map((driver, index) => (
                             <div 
                               key={index}
                               className="text-xs bg-white p-2 rounded border border-blue-100 flex justify-between"
@@ -857,6 +992,9 @@ const DriverVerification = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Driver Verification Results</DialogTitle>
+              <DialogDescription>
+                Driver details from database match with 97% confidence
+              </DialogDescription>
             </DialogHeader>
             
             {driverData && (
@@ -900,7 +1038,7 @@ const DriverVerification = () => {
                     <span className={`text-sm font-medium ${
                       driverData.status === "expired" ? "text-red-600" : ""
                     }`}>
-                      {new Date(driverData.validUntil).toLocaleDateString()}
+                      {driverData.validUntil}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -913,6 +1051,20 @@ const DriverVerification = () => {
                       <span className="text-sm font-medium text-blue-600 underline cursor-pointer" onClick={openMap}>
                         View on Map
                       </span>
+                    </div>
+                  )}
+                  
+                  {driverData.address && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Address</span>
+                      <span className="text-sm font-medium">{driverData.address}</span>
+                    </div>
+                  )}
+                  
+                  {driverData.age && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Age</span>
+                      <span className="text-sm font-medium">{driverData.age}</span>
                     </div>
                   )}
                 </div>
@@ -931,6 +1083,18 @@ const DriverVerification = () => {
                             : "This driver's license has been suspended. Not permitted to drive."
                           }
                         </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {driverData.notes && (
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div className="flex items-start">
+                      <Info className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-sm font-medium text-blue-800">Additional Notes</h3>
+                        <p className="text-sm text-blue-700 mt-1">{driverData.notes}</p>
                       </div>
                     </div>
                   </div>

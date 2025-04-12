@@ -1,1299 +1,634 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Layout from "@/components/Layout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { 
-  User, UserPlus, Lock, Camera, Image, Upload, Search, 
-  FileText, AlertTriangle, Download, Send, RefreshCw,
-  FileSpreadsheet, Trash2, Edit, CheckCircle2, X, Calendar, Droplets, MapPin
-} from "lucide-react";
+import { Camera, Upload, Save, User, FileText, Trash2, Shield, CircleCheck, CircleX } from "lucide-react";
+import FlashLight from "@/components/icons/FlashLight";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { adminUsers } from "@/lib/adminConfig";
 
-interface DriverDetails {
+interface DriverRecord {
   id: string;
   name: string;
   licenseNumber: string;
-  dob: string;
-  address: string;
-  phone: string;
-  email: string;
-  vehicleType: string;
-  regNumber: string;
-  issueDate: string;
-  expiryDate: string;
-  bloodGroup: string;
-  organDonor: boolean;
-  emergencyContact: string;
-  drivingHistory: string;
+  validUntil: string;
+  vehicleClass: string;
   photoUrl: string;
-  documents: { name: string; type: string; size: string; }[];
-  status: "active" | "suspended" | "expired";
-  addedDate: string;
+  status: "valid" | "expired" | "suspended" | "not_found";
+  address: string;
+  age: string;
+  notes?: string;
 }
 
 const AdminDriverDetails = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showAddDriverForm, setShowAddDriverForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
-  const [lastSync, setLastSync] = useState<string | null>(null);
-  const [showTakingPhoto, setShowTakingPhoto] = useState(false);
-  const [encryptionActive, setEncryptionActive] = useState(true);
   const { toast } = useToast();
+  const [drivers, setDrivers] = useState<DriverRecord[]>(() => {
+    const savedDrivers = localStorage.getItem('adminDriverRecords');
+    return savedDrivers ? JSON.parse(savedDrivers) : [];
+  });
   
-  // Admin email - updated as requested
-  const ADMIN_EMAIL = "saikumarpanchagiri058@gmail.com";
-  
-  // Sample driver data
-  const [drivers, setDrivers] = useState<DriverDetails[]>([
-    {
-      id: "DRV001",
-      name: "Raj Kumar Singh",
-      licenseNumber: "TG02420240001234",
-      dob: "1985-04-15",
-      address: "1-95/1, Konkapaka, Warangal - 506336",
-      phone: "9876543210",
-      email: "raj.kumar@example.com",
-      vehicleType: "Car",
-      regNumber: "TS07AB1234",
-      issueDate: "2022-01-10",
-      expiryDate: "2032-01-09",
-      bloodGroup: "O+",
-      organDonor: true,
-      emergencyContact: "9876543211",
-      drivingHistory: "No accidents, 2 speed violations in 2023",
-      photoUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=150&h=150",
-      documents: [
-        { name: "Medical Certificate", type: "PDF", size: "1.2 MB" },
-        { name: "ID Proof", type: "PDF", size: "0.8 MB" }
-      ],
-      status: "active",
-      addedDate: "2023-12-15"
-    },
-    {
-      id: "DRV002",
-      name: "Priya Sharma",
-      licenseNumber: "TG02420240005678",
-      dob: "1990-08-23",
-      address: "2-45/A, Banjara Hills, Hyderabad - 500034",
-      phone: "8765432109",
-      email: "priya.sharma@example.com",
-      vehicleType: "Bike",
-      regNumber: "TS08CD5678",
-      issueDate: "2020-05-20",
-      expiryDate: "2030-05-19",
-      bloodGroup: "B+",
-      organDonor: false,
-      emergencyContact: "8765432100",
-      drivingHistory: "No violations",
-      photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150",
-      documents: [
-        { name: "ID Proof", type: "PDF", size: "1.0 MB" }
-      ],
-      status: "active",
-      addedDate: "2024-01-05"
-    }
-  ]);
-  
-  // New driver form state
-  const [newDriver, setNewDriver] = useState<Partial<DriverDetails>>({
+  const [newDriver, setNewDriver] = useState<Partial<DriverRecord>>({
     name: "",
     licenseNumber: "",
-    dob: "",
+    validUntil: "",
+    vehicleClass: "",
+    status: "valid",
     address: "",
-    phone: "",
-    email: "",
-    vehicleType: "Car",
-    regNumber: "",
-    issueDate: "",
-    expiryDate: "",
-    bloodGroup: "O+",
-    organDonor: false,
-    emergencyContact: "",
-    drivingHistory: "",
-    photoUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=150&h=150",
-    documents: [],
-    status: "active"
+    age: "",
+    notes: ""
   });
-
-  // Generate a random OTP
-  const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const [facing, setFacing] = useState<"user" | "environment">("environment");
+  const [activeAdmin, setActiveAdmin] = useState(adminUsers[0].email);
+  
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewDriver(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const saveDriversToLocalStorage = (updatedDrivers: DriverRecord[]) => {
+    localStorage.setItem('adminDriverRecords', JSON.stringify(updatedDrivers));
   };
 
-  // Handle OTP sending
-  const handleSendOTP = () => {
-    if (adminEmail === ADMIN_EMAIL) {
-      setLoading(true);
-      
-      // Simulate sending a real OTP
-      const generatedOTP = generateOTP();
-      console.log("Generated OTP:", generatedOTP); // In a real app, this would be sent via email/SMS
-      
-      setTimeout(() => {
-        setOtpSent(true);
-        setLoading(false);
-        
-        // Save OTP in localStorage for demo (in a real app, this would be verified server-side)
-        localStorage.setItem('currentOTP', generatedOTP);
-        
-        toast({
-          title: "OTP Sent",
-          description: `A verification code has been sent to ${ADMIN_EMAIL}`,
-        });
-        
-        // For demo purposes, show the OTP (would never do this in production)
-        toast({
-          title: "Demo Mode",
-          description: `For demo purposes, your OTP is: ${generatedOTP}`,
-        });
-      }, 1500);
-    } else {
-      toast({
-        title: "Authentication Failed",
-        description: "You are not authorized to access this panel",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle OTP verification
-  const handleVerifyOTP = () => {
-    const storedOTP = localStorage.getItem('currentOTP');
-    
-    if (otp === storedOTP) {
-      setLoading(true);
-      setTimeout(() => {
-        setIsAuthenticated(true);
-        setLoading(false);
-        
-        // Clear the OTP after successful verification
-        localStorage.removeItem('currentOTP');
-        
-        toast({
-          title: "Authentication Successful",
-          description: `Welcome to the Admin Driver Management Panel, ${ADMIN_EMAIL}`,
-        });
-        
-        if (encryptionActive) {
-          toast({
-            title: "Security Notice",
-            description: "AES-256 encryption active for all data transfers",
-          });
-        }
-      }, 1500);
-    } else {
-      toast({
-        title: "Invalid OTP",
-        description: "The OTP you entered is incorrect",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle adding a new driver
-  const handleAddDriver = () => {
-    if (!newDriver.name || !newDriver.licenseNumber || !newDriver.dob) {
+  const handleSaveDriver = () => {
+    if (!newDriver.name || !newDriver.licenseNumber || !imageSrc) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill all required fields and add a photo",
         variant: "destructive",
       });
       return;
     }
 
-    // Validate license number format
-    const licenseRegex = /^TG\d{10}$/;
-    if (!licenseRegex.test(newDriver.licenseNumber)) {
-      toast({
-        title: "Invalid License Number",
-        description: "License number should be in format TG-XXXXXXXXXX",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate phone number
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(newDriver.phone)) {
-      toast({
-        title: "Invalid Phone Number",
-        description: "Phone number should be 10 digits",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newId = `DRV${String(drivers.length + 1).padStart(3, '0')}`;
-    const today = new Date().toISOString().split('T')[0];
-    
-    const driverToAdd: DriverDetails = {
-      ...newDriver as any,
-      id: newId,
-      addedDate: today,
-      status: "active",
-      documents: newDriver.documents || []
+    const driverId = `drv-${Date.now().toString(36)}`;
+    const driverRecord: DriverRecord = {
+      ...(newDriver as Omit<DriverRecord, 'id' | 'photoUrl'>),
+      id: driverId,
+      photoUrl: imageSrc
     };
 
-    setDrivers([...drivers, driverToAdd]);
-    setShowAddDriverForm(false);
+    const updatedDrivers = [...drivers, driverRecord];
+    setDrivers(updatedDrivers);
+    saveDriversToLocalStorage(updatedDrivers);
     
     // Reset form
     setNewDriver({
       name: "",
       licenseNumber: "",
-      dob: "",
+      validUntil: "",
+      vehicleClass: "",
+      status: "valid",
       address: "",
-      phone: "",
-      email: "",
-      vehicleType: "Car",
-      regNumber: "",
-      issueDate: "",
-      expiryDate: "",
-      bloodGroup: "O+",
-      organDonor: false,
-      emergencyContact: "",
-      drivingHistory: "",
-      photoUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=150&h=150",
-      documents: [],
-      status: "active"
+      age: "",
+      notes: ""
     });
+    setImageSrc(null);
     
     toast({
       title: "Driver Added",
-      description: `${driverToAdd.name} has been added to the database`,
+      description: "Driver information has been saved successfully",
     });
-    
-    // Simulate notification
-    setTimeout(() => {
-      toast({
-        title: "Notification Sent",
-        description: `Administrator (${ADMIN_EMAIL}) has been notified about the new driver`,
-      });
-    }, 1000);
   };
-
-  // Handle file upload
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  
+  const handleDeleteDriver = (id: string) => {
+    const updatedDrivers = drivers.filter(driver => driver.id !== id);
+    setDrivers(updatedDrivers);
+    saveDriversToLocalStorage(updatedDrivers);
     
-    // Check file size
-    const maxSizeMB = 5;
-    const fileSizeMB = file.size / (1024 * 1024);
-    
-    if (fileSizeMB > maxSizeMB) {
+    toast({
+      title: "Driver Removed",
+      description: "Driver record has been deleted",
+    });
+  };
+  
+  const openCamera = async () => {
+    try {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+      }
+      
+      setIsCameraOpen(true);
+      
+      // Try to access flashlight if environment camera
+      if (facing === "environment") {
+        try {
+          const track = mediaStream.getVideoTracks()[0];
+          if (track && 'getCapabilities' in track) {
+            const capabilities = track.getCapabilities();
+            if (capabilities && 'torch' in capabilities) {
+              await track.applyConstraints({
+                advanced: [{ torch: isFlashlightOn }]
+              });
+            }
+          }
+        } catch (flashlightError) {
+          console.error("Flashlight access error:", flashlightError);
+        }
+      }
+      
+    } catch (err) {
+      console.error("Error accessing camera:", err);
       toast({
-        title: "File Too Large",
-        description: `Maximum file size is ${maxSizeMB}MB. Your file is ${fileSizeMB.toFixed(1)}MB.`,
-        variant: "destructive"
+        title: "Camera Access Failed",
+        description: "Could not access camera. Check permissions.",
+        variant: "destructive",
       });
-      return;
     }
+  };
+  
+  const toggleFlashlight = async () => {
+    if (!stream) return;
     
-    // Start upload progress simulation
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          
-          // Add document to driver
-          setNewDriver(prev => ({
-            ...prev,
-            documents: [
-              ...(prev.documents || []),
-              { 
-                name: file.name, 
-                type: file.name.split('.').pop().toUpperCase(), 
-                size: `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
-              }
-            ]
-          }));
-          
-          toast({
-            title: "File Uploaded",
-            description: `${file.name} has been uploaded successfully`,
+    try {
+      const newFlashlightState = !isFlashlightOn;
+      const track = stream.getVideoTracks()[0];
+      
+      if (track && 'getCapabilities' in track) {
+        const capabilities = track.getCapabilities();
+        if (capabilities && 'torch' in capabilities) {
+          await track.applyConstraints({
+            advanced: [{ torch: newFlashlightState }]
           });
           
-          if (encryptionActive) {
-            toast({
-              title: "File Encrypted",
-              description: "Document secured with AES-256 encryption",
-            });
-          }
+          setIsFlashlightOn(newFlashlightState);
           
-          return 0;
+          toast({
+            title: newFlashlightState ? "Flashlight On" : "Flashlight Off",
+            description: newFlashlightState ? "Night vision activated" : "Night vision deactivated",
+          });
+        } else {
+          toast({
+            title: "Flashlight Unavailable",
+            description: "This device doesn't support flashlight control",
+            variant: "default",
+          });
         }
-        return prev + 10;
+      }
+    } catch (err) {
+      console.error("Error toggling flashlight:", err);
+      toast({
+        title: "Flashlight Error",
+        description: "Could not control the flashlight",
+        variant: "destructive",
       });
+    }
+  };
+  
+  const toggleCameraFacing = () => {
+    // Stop current stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Toggle facing mode
+    setFacing(prev => prev === "user" ? "environment" : "user");
+    setIsFlashlightOn(false);
+    
+    // Reopen camera with new facing mode
+    setTimeout(() => {
+      openCamera();
     }, 300);
   };
-
-  // Handle photo upload
-  const handlePhotoUpload = (event, method = "gallery") => {
-    const file = event?.target?.files?.[0];
-    
-    // If using camera, simulate taking a photo
-    if (method === "camera") {
-      setShowTakingPhoto(true);
-      setUploadProgress(0);
+  
+  const takePhoto = () => {
+    if (videoRef.current && canvasRef.current && stream) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       
-      // Simulate camera access and photo taking
-      const photoInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(photoInterval);
-            setShowTakingPhoto(false);
-            
-            // Create a fake URL for the captured photo
-            const fakeUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150";
-            
-            setNewDriver(prev => ({
-              ...prev,
-              photoUrl: fakeUrl
-            }));
-            
-            toast({
-              title: "Photo Captured",
-              description: "Driver photo has been captured successfully",
-            });
-            
-            return 0;
-          }
-          return prev + 10;
-        });
-      }, 200);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
-      return;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setImageSrc(dataUrl);
+      }
+      
+      // Stop camera stream
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setIsCameraOpen(false);
+      setIsFlashlightOn(false);
+      
+      toast({
+        title: "Photo Captured",
+        description: "Driver photo has been taken",
+      });
     }
-    
-    // For gallery or file selection
+  };
+  
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     
-    // Start upload progress simulation
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          
-          // Create a fake URL for the uploaded image
-          const fakeUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150";
-          
-          setNewDriver(prev => ({
-            ...prev,
-            photoUrl: fakeUrl
-          }));
-          
-          toast({
-            title: "Photo Uploaded",
-            description: "Driver photo has been uploaded successfully",
-          });
-          
-          if (encryptionActive) {
-            toast({
-              title: "Photo Encrypted",
-              description: "Image secured with AES-256 encryption",
-            });
-          }
-          
-          return 0;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImageSrc(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
   };
-
-  // Open camera access directly
-  const openCamera = () => {
-    // Check if we're in a browser environment with the MediaDevices API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-          // In a real app, we would show the camera stream here
-          // But for this web app, we'll simulate it
-          handlePhotoUpload(null, "camera");
-          
-          // Important: stop the stream to release the camera
-          stream.getTracks().forEach(track => {
-            track.stop();
-          });
-        })
-        .catch(function(err) {
-          console.error("Camera access error:", err);
-          toast({
-            title: "Camera Access Failed",
-            description: "Could not access device camera. Using simulation mode.",
-            variant: "destructive"
-          });
-          // Fall back to simulation if camera access fails
-          handlePhotoUpload(null, "camera");
-        });
-    } else {
-      // No camera API, simulate
-      toast({
-        title: "Camera API Not Available",
-        description: "Your browser doesn't support camera access. Using simulation mode.",
-      });
-      handlePhotoUpload(null, "camera");
-    }
-  };
-
-  // Handle Google Sheets sync
-  const handleSyncGoogleSheets = () => {
-    setSyncing(true);
-    setSyncProgress(0);
-    
-    // In a real app, we would use the Google Sheets API here
-    const interval = setInterval(() => {
-      setSyncProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setSyncing(false);
-          
-          const now = new Date();
-          setLastSync(now.toLocaleString());
-          
-          toast({
-            title: "Google Sheets Sync Complete",
-            description: `${drivers.length} driver records synced successfully`,
-          });
-          
-          return 0;
-        }
-        return prev + 5;
-      });
-    }, 200);
-  };
-
-  // Handle CSV download
-  const handleDownloadCSV = () => {
-    // In a real app, we would generate an actual CSV file
-    // Here we'll create a CSV string and download it
-    
-    // Create CSV header
-    const headers = [
-      "ID", "Name", "License Number", "DOB", "Phone", 
-      "Vehicle Type", "Reg Number", "Blood Group", "Organ Donor",
-      "Status", "Added Date"
-    ].join(",");
-    
-    // Create CSV rows
-    const rows = drivers.map(driver => [
-      driver.id,
-      driver.name,
-      driver.licenseNumber,
-      driver.dob,
-      driver.phone,
-      driver.vehicleType,
-      driver.regNumber,
-      driver.bloodGroup,
-      driver.organDonor ? "Yes" : "No",
-      driver.status,
-      driver.addedDate
-    ].join(","));
-    
-    // Combine header and rows
-    const csvContent = `data:text/csv;charset=utf-8,${headers}\n${rows.join("\n")}`;
-    
-    // Create a download link and trigger it
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `TITEH_Drivers_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    
-    // Trigger download
-    link.click();
-    
-    // Clean up
-    document.body.removeChild(link);
-    
-    toast({
-      title: "CSV Downloaded",
-      description: "Driver data has been downloaded as CSV file",
-    });
-  };
-
-  // Filter drivers based on search query
-  const filteredDrivers = drivers.filter(driver => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      driver.name.toLowerCase().includes(searchLower) ||
-      driver.licenseNumber.toLowerCase().includes(searchLower) ||
-      driver.regNumber.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Delete driver
-  const handleDeleteDriver = (id: string) => {
-    setDrivers(drivers.filter(driver => driver.id !== id));
-    
-    toast({
-      title: "Driver Deleted",
-      description: "The driver has been removed from the database",
-    });
-  };
-
-  // Generate a random Google Sheet link
-  const getGoogleSheetLink = () => {
-    const sheetId = "1" + Math.random().toString(36).substring(2, 11);
-    return `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=0`;
+  
+  const isAuthorizedAdmin = () => {
+    return adminUsers.some(admin => admin.email === activeAdmin);
   };
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Admin Driver Management</h1>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-titeh-primary">Admin: Driver Records Management</h1>
+          
+          <div className="flex items-center space-x-4">
+            <Select value={activeAdmin} onValueChange={setActiveAdmin}>
+              <SelectTrigger className="w-[260px]">
+                <SelectValue placeholder="Select admin user" />
+              </SelectTrigger>
+              <SelectContent>
+                {adminUsers.map((admin) => (
+                  <SelectItem key={admin.email} value={admin.email}>
+                    {admin.name} ({admin.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="flex items-center">
+              <Shield className="h-5 w-5 text-titeh-primary mr-2" />
+              <span>Admin Console</span>
+            </div>
+          </div>
+        </div>
         
-        {!isAuthenticated ? (
-          <Card className="p-6">
-            <div className="flex items-center mb-4">
-              <Lock className="text-titeh-primary mr-2" />
-              <h2 className="text-lg font-semibold">Admin Authentication Required</h2>
-            </div>
-            
-            {!otpSent ? (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  Please enter your admin email to access the driver management panel.
-                </p>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="adminEmail">Admin Email</Label>
-                  <Input 
-                    id="adminEmail"
-                    type="email"
-                    placeholder="Enter admin email"
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500">Use: {ADMIN_EMAIL}</p>
-                </div>
-                
-                <Button 
-                  onClick={handleSendOTP} 
-                  disabled={loading}
-                  className="w-full bg-titeh-primary"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Sending OTP...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Send OTP
-                    </>
-                  )}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  Please enter the 6-digit OTP sent to {adminEmail}
-                </p>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="otp">One-Time Password</Label>
-                  <Input 
-                    id="otp"
-                    type="text"
-                    placeholder="Enter 6-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    maxLength={6}
-                  />
-                  <p className="text-xs text-gray-500">Enter the OTP sent to your email</p>
-                </div>
-                
-                <Button 
-                  onClick={handleVerifyOTP} 
-                  disabled={loading}
-                  className="w-full bg-titeh-primary"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Verify OTP
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </Card>
-        ) : (
-          <>
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Welcome, Administrator ({ADMIN_EMAIL}). You have full access to the driver database.
-              </p>
-              <div className="flex items-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setIsAuthenticated(false)}
-                  className="mr-2"
-                >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Lock Panel
-                </Button>
-                
-                <Dialog open={showAddDriverForm} onOpenChange={setShowAddDriverForm}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="bg-titeh-primary">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Add New Driver
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Add New Driver</DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                      {/* Personal Information */}
-                      <div>
-                        <h3 className="text-sm font-medium mb-3 flex items-center">
-                          <User className="mr-2 h-4 w-4 text-titeh-primary" />
-                          Personal Information
-                        </h3>
-                        <div className="space-y-3">
-                          <div>
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input 
-                              id="name" 
-                              value={newDriver.name}
-                              onChange={(e) => setNewDriver({...newDriver, name: e.target.value})}
-                              placeholder="Enter full name"
+        {isAuthorizedAdmin() ? (
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Add New Driver
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-1/3">
+                      <div className="mb-4">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center h-40 overflow-hidden">
+                          {imageSrc ? (
+                            <img 
+                              src={imageSrc} 
+                              alt="Driver" 
+                              className="h-full object-cover" 
                             />
-                          </div>
-                          <div>
-                            <Label htmlFor="licenseNumber">Driver License Number</Label>
-                            <Input 
-                              id="licenseNumber" 
-                              value={newDriver.licenseNumber}
-                              onChange={(e) => setNewDriver({...newDriver, licenseNumber: e.target.value})}
-                              placeholder="e.g., TG0123456789"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Format: TG followed by 10 digits</p>
-                          </div>
-                          <div>
-                            <Label htmlFor="dob">Date of Birth</Label>
-                            <Input 
-                              id="dob" 
-                              type="date" 
-                              value={newDriver.dob}
-                              onChange={(e) => setNewDriver({...newDriver, dob: e.target.value})}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="address">Address</Label>
-                            <Textarea 
-                              id="address" 
-                              value={newDriver.address}
-                              onChange={(e) => setNewDriver({...newDriver, address: e.target.value})}
-                              placeholder="Enter full address"
-                              rows={3}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="phone">Phone Number</Label>
-                              <Input 
-                                id="phone" 
-                                value={newDriver.phone}
-                                onChange={(e) => setNewDriver({...newDriver, phone: e.target.value})}
-                                placeholder="10-digit number"
-                              />
+                          ) : (
+                            <div className="text-center p-4">
+                              <User className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-500">No photo yet</p>
                             </div>
-                            <div>
-                              <Label htmlFor="email">Email</Label>
-                              <Input 
-                                id="email" 
-                                type="email" 
-                                value={newDriver.email}
-                                onChange={(e) => setNewDriver({...newDriver, email: e.target.value})}
-                                placeholder="email@example.com"
-                              />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="bloodGroup">Blood Group</Label>
-                              <select 
-                                id="bloodGroup" 
-                                className="w-full p-2 border rounded"
-                                value={newDriver.bloodGroup}
-                                onChange={(e) => setNewDriver({...newDriver, bloodGroup: e.target.value})}
-                              >
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                              </select>
-                            </div>
-                            <div>
-                              <Label htmlFor="organDonor" className="block mb-2">Organ Donor</Label>
-                              <div className="flex items-center">
-                                <Switch 
-                                  id="organDonor"
-                                  checked={newDriver.organDonor}
-                                  onCheckedChange={(checked) => setNewDriver({...newDriver, organDonor: checked})}
-                                />
-                                <span className="ml-2 text-sm">
-                                  {newDriver.organDonor ? "Yes" : "No"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                            <Input 
-                              id="emergencyContact" 
-                              value={newDriver.emergencyContact}
-                              onChange={(e) => setNewDriver({...newDriver, emergencyContact: e.target.value})}
-                              placeholder="10-digit number"
-                            />
-                          </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex mt-3 space-x-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setIsCameraOpen(true)}
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Camera
+                          </Button>
+                          
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-1" />
+                            Upload
+                          </Button>
+                          
+                          <input 
+                            ref={fileInputRef}
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={handleFileInput}
+                          />
                         </div>
                       </div>
-                      
-                      {/* Vehicle & License Information */}
-                      <div>
-                        <h3 className="text-sm font-medium mb-3 flex items-center">
-                          <FileText className="mr-2 h-4 w-4 text-titeh-primary" />
-                          Vehicle & License Information
-                        </h3>
-                        <div className="space-y-3">
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="name">Full Name*</Label>
+                          <Input 
+                            id="name" 
+                            name="name"
+                            value={newDriver.name}
+                            onChange={handleInputChange}
+                            placeholder="Enter full name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="licenseNumber">License Number*</Label>
+                          <Input 
+                            id="licenseNumber" 
+                            name="licenseNumber"
+                            value={newDriver.licenseNumber}
+                            onChange={handleInputChange}
+                            placeholder="Format: TG0220210123456"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label htmlFor="vehicleType">Vehicle Type</Label>
-                            <select 
-                              id="vehicleType" 
-                              className="w-full p-2 border rounded"
-                              value={newDriver.vehicleType}
-                              onChange={(e) => setNewDriver({...newDriver, vehicleType: e.target.value})}
+                            <Label htmlFor="validUntil">Valid Until</Label>
+                            <Input 
+                              id="validUntil" 
+                              name="validUntil"
+                              type="date"
+                              value={newDriver.validUntil}
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="vehicleClass">Vehicle Class</Label>
+                            <Select 
+                              value={newDriver.vehicleClass || ''} 
+                              onValueChange={(value) => setNewDriver(prev => ({ ...prev, vehicleClass: value }))}
                             >
-                              <option value="Car">Car</option>
-                              <option value="Bike">Bike</option>
-                              <option value="Truck">Truck</option>
-                              <option value="Auto">Auto</option>
-                            </select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select class" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="LMV">LMV</SelectItem>
+                                <SelectItem value="MCWG">MCWG</SelectItem>
+                                <SelectItem value="HMV">HMV</SelectItem>
+                                <SelectItem value="LMV, MCWG">LMV, MCWG</SelectItem>
+                                <SelectItem value="LMV, HMV">LMV, HMV</SelectItem>
+                                <SelectItem value="LMV, MCWG, HMV">LMV, MCWG, HMV</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <div>
-                            <Label htmlFor="regNumber">Registration Number</Label>
-                            <Input 
-                              id="regNumber" 
-                              value={newDriver.regNumber}
-                              onChange={(e) => setNewDriver({...newDriver, regNumber: e.target.value})}
-                              placeholder="e.g., TS01AB1234"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="issueDate">Issue Date</Label>
-                              <Input 
-                                id="issueDate" 
-                                type="date" 
-                                value={newDriver.issueDate}
-                                onChange={(e) => setNewDriver({...newDriver, issueDate: e.target.value})}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="expiryDate">Expiry Date</Label>
-                              <Input 
-                                id="expiryDate" 
-                                type="date" 
-                                value={newDriver.expiryDate}
-                                onChange={(e) => setNewDriver({...newDriver, expiryDate: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="drivingHistory">Driving History</Label>
-                            <Textarea 
-                              id="drivingHistory" 
-                              value={newDriver.drivingHistory}
-                              onChange={(e) => setNewDriver({...newDriver, drivingHistory: e.target.value})}
-                              placeholder="Enter any accidents, violations, etc."
-                              rows={3}
-                            />
-                          </div>
-                          
-                          {/* Photo Upload */}
-                          <div>
-                            <Label className="block mb-2">Driver Photo</Label>
-                            {showTakingPhoto ? (
-                              <div className="space-y-2">
-                                <div className="w-full h-32 bg-black rounded-md overflow-hidden flex items-center justify-center">
-                                  <div className="text-white text-center">
-                                    <Camera className="mx-auto mb-1 animate-pulse" />
-                                    <p className="text-xs">Camera Active</p>
-                                  </div>
-                                </div>
-                                
-                                <Progress value={uploadProgress} />
-                                <p className="text-xs text-center text-gray-500">
-                                  Taking photo... {uploadProgress}%
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="flex items-center space-x-4">
-                                <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden">
-                                  {newDriver.photoUrl && (
-                                    <img 
-                                      src={newDriver.photoUrl} 
-                                      alt="Driver" 
-                                      className="w-full h-full object-cover"
-                                    />
-                                  )}
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex flex-wrap gap-2">
-                                    <Button 
-                                      size="sm" 
-                                      className="bg-titeh-primary flex items-center"
-                                      onClick={openCamera}
-                                    >
-                                      <Camera className="mr-2 h-4 w-4" />
-                                      Take Photo
-                                    </Button>
-                                    
-                                    <label className="cursor-pointer">
-                                      <div className="px-3 py-2 bg-blue-600 text-white rounded-md flex items-center text-sm">
-                                        <Image className="mr-2 h-4 w-4" />
-                                        Gallery
-                                      </div>
-                                      <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        className="hidden" 
-                                        onChange={handlePhotoUpload}
-                                      />
-                                    </label>
-                                    
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="flex items-center"
-                                      onClick={() => window.open("https://photos.google.com", "_blank")}
-                                    >
-                                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 12.76c1.48 0 2.68 1.2 2.68 2.68s-1.2 2.68-2.68 2.68-2.68-1.2-2.68-2.68 1.2-2.68 2.68-2.68zm0-9.3c4.3 0 7.8 3.5 7.8 7.8 0 1.2-.27 2.35-.78 3.4-.1.18-.3.18-.48.18H5.45c-.17 0-.37 0-.48-.2-.5-1.03-.78-2.18-.78-3.38 0-4.3 3.5-7.8 7.8-7.8zM12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0 12 0z" />
-                                      </svg>
-                                      Google Photos
-                                    </Button>
-                                  </div>
-                                  
-                                  {uploadProgress > 0 && uploadProgress < 100 && !showTakingPhoto && (
-                                    <div className="space-y-2">
-                                      <Progress value={uploadProgress} />
-                                      <p className="text-xs text-gray-500">Uploading: {uploadProgress}%</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Document Upload */}
-                          <div>
-                            <Label className="block mb-2">Documents</Label>
-                            <div className="space-y-2">
-                              <label className="cursor-pointer block">
-                                <div className="px-3 py-2 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-sm">
-                                  <Upload className="mr-2 h-4 w-4 text-titeh-primary" />
-                                  Click to upload files (PDF, max 5MB)
-                                </div>
-                                <input 
-                                  type="file" 
-                                  accept=".pdf" 
-                                  className="hidden" 
-                                  onChange={handleFileUpload} 
-                                />
-                              </label>
-                              
-                              {uploadProgress > 0 && uploadProgress < 100 && (
-                                <div className="space-y-2">
-                                  <Progress value={uploadProgress} />
-                                  <p className="text-xs text-gray-500">Uploading: {uploadProgress}%</p>
-                                </div>
-                              )}
-                              
-                              {newDriver.documents && newDriver.documents.length > 0 && (
-                                <div className="mt-2">
-                                  <h4 className="text-xs font-medium mb-1">Uploaded Documents:</h4>
-                                  <div className="space-y-1">
-                                    {newDriver.documents.map((doc, index) => (
-                                      <div key={index} className="text-xs flex items-center p-2 bg-gray-50 rounded">
-                                        <FileText className="h-3 w-3 mr-2 text-titeh-primary" />
-                                        <span className="flex-1">{doc.name}</span>
-                                        <span className="text-gray-500 mr-2">{doc.size}</span>
-                                        <button 
-                                          className="text-red-500 hover:text-red-700"
-                                          onClick={() => {
-                                            setNewDriver({
-                                              ...newDriver,
-                                              documents: newDriver.documents.filter((_, i) => i !== index)
-                                            });
-                                          }}
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="status">License Status</Label>
+                          <Select 
+                            value={newDriver.status || 'valid'} 
+                            onValueChange={(value: "valid" | "expired" | "suspended" | "not_found") => 
+                              setNewDriver(prev => ({ ...prev, status: value }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="valid">Valid</SelectItem>
+                              <SelectItem value="expired">Expired</SelectItem>
+                              <SelectItem value="suspended">Suspended</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Security Notice */}
-                    <div className="mt-4 p-3 bg-green-50 rounded-md flex items-start">
-                      <CheckCircle2 className="text-green-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
-                      <p className="text-xs text-gray-600">
-                        All driver data is secured with AES-256 encryption and is only accessible to authorized personnel.
-                      </p>
-                    </div>
-                    
-                    {/* Warning */}
-                    <div className="mt-2 p-3 bg-amber-50 rounded-md flex items-start">
-                      <AlertTriangle className="text-amber-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
-                      <p className="text-xs text-gray-600">
-                        Make sure all information is correct and verified. You are legally responsible for the accuracy of this data.
-                      </p>
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex justify-end space-x-2 mt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowAddDriverForm(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleAddDriver}
-                        className="bg-titeh-primary"
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add Driver
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-sm">Total Drivers</h3>
-                  <User className="text-titeh-primary" size={18} />
-                </div>
-                <p className="text-2xl font-bold">{drivers.length}</p>
-                <p className="text-xs text-gray-500">Last added on {drivers.length > 0 ? drivers[drivers.length - 1].addedDate : "N/A"}</p>
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-sm">Active Licenses</h3>
-                  <CheckCircle2 className="text-green-500" size={18} />
-                </div>
-                <p className="text-2xl font-bold">{drivers.filter(d => d.status === "active").length}</p>
-                <p className="text-xs text-gray-500">
-                  {Math.round((drivers.filter(d => d.status === "active").length / drivers.length) * 100)}% of total
-                </p>
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-sm">Organ Donors</h3>
-                  <Droplets className="text-red-500" size={18} />
-                </div>
-                <p className="text-2xl font-bold">{drivers.filter(d => d.organDonor).length}</p>
-                <p className="text-xs text-gray-500">
-                  {Math.round((drivers.filter(d => d.organDonor).length / drivers.length) * 100)}% of total
-                </p>
-              </Card>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <Card className="p-4 flex-1">
-                <div className="flex items-center mb-4">
-                  <Search className="text-titeh-primary mr-2" size={18} />
-                  <h3 className="font-medium">Search Drivers</h3>
-                </div>
-                <Input 
-                  placeholder="Search by name, license number, or vehicle number" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="mb-2"
-                />
-                <p className="text-xs text-gray-500">
-                  {filteredDrivers.length} {filteredDrivers.length === 1 ? 'result' : 'results'} found
-                </p>
-              </Card>
-              
-              <Card className="p-4 flex-1">
-                <div className="flex items-center mb-4">
-                  <FileSpreadsheet className="text-titeh-primary mr-2" size={18} />
-                  <h3 className="font-medium">Google Sheets Integration</h3>
-                </div>
-                <div className="flex items-center justify-between">
+                  </div>
+                  
                   <div>
-                    <Button 
-                      onClick={handleSyncGoogleSheets}
-                      disabled={syncing}
-                      className="bg-titeh-primary mb-2"
-                      size="sm"
-                    >
-                      {syncing ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          Syncing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Sync to Google Sheets
-                        </>
-                      )}
-                    </Button>
-                    
-                    <p className="text-xs text-gray-500">
-                      {lastSync ? `Last sync: ${lastSync}` : 'Not synced yet'}
-                    </p>
+                    <Label htmlFor="address">Address</Label>
+                    <Input 
+                      id="address" 
+                      name="address"
+                      value={newDriver.address}
+                      onChange={handleInputChange}
+                      placeholder="Enter address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="age">Age</Label>
+                    <Input 
+                      id="age" 
+                      name="age"
+                      value={newDriver.age}
+                      onChange={handleInputChange}
+                      placeholder="Enter age"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea 
+                      id="notes" 
+                      name="notes"
+                      value={newDriver.notes || ''}
+                      onChange={handleInputChange}
+                      placeholder="Additional information"
+                    />
                   </div>
                   
                   <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleDownloadCSV}
+                    onClick={handleSaveDriver} 
+                    className="w-full bg-titeh-primary"
+                    disabled={!newDriver.name || !newDriver.licenseNumber || !imageSrc}
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download CSV
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Driver Record
                   </Button>
                 </div>
                 
-                {syncing && (
-                  <div className="mt-2">
-                    <Progress value={syncProgress} className="mb-1" />
-                    <p className="text-xs text-gray-500">
-                      Syncing data to Google Sheets... {syncProgress}%
-                    </p>
-                  </div>
-                )}
-                
-                {lastSync && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                    <a 
-                      href={getGoogleSheetLink()} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline flex items-center"
-                    >
-                      <FileSpreadsheet className="h-3 w-3 mr-1" />
-                      View in Google Sheets
-                    </a>
-                  </div>
-                )}
-              </Card>
-            </div>
-            
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <h3 className="font-medium mb-4">Driver Database</h3>
-                
-                <Tabs defaultValue="all" className="mb-6">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="all">All Drivers</TabsTrigger>
-                    <TabsTrigger value="active">Active</TabsTrigger>
-                    <TabsTrigger value="expired">Expired</TabsTrigger>
-                    <TabsTrigger value="suspended">Suspended</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="all">
-                    <div className="space-y-4">
-                      {filteredDrivers.length === 0 ? (
-                        <p className="text-center text-gray-500 py-4">No drivers found matching your search criteria</p>
-                      ) : (
-                        filteredDrivers.map((driver) => (
-                          <div key={driver.id} className="border rounded-lg overflow-hidden">
-                            <div className="flex flex-col md:flex-row">
-                              <div className="md:w-1/4 p-4 flex justify-center md:justify-start">
-                                <div className="w-28 h-28 rounded-full overflow-hidden">
-                                  <img 
-                                    src={driver.photoUrl} 
-                                    alt={driver.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="md:w-3/4 p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                  <div>
-                                    <h4 className="text-lg font-semibold flex items-center">
-                                      {driver.name}
-                                      <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${
-                                        driver.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        driver.status === 'expired' ? 'bg-amber-100 text-amber-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        {driver.status.charAt(0).toUpperCase() + driver.status.slice(1)}
-                                      </span>
-                                    </h4>
-                                    <div className="flex items-center text-gray-500 text-sm">
-                                      <FileText className="h-3 w-3 mr-1" />
-                                      {driver.licenseNumber}
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex space-x-2">
-                                    <Button variant="ghost" size="sm">
-                                      <Edit className="h-4 w-4 text-titeh-primary" />
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      onClick={() => handleDeleteDriver(driver.id)}
-                                      className="text-red-500 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-500">DOB:</span> {driver.dob}
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-500">Phone:</span> {driver.phone}
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-500">Blood Group:</span> {driver.bloodGroup}
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-500">Issue Date:</span> {driver.issueDate}
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-500">Expiry Date:</span> {driver.expiryDate}
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-500">Vehicle:</span> {driver.vehicleType} ({driver.regNumber})
-                                  </div>
-                                </div>
-                                
-                                <div className="mt-2 text-sm">
-                                  <span className="text-gray-500">Address:</span> {driver.address}
-                                </div>
-                                
-                                {driver.documents.length > 0 && (
-                                  <div className="mt-2">
-                                    <span className="text-gray-500 text-sm">Documents:</span>
-                                    <div className="flex space-x-2 mt-1">
-                                      {driver.documents.map((doc, index) => (
-                                        <div 
-                                          key={index}
-                                          className="text-xs bg-gray-100 px-2 py-1 rounded flex items-center"
-                                        >
-                                          <FileText className="h-3 w-3 mr-1 text-titeh-primary" />
-                                          {doc.name}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                {/* Camera Dialog */}
+                {isCameraOpen && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
+                      <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                        <h3 className="font-medium">Take Driver Photo</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-500" 
+                          onClick={() => {
+                            if (stream) {
+                              stream.getTracks().forEach(track => track.stop());
+                              setStream(null);
+                            }
+                            setIsCameraOpen(false);
+                            setIsFlashlightOn(false);
+                          }}
+                        >
+                          &times;
+                        </Button>
+                      </div>
+                      
+                      <div className="relative">
+                        <video 
+                          ref={videoRef}
+                          autoPlay 
+                          playsInline
+                          className="w-full h-64 object-cover"
+                          onLoadedMetadata={() => {
+                            if (videoRef.current) {
+                              videoRef.current.play();
+                            }
+                          }}
+                        />
+                        
+                        <canvas ref={canvasRef} className="hidden" />
+                        
+                        <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                          {facing === "user" ? "Front Camera" : "Back Camera"}
+                        </div>
+                        
+                        {facing === "environment" && (
+                          <div className={`absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs ${isFlashlightOn ? 'text-yellow-300' : 'text-white'}`}>
+                            {isFlashlightOn ? 'Flashlight ON' : 'Flashlight OFF'}
                           </div>
-                        ))
-                      )}
+                        )}
+                      </div>
+                      
+                      <div className="p-4 flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={toggleCameraFacing}
+                          className="flex-1"
+                        >
+                          <Camera className="h-4 w-4 mr-1" />
+                          Switch Camera
+                        </Button>
+                        
+                        {facing === "environment" && (
+                          <Button 
+                            variant="outline" 
+                            onClick={toggleFlashlight}
+                            className={`flex-1 ${isFlashlightOn ? 'bg-yellow-50 border-yellow-300' : ''}`}
+                          >
+                            <FlashLight className={`h-4 w-4 mr-1 ${isFlashlightOn ? 'text-yellow-500' : ''}`} />
+                            {isFlashlightOn ? 'Turn Off Light' : 'Turn On Light'}
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          className="flex-1 bg-titeh-primary"
+                          onClick={takePhoto}
+                        >
+                          <Camera className="h-4 w-4 mr-1" />
+                          Take Photo
+                        </Button>
+                      </div>
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="active">
-                    <div className="space-y-4">
-                      {filteredDrivers.filter(d => d.status === "active").length === 0 ? (
-                        <p className="text-center text-gray-500 py-4">No active drivers found</p>
-                      ) : (
-                        filteredDrivers
-                          .filter(d => d.status === "active")
-                          .map((driver) => (
-                            // Same driver card as above
-                            <div key={driver.id} className="border rounded-lg overflow-hidden">
-                              <div className="flex items-center p-4">
-                                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-                                  <img 
-                                    src={driver.photoUrl} 
-                                    alt={driver.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div>
-                                  <h4 className="font-semibold">{driver.name}</h4>
-                                  <p className="text-sm text-gray-600">{driver.licenseNumber}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                      )}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="expired">
-                    <div className="space-y-4">
-                      <p className="text-center text-gray-500 py-4">No expired drivers found</p>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="suspended">
-                    <div className="space-y-4">
-                      <p className="text-center text-gray-500 py-4">No suspended drivers found</p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
-            <Card className="p-4 bg-blue-50">
-              <h2 className="font-semibold mb-2 flex items-center">
-                <AlertTriangle className="text-blue-500 mr-2" size={18} />
-                Admin Access Only
-              </h2>
-              <p className="text-sm text-gray-600">This section is restricted to authorized administrators only. All actions are logged and audited for security purposes.</p>
+            <Card className="col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="mr-2 h-5 w-5" />
+                  Driver Records Database
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                  {drivers.length > 0 ? (
+                    drivers.map((driver) => (
+                      <div key={driver.id} className="border rounded-lg p-3 flex items-start space-x-3 hover:bg-gray-50">
+                        <div className="flex-shrink-0">
+                          <img 
+                            src={driver.photoUrl} 
+                            alt={driver.name}
+                            className="h-16 w-16 object-cover rounded-md" 
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <h3 className="font-medium">{driver.name}</h3>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-red-500 h-6 w-6 p-0"
+                              onClick={() => handleDeleteDriver(driver.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <p>License: {driver.licenseNumber}</p>
+                            <div className="flex justify-between">
+                              <span>Valid until: {driver.validUntil}</span>
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                driver.status === "valid" 
+                                  ? "bg-green-100 text-green-800" 
+                                  : driver.status === "expired"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-orange-100 text-orange-800"
+                              }`}>
+                                {driver.status === "valid" ? "Valid" : driver.status === "expired" ? "Expired" : "Suspended"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                      <p>No driver records yet</p>
+                      <p className="text-sm mt-1">Add drivers using the form</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
             </Card>
-          </>
+          </div>
+        ) : (
+          <Card className="p-6 text-center">
+            <div className="flex flex-col items-center justify-center py-12">
+              <CircleX className="h-16 w-16 text-red-500 mb-4" />
+              <h2 className="text-2xl font-semibold mb-2">Access Denied</h2>
+              <p className="text-gray-600 mb-6">You don't have permission to access the admin panel.</p>
+              <p className="text-gray-500 max-w-md mx-auto">
+                Only authorized administrators can access this section. Please select an authorized admin email from the dropdown above.
+              </p>
+            </div>
+          </Card>
         )}
       </div>
     </Layout>
