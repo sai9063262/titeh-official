@@ -110,3 +110,17 @@ export const toggleTorch = async (track: MediaStreamTrack, turnOn: boolean): Pro
     return false;
   }
 };
+
+/**
+ * Convert a File object to a data URL
+ * @param file File to convert
+ * @returns Promise resolving to a data URL
+ */
+export const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};

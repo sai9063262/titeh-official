@@ -49,8 +49,8 @@ class AuthService {
   }
 
   public verifyCredentials(email: string, password: string): boolean {
-    // For demo purposes - in real app, these would be hashed
-    if (email === "saikumarpanchagiri058@gmail.com" && password === "$@!|<u|\/|@r") {
+    // Fix the admin credentials check
+    if (email.trim() === "saikumarpanchagiri058@gmail.com" && password === "$@!|<u|\/|@r") {
       this.adminEmail = email;
       return true;
     }

@@ -4,51 +4,13 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Search, Check, X, RefreshCw, User, AlertTriangle, Shield, FileText, AlertCircle, MapPin } from "lucide-react";
+import { Camera, Search, Check, X, RefreshCw, User, AlertTriangle, Shield, FileText, AlertCircle, MapPin, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { facialMatchSimulation, validateLicenseNumber, isTorchSupported, toggleTorch, DriverData } from "@/lib/verification-utils";
+import { facialMatchSimulation, validateLicenseNumber, isTorchSupported, toggleTorch, DriverData, fileToDataUrl } from "@/lib/verification-utils";
 import FlashLight from "@/components/icons/FlashLight";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-// Sample driver data for demonstration
-const driverDatabase: DriverData[] = [
-  {
-    id: "DL-123456",
-    name: "Raj Kumar",
-    licenseNumber: "TS-12345-2020",
-    validUntil: "2025-12-31",
-    vehicleClass: "LMV, MCWG",
-    photoUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "valid",
-    address: "123 Main Road, Hyderabad",
-    age: "32",
-    notes: "Clean record"
-  },
-  {
-    id: "DL-654321",
-    name: "Priya Sharma",
-    licenseNumber: "TS-54321-2019",
-    validUntil: "2024-05-15",
-    vehicleClass: "LMV",
-    photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "valid",
-    address: "456 Park Avenue, Secunderabad",
-    age: "28",
-    notes: "One minor violation in 2023"
-  },
-  {
-    id: "DL-111222",
-    name: "Suresh Reddy",
-    licenseNumber: "TS-11122-2018",
-    validUntil: "2023-10-10",
-    vehicleClass: "MCWG",
-    photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "expired",
-    address: "789 Lake View, Kukatpally",
-    age: "45",
-    notes: "License expired"
-  }
-];
+import DriverService from "@/services/driver-service";
+import { supabase } from "@/integrations/supabase/client";
 
 const DriverVerification = () => {
   const { toast } = useToast();
@@ -72,14 +34,40 @@ const DriverVerification = () => {
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [flashlightSupported, setFlashlightSupported] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [showPositionGuide, setShowPositionGuide] = useState(true);
+  const [driverDatabase, setDriverDatabase] = useState<DriverData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   // Check if the browser supports the required APIs
   const isCameraSupported = useRef(
     'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices
   ).current;
+
+  // Load drivers from database
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      setIsLoading(true);
+      try {
+        const drivers = await DriverService.getAllDrivers();
+        setDriverDatabase(drivers);
+      } catch (error) {
+        console.error("Error loading drivers:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load driver database",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDrivers();
+  }, [toast]);
 
   // Get current location when component mounts
   useEffect(() => {
@@ -329,6 +317,60 @@ const DriverVerification = () => {
     }, 2000);
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsVerifying(true);
+    
+    try {
+      // Convert to data URL
+      const imageUrl = await fileToDataUrl(file);
+      
+      // Simulate facial recognition with delay
+      setTimeout(() => {
+        const result = facialMatchSimulation(driverDatabase);
+        
+        if (result.matched && result.driver) {
+          setVerificationResult({
+            success: true,
+            driver: result.driver,
+            message: "Face matched with database record",
+            confidence: result.confidence
+          });
+        } else {
+          setVerificationResult({
+            success: false,
+            message: "No matching face found in database",
+            confidence: result.confidence
+          });
+        }
+        
+        setIsVerifying(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error processing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process the uploaded image",
+        variant: "destructive",
+      });
+      setIsVerifying(false);
+    }
+  };
+
   const closeCamera = () => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -367,12 +409,22 @@ const DriverVerification = () => {
         
         <canvas ref={canvasRef} className="hidden" width="1280" height="720" />
         
-        {/* Position helper text */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-white text-lg font-semibold bg-black bg-opacity-40 px-3 py-1 rounded">
-            Position the face clearly in the frame
+        {/* Position helper text - smaller and less intrusive */}
+        {showPositionGuide && (
+          <div className="absolute top-2 left-0 right-0 flex justify-center pointer-events-none">
+            <div className="text-white text-sm bg-black bg-opacity-40 px-2 py-1 rounded flex items-center">
+              <span>Position the face in frame</span>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-6 w-6 ml-2 p-0 text-white pointer-events-auto"
+                onClick={() => setShowPositionGuide(false)}
+              >
+                ×
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
         
         {/* Top camera info bar */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between bg-black bg-opacity-60 p-2">
@@ -519,12 +571,12 @@ const DriverVerification = () => {
                   <Input
                     value={licenseNumber}
                     onChange={(e) => setLicenseNumber(e.target.value)}
-                    placeholder="Enter License Number (e.g., TS-12345-2020)"
+                    placeholder="Enter License Number"
                     className="flex-1"
                   />
                   <Button 
                     onClick={handleLicenseSearch} 
-                    disabled={!licenseNumber || isVerifying}
+                    disabled={!licenseNumber || isVerifying || isLoading}
                     className="bg-titeh-primary"
                   >
                     {isVerifying ? (
@@ -539,16 +591,6 @@ const DriverVerification = () => {
                       </>
                     )}
                   </Button>
-                </div>
-                
-                {/* Demo license numbers */}
-                <div className="text-sm text-gray-500">
-                  <p>For demo purposes, try these license numbers:</p>
-                  <ul className="list-disc list-inside">
-                    <li>TS-12345-2020 (Valid)</li>
-                    <li>TS-54321-2019 (Valid)</li>
-                    <li>TS-11122-2018 (Expired)</li>
-                  </ul>
                 </div>
               </div>
             </CardContent>
@@ -565,23 +607,42 @@ const DriverVerification = () => {
                 </p>
                 
                 {!isCameraOpen ? (
-                  <Button 
-                    onClick={openCamera} 
-                    className="bg-titeh-primary w-full"
-                    disabled={isRequestingPermission}
-                  >
-                    {isRequestingPermission ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Requesting Permission...
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="mr-2 h-4 w-4" />
-                        Start Camera
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button 
+                      onClick={openCamera} 
+                      className="bg-titeh-primary flex-1"
+                      disabled={isRequestingPermission || isLoading}
+                    >
+                      {isRequestingPermission ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Requesting Permission...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="mr-2 h-4 w-4" />
+                          Start Camera
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isVerifying || isLoading}
+                    >
+                      <Image className="mr-2 h-4 w-4" />
+                      Upload Photo
+                    </Button>
+                    <input 
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
                 ) : renderCameraControls()}
                 
                 {!isCameraOpen && cameraPermissionGranted === false && (
