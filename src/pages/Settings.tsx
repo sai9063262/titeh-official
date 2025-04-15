@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import { 
   Languages, MapPin, CreditCard, Bell, RefreshCw, Cloud, 
   UserCircle, History, PlusCircle, Bluetooth, Wifi, Shield, Smartphone,
-  Settings as SettingsIcon, Loader2, AlertTriangle
+  Settings as SettingsIcon, Loader2, AlertTriangle, MessageSquare
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -31,6 +31,7 @@ const Settings = () => {
     { icon: <Bluetooth className="text-blue-500 text-xl" />, label: "Bluetooth Settings", link: "/device-settings", badge: "New" },
     { icon: <Wifi className="text-blue-500 text-xl" />, label: "Wi-Fi Settings", link: "/device-settings?tab=wifi", badge: "New" },
     { icon: <Smartphone className="text-blue-500 text-xl" />, label: "Admin Driver Management", link: "/admin-driver-details", badge: "Admin Only" },
+    { icon: <MessageSquare className="text-blue-500 text-xl" />, label: "T-Helper AI Assistant", link: "/t-helper", badge: "New" },
   ];
 
   const handleCheckForUpdates = () => {
@@ -126,6 +127,7 @@ const Settings = () => {
                   <li>Enhanced security with AES-256 encryption</li>
                   <li>Added Admin Driver Management panel</li>
                   <li>Google Sheets integration for driver data</li>
+                  <li>New T-Helper AI Assistant for answering questions</li>
                 </ul>
               </div>
             </div>

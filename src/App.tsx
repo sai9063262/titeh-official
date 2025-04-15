@@ -42,6 +42,7 @@ import FAQ from "./pages/FAQ";
 import Newsletter from "./pages/Newsletter";
 import DeviceSettings from "./pages/DeviceSettings";
 import AdminDriverDetails from "./pages/AdminDriverDetails";
+import THelper from "./pages/THelper";
 
 // Calculator pages
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
@@ -76,6 +77,7 @@ const App = () => {
               <Route path="/newsletter" element={<Newsletter />} />
               <Route path="/device-settings" element={<DeviceSettings />} />
               <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
+              <Route path="/t-helper" element={<THelper />} />
               
               {/* Settings sub-pages */}
               <Route path="/settings/language" element={<Language />} />
