@@ -9,7 +9,129 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      drivers: {
+        Row: {
+          address: string | null
+          age: string | null
+          blood_type: string | null
+          created_at: string
+          criminal_record_notes: string | null
+          criminal_record_status: string | null
+          date_of_birth: string | null
+          document_url: string | null
+          driver_experience_years: number | null
+          email: string | null
+          emergency_contact_name: string | null
+          gender: string | null
+          id: string
+          language_proficiency: string[] | null
+          license_number: string
+          medical_conditions: string | null
+          name: string
+          nationality: string | null
+          notes: string | null
+          phone_number: string | null
+          photo_url: string | null
+          preferred_contact_method: string | null
+          previous_employers: string | null
+          safety_training_date: string | null
+          status: string | null
+          training_certificates: string[] | null
+          updated_at: string
+          valid_until: string | null
+          vehicle_class: string | null
+          vehicle_color: string | null
+        }
+        Insert: {
+          address?: string | null
+          age?: string | null
+          blood_type?: string | null
+          created_at?: string
+          criminal_record_notes?: string | null
+          criminal_record_status?: string | null
+          date_of_birth?: string | null
+          document_url?: string | null
+          driver_experience_years?: number | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          gender?: string | null
+          id?: string
+          language_proficiency?: string[] | null
+          license_number: string
+          medical_conditions?: string | null
+          name: string
+          nationality?: string | null
+          notes?: string | null
+          phone_number?: string | null
+          photo_url?: string | null
+          preferred_contact_method?: string | null
+          previous_employers?: string | null
+          safety_training_date?: string | null
+          status?: string | null
+          training_certificates?: string[] | null
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_class?: string | null
+          vehicle_color?: string | null
+        }
+        Update: {
+          address?: string | null
+          age?: string | null
+          blood_type?: string | null
+          created_at?: string
+          criminal_record_notes?: string | null
+          criminal_record_status?: string | null
+          date_of_birth?: string | null
+          document_url?: string | null
+          driver_experience_years?: number | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          gender?: string | null
+          id?: string
+          language_proficiency?: string[] | null
+          license_number?: string
+          medical_conditions?: string | null
+          name?: string
+          nationality?: string | null
+          notes?: string | null
+          phone_number?: string | null
+          photo_url?: string | null
+          preferred_contact_method?: string | null
+          previous_employers?: string | null
+          safety_training_date?: string | null
+          status?: string | null
+          training_certificates?: string[] | null
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_class?: string | null
+          vehicle_color?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
