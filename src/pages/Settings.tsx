@@ -1,19 +1,26 @@
 
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import { 
   Languages, MapPin, CreditCard, Bell, RefreshCw, Cloud, 
   UserCircle, History, PlusCircle, Bluetooth, Wifi, Shield, Smartphone,
-  Settings as SettingsIcon, Loader2, AlertTriangle, MessageSquare
+  Settings as SettingsIcon, Loader2, AlertTriangle, MessageSquare, Lock
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import AdminLoginDialog from "@/components/admin/AdminLoginDialog";
+import AuthService from "@/services/auth-service";
 
 const Settings = () => {
   const [isUpdatingApp, setIsUpdatingApp] = useState(false);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const isAdminLoggedIn = AuthService.isLoggedIn();
+  const adminEmail = AuthService.getAdminEmail();
   
   const settingsItems = [
     { icon: <Languages className="text-titeh-primary text-xl" />, label: "Language", link: "/settings/language" },
@@ -30,7 +37,13 @@ const Settings = () => {
   const connectivityItems = [
     { icon: <Bluetooth className="text-blue-500 text-xl" />, label: "Bluetooth Settings", link: "/device-settings", badge: "New" },
     { icon: <Wifi className="text-blue-500 text-xl" />, label: "Wi-Fi Settings", link: "/device-settings?tab=wifi", badge: "New" },
-    { icon: <Smartphone className="text-blue-500 text-xl" />, label: "Admin Driver Management", link: "/admin-driver-details", badge: "Admin Only" },
+    { 
+      icon: <Smartphone className="text-blue-500 text-xl" />, 
+      label: "Admin Driver Management", 
+      link: "/admin-driver-details", 
+      badge: "Admin Only",
+      adminRequired: true
+    },
     { icon: <MessageSquare className="text-blue-500 text-xl" />, label: "T-Helper AI Assistant", link: "/t-helper", badge: "New" },
   ];
 
@@ -48,10 +61,56 @@ const Settings = () => {
     }, 2000);
   };
 
+  const handleAdminLogin = () => {
+    if (isAdminLoggedIn) {
+      // If already logged in, go to admin dashboard
+      navigate("/admin-dashboard");
+    } else {
+      // Open dialog or navigate to login page
+      navigate("/admin-login");
+    }
+  };
+
+  const handleAdminLogout = () => {
+    AuthService.logout();
+    toast({
+      title: "Logged out",
+      description: "You have been logged out of admin mode",
+    });
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Settings</h1>
+        
+        {isAdminLoggedIn && (
+          <div className="mb-6 bg-purple-50 p-4 rounded-lg shadow-sm border border-purple-100">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-purple-800">Admin Mode Active</h2>
+                <p className="text-sm text-purple-600">Logged in as {adminEmail}</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate("/admin-dashboard")}
+                >
+                  Admin Dashboard
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleAdminLogout}
+                >
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex justify-between items-center">
@@ -98,7 +157,20 @@ const Settings = () => {
         <h2 className="text-lg font-semibold mb-4">Device Connectivity & Admin</h2>
         <div className="space-y-4 mb-8">
           {connectivityItems.map((item, index) => (
-            <Link to={item.link} key={index}>
+            <Link 
+              to={!item.adminRequired || isAdminLoggedIn ? item.link : "#"} 
+              onClick={(e) => {
+                if (item.adminRequired && !isAdminLoggedIn) {
+                  e.preventDefault();
+                  toast({
+                    title: "Admin Access Required",
+                    description: "Please login as administrator to access this feature",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              key={index}
+            >
               <Card className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -114,6 +186,24 @@ const Settings = () => {
               </Card>
             </Link>
           ))}
+          
+          {/* Admin Login Card */}
+          <Card 
+            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer" 
+            onClick={handleAdminLogin}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="mr-4 w-8">
+                  <Lock className="text-purple-500 text-xl" />
+                </div>
+                <span className="font-medium">Admin Login</span>
+              </div>
+              <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                Secure Access
+              </span>
+            </div>
+          </Card>
         </div>
         
         <div className="space-y-4 mb-8">
@@ -142,6 +232,17 @@ const Settings = () => {
           </Card>
         </div>
       </div>
+      
+      {/* Admin Login Dialog */}
+      <AdminLoginDialog 
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onSuccess={() => {
+          setIsAdminLoginOpen(false);
+          navigate("/admin-dashboard");
+        }}
+        purpose="Admin Access"
+      />
     </Layout>
   );
 };

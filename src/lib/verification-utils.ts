@@ -4,14 +4,16 @@
  * In a production application, this would be replaced with actual facial recognition API calls.
  */
 
-interface DriverData {
+export type DriverStatus = "valid" | "expired" | "suspended" | "not_found";
+
+export interface DriverData {
   id: string;
   name: string;
   licenseNumber: string;
   validUntil: string;
   vehicleClass: string;
   photoUrl: string;
-  status: "valid" | "expired" | "suspended" | "not_found";
+  status: DriverStatus;
   address?: string;
   age?: string;
   notes?: string;
@@ -68,4 +70,43 @@ export const validateLicenseNumber = (licenseNumber: string, drivers: DriverData
   );
   
   return matchedDriver || null;
+};
+
+/**
+ * Check if the browser supports torch (flashlight) functionality
+ * @returns Boolean indicating if torch is supported
+ */
+export const isTorchSupported = async (track: MediaStreamTrack): Promise<boolean> => {
+  if (!track) return false;
+  
+  try {
+    const capabilities = track.getCapabilities();
+    // The torch capability might not be exposed in the type definitions
+    // So we use a type assertion here
+    return !!(capabilities as any).torch;
+  } catch (error) {
+    console.error("Error checking torch support:", error);
+    return false;
+  }
+};
+
+/**
+ * Toggle torch/flashlight on a video track
+ * @param track Media track to toggle flashlight on
+ * @param turnOn Boolean to turn torch on or off
+ * @returns Success status
+ */
+export const toggleTorch = async (track: MediaStreamTrack, turnOn: boolean): Promise<boolean> => {
+  if (!track) return false;
+  
+  try {
+    // Apply the torch constraint
+    await track.applyConstraints({
+      advanced: [{ torch: turnOn } as any]
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to toggle torch:", error);
+    return false;
+  }
 };

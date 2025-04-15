@@ -44,6 +44,10 @@ import DeviceSettings from "./pages/DeviceSettings";
 import AdminDriverDetails from "./pages/AdminDriverDetails";
 import THelper from "./pages/THelper";
 
+// New admin pages
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+
 // Calculator pages
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
 import LoanCalculator from "./pages/vehicle/calculators/LoanCalculator";
@@ -78,6 +82,10 @@ const App = () => {
               <Route path="/device-settings" element={<DeviceSettings />} />
               <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
               <Route path="/t-helper" element={<THelper />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
               
               {/* Settings sub-pages */}
               <Route path="/settings/language" element={<Language />} />

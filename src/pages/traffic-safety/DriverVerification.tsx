@@ -4,14 +4,14 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Search, Check, X, RefreshCw, User, AlertTriangle, Shield, FileText, AlertCircle } from "lucide-react";
+import { Camera, Search, Check, X, RefreshCw, User, AlertTriangle, Shield, FileText, AlertCircle, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { facialMatchSimulation, validateLicenseNumber } from "@/lib/verification-utils";
+import { facialMatchSimulation, validateLicenseNumber, isTorchSupported, toggleTorch, DriverData } from "@/lib/verification-utils";
 import FlashLight from "@/components/icons/FlashLight";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Sample driver data for demonstration
-const driverDatabase = [
+const driverDatabase: DriverData[] = [
   {
     id: "DL-123456",
     name: "Raj Kumar",
@@ -19,7 +19,7 @@ const driverDatabase = [
     validUntil: "2025-12-31",
     vehicleClass: "LMV, MCWG",
     photoUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "valid" as const,
+    status: "valid",
     address: "123 Main Road, Hyderabad",
     age: "32",
     notes: "Clean record"
@@ -31,7 +31,7 @@ const driverDatabase = [
     validUntil: "2024-05-15",
     vehicleClass: "LMV",
     photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "valid" as const,
+    status: "valid",
     address: "456 Park Avenue, Secunderabad",
     age: "28",
     notes: "One minor violation in 2023"
@@ -43,7 +43,7 @@ const driverDatabase = [
     validUntil: "2023-10-10",
     vehicleClass: "MCWG",
     photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200",
-    status: "expired" as const,
+    status: "expired",
     address: "789 Lake View, Kukatpally",
     age: "45",
     notes: "License expired"
@@ -57,7 +57,7 @@ const DriverVerification = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     success: boolean;
-    driver?: typeof driverDatabase[0];
+    driver?: DriverData;
     message?: string;
     confidence?: number;
   } | null>(null);
@@ -70,6 +70,8 @@ const DriverVerification = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [flashlightSupported, setFlashlightSupported] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lon: number} | null>(null);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -78,6 +80,23 @@ const DriverVerification = () => {
   const isCameraSupported = useRef(
     'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices
   ).current;
+
+  // Get current location when component mounts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          setCurrentLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        () => {
+          console.log("Geolocation permission denied or unavailable");
+        }
+      );
+    }
+  }, []);
 
   const handleLicenseSearch = () => {
     setIsVerifying(true);
@@ -118,21 +137,21 @@ const DriverVerification = () => {
     }
 
     try {
-      // First, check if we already have permission
-      const permissions = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      // Check if permission is already granted
+      const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
       
-      if (permissions.state === 'denied') {
-        setCameraError("Camera permission was denied. Please enable it in your browser settings and reload the page.");
+      if (permissionStatus.state === 'denied') {
+        setCameraError("Camera permission denied. Please enable it in your browser settings.");
         toast({
           title: "Permission Denied",
-          description: "Camera access was denied. Check browser settings.",
+          description: "Camera access was denied. Check browser settings and reload the page.",
           variant: "destructive",
         });
         setCameraPermissionGranted(false);
         setIsRequestingPermission(false);
         return;
       }
-
+      
       // Try to access the camera
       const constraints: MediaStreamConstraints = {
         video: {
@@ -153,8 +172,15 @@ const DriverVerification = () => {
         videoRef.current.srcObject = mediaStream;
       }
       
+      // Check if flashlight is supported
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const isSupported = await isTorchSupported(videoTrack);
+        setFlashlightSupported(isSupported);
+      }
+      
       toast({
-        title: "Camera Access Granted",
+        title: "Camera Active",
         description: `${facing === 'user' ? 'Front' : 'Back'} camera is now active`,
       });
       
@@ -204,6 +230,17 @@ const DriverVerification = () => {
         videoRef.current.srcObject = mediaStream;
       }
       
+      // Check if flashlight is supported on this camera
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const isSupported = await isTorchSupported(videoTrack);
+        setFlashlightSupported(isSupported);
+        // Turn off flashlight when switching to front camera
+        if (newFacing === 'user' && isFlashlightOn) {
+          setIsFlashlightOn(false);
+        }
+      }
+      
       toast({
         title: "Camera Switched",
         description: `${newFacing === 'user' ? 'Front' : 'Back'} camera activated`,
@@ -220,34 +257,27 @@ const DriverVerification = () => {
     }
   };
 
-  const toggleFlashlight = async () => {
+  const handleToggleFlashlight = async () => {
     if (!stream) return;
     
     try {
-      const track = stream.getVideoTracks()[0];
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack) return;
       
-      if (track) {
-        const capabilities = track.getCapabilities();
-        
-        // Check if torch is supported
-        if (capabilities.torch) {
-          await track.applyConstraints({
-            advanced: [{ torch: !isFlashlightOn }]
-          });
-          
-          setIsFlashlightOn(!isFlashlightOn);
-          
-          toast({
-            title: `Flashlight ${!isFlashlightOn ? 'ON' : 'OFF'}`,
-            description: `Camera flashlight turned ${!isFlashlightOn ? 'on' : 'off'}`,
-          });
-        } else {
-          toast({
-            title: "Flashlight Not Available",
-            description: "Your device does not support flashlight control",
-            variant: "destructive",
-          });
-        }
+      const success = await toggleTorch(videoTrack, !isFlashlightOn);
+      
+      if (success) {
+        setIsFlashlightOn(!isFlashlightOn);
+        toast({
+          title: `Flashlight ${!isFlashlightOn ? 'ON' : 'OFF'}`,
+          description: `Camera flashlight turned ${!isFlashlightOn ? 'on' : 'off'}`,
+        });
+      } else {
+        toast({
+          title: "Flashlight Error",
+          description: "Could not control flashlight. Your device may not support this feature.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Flashlight error:", error);
@@ -317,6 +347,139 @@ const DriverVerification = () => {
     };
   }, [stream]);
 
+  const renderCameraControls = () => (
+    <div className="space-y-4">
+      <div className="relative bg-black rounded-lg overflow-hidden" style={{ minHeight: "300px" }}>
+        <video 
+          ref={videoRef}
+          autoPlay 
+          playsInline
+          className="w-full h-full object-cover"
+          onLoadedMetadata={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(e => {
+                console.error("Video play error:", e);
+                setCameraError("Failed to play video stream");
+              });
+            }
+          }}
+        />
+        
+        <canvas ref={canvasRef} className="hidden" width="1280" height="720" />
+        
+        {/* Position helper text */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-white text-lg font-semibold bg-black bg-opacity-40 px-3 py-1 rounded">
+            Position the face clearly in the frame
+          </div>
+        </div>
+        
+        {/* Top camera info bar */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between bg-black bg-opacity-60 p-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white h-8 px-2 py-1"
+            onClick={switchCamera}
+          >
+            {facing === "environment" ? (
+              <>
+                <Camera className="h-4 w-4 mr-1" />
+                Back Camera
+              </>
+            ) : (
+              <>
+                <User className="h-4 w-4 mr-1" />
+                Front Camera
+              </>
+            )}
+          </Button>
+          
+          {currentLocation && (
+            <div className="text-white text-xs flex items-center">
+              <MapPin className="h-3 w-3 mr-1" />
+              Location: {currentLocation.lat.toFixed(4)}, {currentLocation.lon.toFixed(4)}
+            </div>
+          )}
+        </div>
+        
+        {cameraError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 p-4">
+            <div className="text-white text-center max-w-md">
+              <AlertCircle className="mx-auto mb-2 h-8 w-8 text-red-400" />
+              <p className="text-lg font-semibold mb-2">Camera Error</p>
+              <p className="mb-4">{cameraError}</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button 
+                  onClick={openCamera} 
+                  variant="outline" 
+                  className="text-white border-white"
+                >
+                  Retry Camera
+                </Button>
+                <Button 
+                  onClick={() => {
+                    closeCamera();
+                    setCameraError(null);
+                  }}
+                  variant="destructive"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex flex-wrap gap-2 justify-between">
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={switchCamera}
+            className="flex-1"
+          >
+            Switch to {facing === "environment" ? "Front" : "Back"} Camera
+          </Button>
+          
+          {(flashlightSupported && facing === "environment") && (
+            <Button 
+              variant={isFlashlightOn ? "default" : "outline"}
+              onClick={handleToggleFlashlight}
+              className="flex-1"
+            >
+              <FlashLight className={`mr-2 h-4 w-4 ${isFlashlightOn ? 'text-white' : ''}`} />
+              {isFlashlightOn ? "Turn Off Light" : "Turn On Light"}
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <Button variant="outline" onClick={closeCamera}>
+            Cancel
+          </Button>
+          <Button 
+            className="bg-titeh-primary" 
+            onClick={captureImage}
+            disabled={isVerifying || !!cameraError}
+          >
+            {isVerifying ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <Camera className="mr-2 h-4 w-4" />
+                Take Photo
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -328,6 +491,7 @@ const DriverVerification = () => {
             onClick={() => {
               setVerificationMode(verificationMode === "license" ? "facial" : "license");
               setVerificationResult(null);
+              closeCamera();
             }}
           >
             {verificationMode === "license" ? (
@@ -418,96 +582,7 @@ const DriverVerification = () => {
                       </>
                     )}
                   </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: "300px" }}>
-                      <video 
-                        ref={videoRef}
-                        autoPlay 
-                        playsInline
-                        className="w-full h-full object-cover"
-                        onLoadedMetadata={() => {
-                          if (videoRef.current) {
-                            videoRef.current.play().catch(e => {
-                              console.error("Video play error:", e);
-                              setCameraError("Failed to play video stream");
-                            });
-                          }
-                        }}
-                      />
-                      
-                      <canvas ref={canvasRef} className="hidden" width="1280" height="720" />
-                      
-                      {cameraError && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 p-4">
-                          <div className="text-white text-center max-w-md">
-                            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-red-400" />
-                            <p className="text-lg font-semibold mb-2">Camera Error</p>
-                            <p className="mb-4">{cameraError}</p>
-                            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                              <Button 
-                                onClick={openCamera} 
-                                variant="outline" 
-                                className="text-white border-white"
-                              >
-                                Retry Camera
-                              </Button>
-                              <Button 
-                                onClick={() => {
-                                  closeCamera();
-                                  setCameraError(null);
-                                }}
-                                variant="destructive"
-                              >
-                                Close
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 justify-between">
-                      <div className="flex gap-2">
-                        <Button variant="secondary" onClick={switchCamera}>
-                          {facing === "environment" ? "Front Camera" : "Back Camera"}
-                        </Button>
-                        
-                        <Button 
-                          variant="secondary" 
-                          onClick={toggleFlashlight}
-                          disabled={facing === "user"}
-                        >
-                          <FlashLight className="mr-2 h-4 w-4" />
-                          {isFlashlightOn ? "Turn Off Light" : "Turn On Light"}
-                        </Button>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button variant="outline" onClick={closeCamera}>
-                          Cancel
-                        </Button>
-                        <Button 
-                          className="bg-titeh-primary" 
-                          onClick={captureImage}
-                          disabled={isVerifying || !!cameraError}
-                        >
-                          {isVerifying ? (
-                            <>
-                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            <>
-                              <Camera className="mr-2 h-4 w-4" />
-                              Capture & Verify
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                ) : renderCameraControls()}
                 
                 {!isCameraOpen && cameraPermissionGranted === false && (
                   <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
@@ -665,34 +740,6 @@ const DriverVerification = () => {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Photo Capture Dialog */}
-      <Dialog open={isCameraOpen} onOpenChange={(open) => !open && closeCamera()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Capture Driver Photo</DialogTitle>
-          </DialogHeader>
-          <div className="flex justify-between">
-            <Button variant="secondary">
-              {facing === "environment" ? "Back Camera" : "Front Camera"}
-            </Button>
-            <Button variant="secondary">
-              Flashlight {isFlashlightOn ? "OFF" : "ON"}
-            </Button>
-          </div>
-          
-          <div className="mt-4 flex justify-between">
-            <Button variant="outline" onClick={switchCamera}>
-              <Camera className="mr-2 h-4 w-4" />
-              Switch Camera
-            </Button>
-            <Button variant="outline" onClick={toggleFlashlight}>
-              <FlashLight className="mr-2 h-4 w-4" />
-              Turn {isFlashlightOn ? "Off" : "On"} Light
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Layout>
   );
 };
