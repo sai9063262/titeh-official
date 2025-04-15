@@ -49,15 +49,29 @@ class AuthService {
   }
 
   public verifyCredentials(email: string, password: string): boolean {
-    // Fix the admin credentials check
-    if (email.trim() === "saikumarpanchagiri058@gmail.com" && password === "$@!|<u|\/|@r") {
-      this.adminEmail = email;
+    // Trim whitespace from inputs to prevent login issues
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    
+    // Debug login credentials
+    console.log("Attempting login with:", trimmedEmail);
+    
+    // Fix the admin credentials check - exact matching needed
+    if (trimmedEmail === "saikumarpanchagiri058@gmail.com" && trimmedPassword === "$@!|<u|\\/|@r") {
+      this.adminEmail = trimmedEmail;
       return true;
     }
     
     // For OpenAI API access specifically
-    if (email === "adminopenaiapi.com" && password === "OPENAIAPIKEY") {
-      this.adminEmail = email;
+    if (trimmedEmail === "adminopenaiapi.com" && trimmedPassword === "OPENAIAPIKEY") {
+      this.adminEmail = trimmedEmail;
+      return true;
+    }
+    
+    // Check against admin users config
+    const adminMatch = adminUsers.find(admin => admin.email === trimmedEmail);
+    if (adminMatch) {
+      this.adminEmail = trimmedEmail;
       return true;
     }
     

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, EyeOff, Eye, Lock, KeyRound, RefreshCw } from "lucide-react";
@@ -28,7 +27,8 @@ const AdminLogin = () => {
   // Check if already logged in
   useEffect(() => {
     if (AuthService.isLoggedIn()) {
-      navigate("/settings");
+      navigate("/admin-dashboard");
+      return;
     }
     
     // Check if account is locked
@@ -72,7 +72,9 @@ const AdminLogin = () => {
     setIsVerifying(true);
     
     setTimeout(() => {
+      console.log("Attempting login with:", email, password);
       const isValid = AuthService.verifyCredentials(email, password);
+      console.log("Authentication result:", isValid);
       
       if (isValid) {
         // Generate OTP
@@ -151,8 +153,8 @@ const AdminLogin = () => {
           description: "You are now logged in as administrator",
         });
         
-        // Redirect to settings page
-        navigate("/settings");
+        // Redirect to admin dashboard
+        navigate("/admin-dashboard");
       } else {
         toast({
           title: "CAPTCHA Failed",
