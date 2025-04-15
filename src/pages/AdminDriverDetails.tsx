@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Upload, Save, User, FileText, Trash2, Shield, CircleCheck, CircleX } from "lucide-react";
+import { Camera, Upload, Save, User, FileText, Trash2, Shield, CircleCheck, CircleX, Image, X } from "lucide-react";
 import FlashLight from "@/components/icons/FlashLight";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,14 @@ interface DriverRecord {
   address: string;
   age: string;
   notes?: string;
+  email?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  medicalConditions?: string;
+  trainingCertificates?: string[];
+  documents?: { name: string; url: string; }[];
 }
 
 const AdminDriverDetails = () => {
@@ -41,7 +49,15 @@ const AdminDriverDetails = () => {
     status: "valid",
     address: "",
     age: "",
-    notes: ""
+    notes: "",
+    email: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    medicalConditions: "",
+    trainingCertificates: [],
+    documents: []
   });
   
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -53,11 +69,50 @@ const AdminDriverDetails = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const docInputRef = useRef<HTMLInputElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewDriver(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Only PDF files are allowed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setNewDriver(prev => ({
+          ...prev,
+          documents: [...(prev.documents || []), {
+            name: file.name,
+            url: event.target.result as string
+          }]
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
   
   const saveDriversToLocalStorage = (updatedDrivers: DriverRecord[]) => {
@@ -142,12 +197,13 @@ const AdminDriverDetails = () => {
       if (facing === "environment") {
         try {
           const track = mediaStream.getVideoTracks()[0];
-          if (track && 'getCapabilities' in track) {
+          // Handle flashlight access in a way that bypasses TypeScript constraints
+          if (track && typeof track.getCapabilities === 'function') {
             const capabilities = track.getCapabilities();
-            if (capabilities && 'torch' in capabilities) {
-              await track.applyConstraints({
-                advanced: [{ torch: isFlashlightOn }]
-              });
+            // @ts-ignore: Flashlight functionality varies by browser
+            if (capabilities && capabilities.torch) {
+              // @ts-ignore: Applying torch constraint
+              await track.applyConstraints({ advanced: [{ torch: isFlashlightOn }] });
             }
           }
         } catch (flashlightError) {
@@ -176,6 +232,7 @@ const AdminDriverDetails = () => {
         const capabilities = track.getCapabilities();
         if (capabilities && 'torch' in capabilities) {
           await track.applyConstraints({
+            // @ts-ignore - Torch is supported on some mobile devices
             advanced: [{ torch: newFlashlightState }]
           });
           
@@ -451,6 +508,101 @@ const AdminDriverDetails = () => {
                       onChange={handleInputChange}
                       placeholder="Enter age"
                     />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                      <Input 
+                        id="emergencyContactName" 
+                        name="emergencyContactName"
+                        value={newDriver.emergencyContactName}
+                        onChange={handleInputChange}
+                        placeholder="Emergency contact name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                      <Input 
+                        id="emergencyContactPhone" 
+                        name="emergencyContactPhone"
+                        type="tel"
+                        value={newDriver.emergencyContactPhone}
+                        onChange={handleInputChange}
+                        placeholder="+91 XXXXX XXXXX"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="medicalConditions">Medical Conditions</Label>
+                    <Textarea 
+                      id="medicalConditions" 
+                      name="medicalConditions"
+                      value={newDriver.medicalConditions || ''}
+                      onChange={handleInputChange}
+                      placeholder="List any relevant medical conditions"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="trainingCertificates">Training Certificates</Label>
+                    <Input 
+                      id="trainingCertificates" 
+                      name="trainingCertificates"
+                      value={newDriver.trainingCertificates?.join(', ')}
+                      onChange={(e) => {
+                        const certificates = e.target.value.split(',').map(cert => cert.trim());
+                        setNewDriver(prev => ({ ...prev, trainingCertificates: certificates }));
+                      }}
+                      placeholder="Enter certificates separated by commas"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="mb-2 block">Documents (PDF, max 5MB)</Label>
+                    <input 
+                      ref={docInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="application/pdf"
+                      onChange={handleDocumentUpload}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => docInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-1" />
+                        Upload Document
+                      </Button>
+                      {newDriver.documents && newDriver.documents.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                          {newDriver.documents.map((doc, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <FileText className="h-4 w-4" />
+                              <span>{doc.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-500"
+                                onClick={() => {
+                                  setNewDriver(prev => ({
+                                    ...prev,
+                                    documents: prev.documents?.filter((_, i) => i !== index)
+                                  }));
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>

@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { facialMatchSimulation } from "@/lib/verification-utils";
 
 interface DriverData {
@@ -37,450 +37,223 @@ interface GeolocationPosition {
 
 const DriverVerification = () => {
   const { toast } = useToast();
+  const [licenseNumber, setLicenseNumber] = useState("");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isPhotoTaken, setIsPhotoTaken] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [matchFound, setMatchFound] = useState<boolean | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [activeTab, setActiveTab] = useState("camera");
-  const [manualSearch, setManualSearch] = useState("");
-  const [driverData, setDriverData] = useState<DriverData | null>(null);
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [facing, setFacing] = useState<"user" | "environment">("environment");
-  const [locationGranted, setLocationGranted] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
-  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
-  const [adminStoredDrivers, setAdminStoredDrivers] = useState<DriverData[]>([]);
-  
-  // Get admin stored drivers from localStorage
-  useEffect(() => {
-    const storedDrivers = localStorage.getItem('adminDriverRecords');
-    if (storedDrivers) {
-      try {
-        const parsedDrivers = JSON.parse(storedDrivers);
-        setAdminStoredDrivers(parsedDrivers);
-      } catch (error) {
-        console.error("Error parsing stored drivers:", error);
-      }
-    }
-  }, []);
-  
-  // Backup dummy drivers in case no admin drivers are stored
-  const dummyDrivers: DriverData[] = [
+  const [isLicenseValidating, setIsLicenseValidating] = useState(false);
+  const [licenseValidationResult, setLicenseValidationResult] = useState<DriverData | null>(null);
+  const [manualSearch, setManualSearch] = useState("");
+  const [matchFound, setMatchFound] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [driverData, setDriverData] = useState<DriverData | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [allDrivers, setAllDrivers] = useState<DriverData[]>([
     {
-      id: "dummy1",
-      name: "Raj Kumar Singh",
-      licenseNumber: "TG0220210123456",
-      validUntil: "2030-06-15",
-      vehicleClass: "LMV, MCWG",
-      photoUrl: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=180&h=180",
-      status: "valid"
-    },
-    {
-      id: "dummy2",
-      name: "Priya Sharma",
-      licenseNumber: "TG0420200789012",
-      validUntil: "2025-11-30",
-      vehicleClass: "MCWG",
-      photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=180&h=180",
-      status: "valid"
-    },
-    {
-      id: "dummy3",
-      name: "Mohammad Farhan",
-      licenseNumber: "TG0120183456789",
-      validUntil: "2023-05-20",
-      vehicleClass: "LMV, MCWG, HMV",
-      photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=180&h=180",
-      status: "expired"
-    },
-    {
-      id: "dummy4",
-      name: "Anjali Reddy",
-      licenseNumber: "TG0320190234567",
-      validUntil: "2029-08-10",
+      id: "drv-1",
+      name: "John Doe",
+      licenseNumber: "DL1234567890",
+      validUntil: "2025-12-31",
       vehicleClass: "LMV",
-      photoUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=180&h=180",
-      status: "suspended"
+      photoUrl: "/placeholder.svg",
+      status: "valid",
+      address: "123 Main St",
+      age: "35",
+      notes: "No violations"
+    },
+    {
+      id: "drv-2",
+      name: "Jane Smith",
+      licenseNumber: "DL0987654321",
+      validUntil: "2024-06-30",
+      vehicleClass: "MCWG",
+      photoUrl: "/placeholder.svg",
+      status: "expired",
+      address: "456 Oak Ave",
+      age: "28",
+      notes: "Expired license"
+    },
+    {
+      id: "drv-3",
+      name: "Alice Johnson",
+      licenseNumber: "DL5678901234",
+      validUntil: "2026-03-15",
+      vehicleClass: "HMV",
+      photoUrl: "/placeholder.svg",
+      status: "suspended",
+      address: "789 Pine Ln",
+      age: "42",
+      notes: "License suspended due to traffic violations"
     }
-  ];
+  ]);
 
-  // Combined drivers - admin stored + dummy
-  const allDrivers = [...adminStoredDrivers, ...(adminStoredDrivers.length > 0 ? [] : dummyDrivers)];
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // Request location access
   useEffect(() => {
-    const getLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position: GeolocationPosition) => {
-            setCurrentLocation({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-            setLocationGranted(true);
-            toast({
-              title: "Location Access Granted",
-              description: "Location services are now available for verification",
-            });
-          },
-          (error) => {
-            console.error("Error getting location:", error);
-            toast({
-              title: "Location Access Denied",
-              description: "Please enable location for complete verification",
-              variant: "destructive",
-            });
-            setLocationGranted(false);
-          }
-        );
-      } else {
-        toast({
-          title: "Location Not Supported",
-          description: "Your device doesn't support location services",
-          variant: "destructive",
-        });
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
       }
     };
+  }, [stream]);
 
-    getLocation();
-  }, [toast]);
-
-  // Effect to handle camera access with improved mobile detection and handling
-  useEffect(() => {
-    if (isCameraOpen) {
-      const enableCamera = async () => {
-        try {
-          setIsCameraLoading(true);
-          setCameraError(null);
-          
-          // Check if this is likely a mobile device
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-          
-          // Define constraints with proper handling for mobile devices
-          const constraints: MediaStreamConstraints = {
-            video: isMobile 
-              ? { 
-                  facingMode: { exact: facing },
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 }
-                } 
-              : { 
-                  facingMode: facing,
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 }
-                }
-          };
-          
-          console.log("Requesting camera with constraints:", constraints);
-          
-          const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-          
-          if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
-            setStream(mediaStream);
-            
-            // Try to access flashlight if environment camera
-            if (facing === "environment") {
-              try {
-                const track = mediaStream.getVideoTracks()[0];
-                if (track && 'getCapabilities' in track) {
-                  const capabilities = track.getCapabilities();
-                  if (capabilities && 'torch' in capabilities) {
-                    // Initialize flashlight state (off by default)
-                    await track.applyConstraints({
-                      advanced: [{ torch: isFlashlightOn }]
-                    });
-                  }
-                }
-              } catch (flashlightError) {
-                console.error("Flashlight access error:", flashlightError);
-              }
-            }
-          }
-          
-          toast({
-            title: "Camera Access Granted",
-            description: `${facing === "user" ? "Front" : "Back"} camera is now active for verification`,
-          });
-          
-          setIsCameraLoading(false);
-        } catch (err) {
-          console.error("Error accessing camera:", err);
-          
-          // Try again without the 'exact' constraint if we're on mobile
-          if (facing === "environment") {
-            try {
-              const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: facing }
+  const enableCamera = async () => {
+    try {
+      setIsCameraLoading(true);
+      setCameraError(null);
+      
+      const constraints: MediaStreamConstraints = {
+        video: { 
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+        
+        if (facing === "environment") {
+          try {
+            const track = mediaStream.getVideoTracks()[0];
+            if (track && typeof track.applyConstraints === 'function') {
+              await track.applyConstraints({
+                advanced: [{ torch: isFlashlightOn }] as any
               });
-              
-              if (videoRef.current) {
-                videoRef.current.srcObject = fallbackStream;
-                setStream(fallbackStream);
-                setIsCameraLoading(false);
-                return;
-              }
-            } catch (fallbackErr) {
-              console.error("Fallback camera access failed:", fallbackErr);
             }
+          } catch (flashlightError) {
+            console.error("Flashlight access error:", flashlightError);
           }
-          
-          setCameraError(`Could not access ${facing === "user" ? "front" : "back"} camera. Please check permissions.`);
-          toast({
-            title: "Camera Access Failed",
-            description: `Could not access ${facing === "user" ? "front" : "back"} camera. Please check permissions.`,
-            variant: "destructive",
-          });
-          
-          setIsCameraLoading(false);
-          
-          // Fallback to simulation mode after a short delay
-          setTimeout(simulateCamera, 1500);
         }
-      };
+      }
       
-      enableCamera();
+      setIsCameraLoading(false);
       
-      return () => {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-      };
+      toast({
+        title: "Camera Access Granted",
+        description: `${facing === "user" ? "Front" : "Back"} camera is now active`,
+      });
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setCameraError("Could not access camera");
+      setIsCameraLoading(false);
+      
+      toast({
+        title: "Camera Access Failed",
+        description: "Could not access camera. Check permissions.",
+        variant: "destructive",
+      });
     }
-  }, [isCameraOpen, facing, toast]);
-  
-  // Toggle camera facing mode with improved handling
-  const toggleCameraFacing = () => {
-    // Stop current stream
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    
-    // Toggle facing mode
-    setFacing(prev => prev === "user" ? "environment" : "user");
-    // Reset flashlight when switching to front camera
-    if (facing === "environment") {
-      setIsFlashlightOn(false);
-    }
-    
-    // Reset video element
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    
-    setCameraError(null);
-    setIsCameraOpen(false);
-    
-    // Small delay before reopening camera
-    setTimeout(() => setIsCameraOpen(true), 300);
   };
-  
-  // Toggle flashlight on/off
+
   const toggleFlashlight = async () => {
     if (!stream || facing !== "environment") return;
     
     try {
       const track = stream.getVideoTracks()[0];
-      if (!track || !('getCapabilities' in track)) {
-        toast({
-          title: "Flashlight Unavailable",
-          description: "Your device doesn't support flashlight control",
-          variant: "destructive",
+      if (track && typeof track.applyConstraints === 'function') {
+        const newFlashlightState = !isFlashlightOn;
+        
+        await track.applyConstraints({
+          advanced: [{ torch: newFlashlightState }] as any
         });
-        return;
-      }
-      
-      const capabilities = track.getCapabilities();
-      if (!capabilities || !('torch' in capabilities)) {
+        
+        setIsFlashlightOn(newFlashlightState);
+        
         toast({
-          title: "Flashlight Unavailable",
-          description: "This device doesn't support flashlight control",
-          variant: "destructive",
+          title: newFlashlightState ? "Night Vision Activated" : "Night Vision Deactivated",
+          description: newFlashlightState ? "Flashlight turned on" : "Flashlight turned off",
         });
-        return;
       }
-      
-      const newFlashlightState = !isFlashlightOn;
-      await track.applyConstraints({
-        advanced: [{ torch: newFlashlightState }]
-      });
-      
-      setIsFlashlightOn(newFlashlightState);
-      
-      toast({
-        title: newFlashlightState ? "Night Vision Activated" : "Night Vision Deactivated",
-        description: newFlashlightState ? "Flashlight turned on" : "Flashlight turned off",
-      });
     } catch (err) {
       console.error("Error toggling flashlight:", err);
       toast({
-        title: "Flashlight Error",
-        description: "Could not control the flashlight",
+        title: "Flashlight Unavailable",
+        description: "This device doesn't support flashlight control",
         variant: "destructive",
       });
     }
-  };
-  
-  // Function to simulate camera if access fails
-  const simulateCamera = () => {
-    setImageSrc("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=480&h=320");
-    setIsPhotoTaken(true);
-    runVerification();
-  };
-  
-  // Handle taking a photo from camera stream with enhanced error handling
-  const takePhoto = () => {
-    if (videoRef.current && stream && stream.active) {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth || 640;
-        canvas.height = videoRef.current.videoHeight || 480;
-        const ctx = canvas.getContext('2d');
-        if (ctx && videoRef.current) {
-          // Draw video frame to canvas
-          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-          
-          // Get image as data URL
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          setImageSrc(dataUrl);
-          setIsPhotoTaken(true);
-          
-          // Stop camera stream after taking photo
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-          }
-          
-          toast({
-            title: "Photo Captured",
-            description: "Processing driver verification...",
-          });
-          
-          runVerification();
-        } else {
-          toast({
-            title: "Error Taking Photo",
-            description: "Could not process the image. Please try again.",
-            variant: "destructive",
-          });
-          simulateCamera();
-        }
-      } catch (err) {
-        console.error("Error taking photo:", err);
-        toast({
-          title: "Error Taking Photo",
-          description: "Could not capture image. Using simulation mode instead.",
-          variant: "destructive",
-        });
-        simulateCamera();
-      }
-    } else {
-      // Fallback for testing
-      toast({
-        title: "Camera Not Available",
-        description: "Using simulation mode instead.",
-        variant: "default",
-      });
-      simulateCamera();
-    }
-  };
-  
-  // Reset camera and take new photo
-  const resetCamera = () => {
-    setIsPhotoTaken(false);
-    setImageSrc(null);
-    setMatchFound(null);
-    setDriverData(null);
-    setManualSearch("");
-    setProgress(0);
-    setIsProcessing(false);
-    setIsCameraOpen(true);
   };
 
-  // Open map with current location
-  const openMap = () => {
-    if (currentLocation) {
-      const mapUrl = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
-      window.open(mapUrl, '_blank');
-    } else {
-      toast({
-        title: "Location Not Available",
-        description: "Please enable location services to view on map",
-        variant: "destructive",
-      });
+  const toggleCameraFacing = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    setFacing(prev => prev === "user" ? "environment" : "user");
+    setIsFlashlightOn(false);
+    
+    setTimeout(() => {
+      enableCamera();
+    }, 300);
+  };
+
+  const captureAndVerify = async () => {
+    if (videoRef.current && canvasRef.current && stream) {
+      setIsVerifying(true);
+      setVerificationResult(null);
+      
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        const matchResult = facialMatchSimulation(allDrivers);
+        
+        if (matchResult.matched && matchResult.confidence && matchResult.driver) {
+          setVerificationResult({
+            ...matchResult,
+            imageDataUrl
+          });
+          
+          toast({
+            title: "Driver Verified",
+            description: `Facial match: ${matchResult.driver.name} (Confidence: ${matchResult.confidence}%)`,
+          });
+        } else {
+          setVerificationResult({
+            matched: false,
+            confidence: matchResult.confidence,
+            imageDataUrl
+          });
+          
+          toast({
+            title: "Driver Verification Failed",
+            description: `No facial match found (Confidence: ${matchResult.confidence}%)`,
+            variant: "destructive",
+          });
+        }
+      }
+      
+      setIsVerifying(false);
     }
   };
-  
-  // Run verification process with progress bar
-  const runVerification = () => {
-    setIsProcessing(true);
-    setProgress(0);
-    
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-          
-          // First check if we have admin stored drivers
-          if (adminStoredDrivers.length > 0) {
-            // Simulate matching using admin stored drivers with 75% match probability for demo
-            const matchResult = facialMatchSimulation(adminStoredDrivers);
-            setMatchFound(matchResult.matched);
-            
-            if (matchResult.matched && matchResult.driver) {
-              setDriverData(matchResult.driver);
-              setIsDialogOpen(true);
-              
-              toast({
-                title: "Driver Identified",
-                description: `Match found: ${matchResult.driver.name}`,
-              });
-            } else {
-              toast({
-                title: "No Match Found",
-                description: "Could not identify driver in our database",
-                variant: "destructive",
-              });
-            }
-          } else {
-            // Fallback to dummy data if no admin drivers
-            const isMatch = Math.random() < 0.75;
-            setMatchFound(isMatch);
-            
-            if (isMatch) {
-              // Pick a random driver from our dummy data
-              const randomDriver = dummyDrivers[Math.floor(Math.random() * dummyDrivers.length)];
-              setDriverData(randomDriver);
-              setIsDialogOpen(true);
-              
-              toast({
-                title: "Driver Identified",
-                description: `Match found: ${randomDriver.name}`,
-              });
-            } else {
-              toast({
-                title: "No Match Found",
-                description: "Could not identify driver in our database",
-                variant: "destructive",
-              });
-            }
-          }
-          
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 150);
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCameraOpen(false);
+    setIsFlashlightOn(false);
+    setCameraError(null);
   };
-  
-  // Handle manual search by license number
+
   const handleManualSearch = () => {
     if (!manualSearch) {
       toast({
@@ -494,7 +267,6 @@ const DriverVerification = () => {
     setIsLoading(true);
     
     setTimeout(() => {
-      // Search in both admin stored drivers and dummy data
       const foundDriver = allDrivers.find(
         driver => driver.licenseNumber.toLowerCase() === manualSearch.toLowerCase()
       );
@@ -524,594 +296,226 @@ const DriverVerification = () => {
 
   return (
     <Layout>
-      <div>
-        <h1 className="text-2xl font-semibold text-titeh-primary mb-2">Driver Verification</h1>
-        <p className="text-gray-500 mb-6">Verify driver's identity and license status</p>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Driver Verification</h1>
         
-        {/* Location Permission Banner */}
-        <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${locationGranted ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-          <div className={`p-2 rounded-full ${locationGranted ? 'bg-green-100' : 'bg-yellow-100'}`}>
-            <MapPin className={`h-5 w-5 ${locationGranted ? 'text-green-600' : 'text-yellow-600'}`} />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-medium text-sm">
-              {locationGranted ? 'Location Access Granted' : 'Location Access Required'}
-            </h3>
-            <p className="text-xs text-gray-600">
-              {locationGranted 
-                ? 'Your location is being used for verification purposes' 
-                : 'Enable location services for complete verification'
-              }
-            </p>
-          </div>
-          {locationGranted && (
+        <Card className="p-4 mb-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <Shield className="text-titeh-primary mr-2" />
+            License Validation
+          </h2>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Input 
+              placeholder="Enter License Number (e.g., DL1234567890)" 
+              className="flex-1"
+              value={licenseNumber}
+              onChange={(e) => setLicenseNumber(e.target.value)}
+            />
             <Button 
-              variant="outline" 
-              size="sm"
-              onClick={openMap}
-              className="ml-auto"
+              onClick={handleManualSearch} 
+              className="bg-titeh-primary hover:bg-blue-600"
+              disabled={isLicenseValidating}
             >
-              <MapPin className="h-4 w-4 mr-1" />
-              View Map
+              {isLicenseValidating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                <>
+                  <UserCheck className="mr-2 h-4 w-4" />
+                  Validate
+                </>
+              )}
             </Button>
-          )}
-          {!locationGranted && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position: GeolocationPosition) => {
-                      setCurrentLocation({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                      });
-                      setLocationGranted(true);
-                      toast({
-                        title: "Location Access Granted",
-                        description: "Location services are now available",
-                      });
-                    },
-                    (error) => {
-                      toast({
-                        title: "Location Access Denied",
-                        description: "Please enable location in your browser settings",
-                        variant: "destructive",
-                      });
-                    }
-                  );
-                }
-              }}
-              className="ml-auto"
-            >
-              Enable Location
-            </Button>
-          )}
-        </div>
-        
-        <Tabs 
-          defaultValue="camera" 
-          className="mb-6"
-          value={activeTab}
-          onValueChange={setActiveTab}
-        >
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="camera" className="flex items-center gap-2">
-              <Camera className="h-4 w-4" />
-              Face Recognition
-            </TabsTrigger>
-            <TabsTrigger value="license" className="flex items-center gap-2">
-              <FileSpreadsheet className="h-4 w-4" />
-              License Number
-            </TabsTrigger>
-          </TabsList>
+          </div>
           
-          <TabsContent value="camera">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Face Verification</CardTitle>
-                    {isCameraOpen && !isPhotoTaken && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={toggleCameraFacing}
-                        disabled={isCameraLoading}
-                      >
-                        <Smartphone className="h-4 w-4 mr-1" />
-                        {facing === "user" ? "Switch to Back Camera" : "Switch to Front Camera"}
-                      </Button>
-                    )}
-                  </div>
-                  <CardDescription>
-                    Take a clear photo of the driver for instant verification
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {!isCameraOpen && !isPhotoTaken ? (
-                      <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                        <Camera className="h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-sm text-gray-600 text-center mb-4">
-                          Access your camera to take a photo of the driver for verification
-                        </p>
-                        <Button 
-                          onClick={() => setIsCameraOpen(true)}
-                          className="bg-titeh-primary"
-                        >
-                          Open Camera
-                        </Button>
-                      </div>
-                    ) : isPhotoTaken ? (
-                      <div className="space-y-4">
-                        <div className="relative border rounded-lg overflow-hidden">
-                          {imageSrc && (
-                            <img 
-                              src={imageSrc} 
-                              alt="Driver" 
-                              className="w-full h-64 object-cover"
-                            />
-                          )}
-                          
-                          {isProcessing && (
-                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
-                              <Scan className="h-8 w-8 animate-pulse mb-2" />
-                              <p className="text-sm mb-2">Analyzing face...</p>
-                              <div className="w-3/4">
-                                <Progress value={progress} className="h-2" />
-                              </div>
-                              <p className="text-xs mt-2">{progress}% complete</p>
-                            </div>
-                          )}
-                          
-                          {matchFound === false && !isProcessing && (
-                            <div className="absolute inset-0 bg-red-500/30 flex flex-col items-center justify-center">
-                              <div className="bg-white p-4 rounded-lg text-center">
-                                <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                                <p className="font-semibold text-red-600">No Match Found</p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  Driver not recognized in the database
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {locationGranted && currentLocation && (
-                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              Location: Verified
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            onClick={resetCamera}
-                            className="flex items-center gap-1 flex-1"
-                            disabled={isProcessing}
-                          >
-                            <Camera className="h-4 w-4" />
-                            Take New Photo
-                          </Button>
-                          
-                          {matchFound === false && (
-                            <Button 
-                              className="flex items-center gap-1 flex-1 bg-titeh-primary"
-                              onClick={() => setActiveTab("license")}
-                            >
-                              <FileSpreadsheet className="h-4 w-4" />
-                              Search by License
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="relative border rounded-lg overflow-hidden h-64">
-                          {isCameraLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                              <div className="text-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-titeh-primary mx-auto mb-2" />
-                                <p className="text-sm text-gray-600">Accessing {facing === "user" ? "front" : "back"} camera...</p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {cameraError && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-red-50">
-                              <div className="text-center p-4">
-                                <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                                <p className="text-sm font-medium text-red-800">{cameraError}</p>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="mt-3"
-                                  onClick={toggleCameraFacing}
-                                >
-                                  Try {facing === "user" ? "Back" : "Front"} Camera
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          <video 
-                            ref={videoRef}
-                            autoPlay 
-                            muted 
-                            playsInline
-                            className={`w-full h-full object-cover ${isCameraLoading || cameraError ? 'opacity-0' : 'opacity-100'}`}
-                          />
-                          
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                            <p className="text-white text-sm">
-                              Position the face clearly in the frame
-                            </p>
-                          </div>
-                          
-                          {locationGranted && currentLocation && (
-                            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
-                            </div>
-                          )}
-                          
-                          {facing === "user" && (
-                            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
-                              <Smartphone className="h-3 w-3 inline mr-1" />
-                              Front Camera
-                            </div>
-                          )}
-                          
-                          {facing === "environment" && (
-                            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
-                              <Camera className="h-3 w-3 inline mr-1" />
-                              Back Camera {isFlashlightOn ? '(Light ON)' : ''}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              if (stream) {
-                                stream.getTracks().forEach(track => track.stop());
-                              }
-                              setIsCameraOpen(false);
-                              setIsFlashlightOn(false);
-                            }}
-                            className="flex-1"
-                            disabled={isCameraLoading}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Cancel
-                          </Button>
-                          
-                          {facing === "environment" && (
-                            <Button 
-                              variant="outline" 
-                              onClick={toggleFlashlight}
-                              className={`flex-1 ${isFlashlightOn ? 'bg-yellow-50 border-yellow-300' : ''}`}
-                              disabled={isCameraLoading}
-                            >
-                              <FlashLight className={`h-4 w-4 mr-1 ${isFlashlightOn ? 'text-yellow-500' : ''}`} />
-                              {isFlashlightOn ? 'Light Off' : 'Night Vision'}
-                            </Button>
-                          )}
-                          
-                          <Button 
-                            onClick={takePhoto} 
-                            className="bg-titeh-primary flex-1"
-                            disabled={isCameraLoading || !!cameraError}
-                          >
-                            <Camera className="h-4 w-4 mr-1" />
-                            Take Photo
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Verification Guide</CardTitle>
-                  <CardDescription>
-                    How to properly verify a driver's identity
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3 pb-3 border-b">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <Camera className="h-5 w-5 text-titeh-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-sm">Take a Clear Photo</h3>
-                        <p className="text-sm text-gray-600">
-                          Ensure good lighting and a straight-on view of the driver's face
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 pb-3 border-b">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <UserCheck className="h-5 w-5 text-titeh-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-sm">Verify Identity</h3>
-                        <p className="text-sm text-gray-600">
-                          Compare the photo with the driver and check license details
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 pb-3 border-b">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <Shield className="h-5 w-5 text-titeh-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-sm">Check Status</h3>
-                        <p className="text-sm text-gray-600">
-                          Confirm the license is valid and not expired or suspended
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="p-3 bg-yellow-50 rounded-md">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium text-sm text-yellow-800">Important Notice</h3>
-                          <p className="text-xs text-yellow-700">
-                            Only authorized personnel should perform driver verification. 
-                            Unauthorized access to driver data is punishable under data protection laws.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-3 bg-blue-50 rounded-md">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium text-sm text-blue-800">Device Requirements</h3>
-                          <p className="text-xs text-blue-700">
-                            For optimal verification, use a device with a working camera and location services enabled.
-                            Both front and back cameras can be used for verification purposes.
-                          </p>
-                          <p className="text-xs text-blue-700 mt-1">
-                            Night vision mode (flashlight) is available with back camera for low-light situations.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {licenseValidationResult && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-700">
+                License is valid and belongs to: {licenseValidationResult.name}
+              </p>
             </div>
-          </TabsContent>
+          )}
+        </Card>
+        
+        <Card className="p-4 mb-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <Camera className="text-titeh-primary mr-2" />
+            Facial Recognition
+          </h2>
           
-          <TabsContent value="license">
-            <Card>
-              <CardHeader>
-                <CardTitle>License Number Search</CardTitle>
-                <CardDescription>
-                  Enter the driver's license number to verify their status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="space-y-2">
-                      <Label htmlFor="license" className="block text-sm font-medium">
-                        Driver's License Number
-                      </Label>
-                      <input 
-                        id="license"
-                        type="text"
-                        className="w-full p-2 border rounded-md"
-                        placeholder="e.g. TG0220210123456"
-                        value={manualSearch}
-                        onChange={(e) => setManualSearch(e.target.value)}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Format: State code (TG) followed by numbers
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-600">
+              Initiate facial recognition to verify the driver's identity.
+            </p>
+            <Button 
+              onClick={() => setIsCameraOpen(true)} 
+              className="bg-titeh-primary hover:bg-blue-600"
+              disabled={isCameraOpen}
+            >
+              <Scan className="mr-2 h-4 w-4" />
+              Open Camera
+            </Button>
+          </div>
+          
+          {cameraError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-700">
+                <AlertCircle className="mr-2 h-4 w-4 inline-block align-middle" />
+                {cameraError}
+              </p>
+            </div>
+          )}
+          
+          {verificationResult && (
+            <div className="mt-4">
+              {verificationResult.matched ? (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center mb-2">
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                    <p className="text-sm text-green-700 font-medium">
+                      Driver Verified: {verificationResult.driver.name}
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <img 
+                      src={verificationResult.imageDataUrl} 
+                      alt="Captured Driver" 
+                      className="w-24 h-24 object-cover rounded-md mr-4" 
+                    />
+                    <div>
+                      <p className="text-xs text-gray-600">
+                        Confidence: {verificationResult.confidence}%
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        License Number: {verificationResult.driver.licenseNumber}
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => setActiveTab("camera")}
-                    >
-                      <Camera className="h-4 w-4 mr-1" />
-                      Use Camera
-                    </Button>
-                    <Button 
-                      className="flex-1 bg-titeh-primary"
-                      onClick={handleManualSearch}
-                      disabled={isLoading || !manualSearch}
-                    >
-                      {isLoading ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        <>
-                          <Scan className="h-4 w-4 mr-1" />
-                          Verify License
-                        </>
-                      )}
-                    </Button>
+                </div>
+              ) : (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center mb-2">
+                    <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+                    <p className="text-sm text-red-700 font-medium">
+                      Driver Verification Failed
+                    </p>
                   </div>
-                  
-                  <div className="p-3 bg-blue-50 rounded-md">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium text-sm text-blue-800">Sample License Numbers</h3>
-                        <p className="text-xs text-blue-700 mb-2">
-                          For testing, use one of these license numbers:
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {allDrivers.slice(0, 4).map((driver, index) => (
-                            <div 
-                              key={index}
-                              className="text-xs bg-white p-2 rounded border border-blue-100 flex justify-between"
-                            >
-                              <span>{driver.licenseNumber}</span>
-                              <span className={`font-medium ${
-                                driver.status === "valid" ? "text-green-600" : 
-                                driver.status === "expired" ? "text-red-600" : "text-orange-600"
-                              }`}>
-                                {driver.status === "valid" ? "Valid" : 
-                                 driver.status === "expired" ? "Expired" : "Suspended"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                  <div className="flex items-center">
+                    <img 
+                      src={verificationResult.imageDataUrl} 
+                      alt="Captured Driver" 
+                      className="w-24 h-24 object-cover rounded-md mr-4" 
+                    />
+                    <p className="text-xs text-gray-600">
+                      No match found (Confidence: {verificationResult.confidence}%)
+                    </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              )}
+            </div>
+          )}
+        </Card>
         
-        {/* Driver verification results dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Driver Verification Results</DialogTitle>
-              <DialogDescription>
-                Driver details from database match with 97% confidence
-              </DialogDescription>
-            </DialogHeader>
-            
-            {driverData && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={driverData.photoUrl} 
-                    alt={driverData.name}
-                    className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
+        {isCameraOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
+              <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                <h3 className="font-medium">Capture Driver Photo</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-500" 
+                  onClick={closeCamera}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="relative">
+                {isCameraLoading ? (
+                  <div className="w-full h-64 flex items-center justify-center">
+                    <Loader2 className="animate-spin text-titeh-primary" size={48} />
+                  </div>
+                ) : (
+                  <video 
+                    ref={videoRef}
+                    autoPlay 
+                    playsInline
+                    className="w-full h-64 object-cover"
+                    onLoadedMetadata={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play();
+                      }
+                    }}
                   />
-                  <div>
-                    <h3 className="font-medium text-lg">{driverData.name}</h3>
-                    <div className="flex items-center gap-1 mt-1">
-                      {driverData.status === "valid" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Valid
-                        </span>
-                      ) : driverData.status === "expired" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Expired
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Suspended
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">License Number</span>
-                    <span className="text-sm font-medium">{driverData.licenseNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Valid Until</span>
-                    <span className={`text-sm font-medium ${
-                      driverData.status === "expired" ? "text-red-600" : ""
-                    }`}>
-                      {driverData.validUntil}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Vehicle Class</span>
-                    <span className="text-sm font-medium">{driverData.vehicleClass}</span>
-                  </div>
-                  {locationGranted && currentLocation && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Verification Location</span>
-                      <span className="text-sm font-medium text-blue-600 underline cursor-pointer" onClick={openMap}>
-                        View on Map
-                      </span>
-                    </div>
-                  )}
-                  
-                  {driverData.address && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Address</span>
-                      <span className="text-sm font-medium">{driverData.address}</span>
-                    </div>
-                  )}
-                  
-                  {driverData.age && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Age</span>
-                      <span className="text-sm font-medium">{driverData.age}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {driverData.status !== "valid" && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <div className="flex items-start">
-                      <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-sm font-medium text-red-800">
-                          {driverData.status === "expired" ? "License Expired" : "License Suspended"}
-                        </h3>
-                        <p className="text-sm text-red-700 mt-1">
-                          {driverData.status === "expired" 
-                            ? "This driver's license has expired and is no longer valid."
-                            : "This driver's license has been suspended. Not permitted to drive."
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 )}
                 
-                {driverData.notes && (
-                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-                    <div className="flex items-start">
-                      <Info className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="text-sm font-medium text-blue-800">Additional Notes</h3>
-                        <p className="text-sm text-blue-700 mt-1">{driverData.notes}</p>
-                      </div>
-                    </div>
+                <canvas ref={canvasRef} className="hidden" />
+                
+                <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                  {facing === "user" ? "Front Camera" : "Back Camera"}
+                </div>
+                
+                {facing === "environment" && (
+                  <div className={`absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-xs ${isFlashlightOn ? 'text-yellow-300' : 'text-white'}`}>
+                    {isFlashlightOn ? 'Flashlight ON' : 'Flashlight OFF'}
                   </div>
                 )}
               </div>
-            )}
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Close
-              </Button>
-              <Button className="bg-titeh-primary">
-                Print Report
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              
+              <div className="p-4 flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={toggleCameraFacing}
+                  className="flex-1"
+                  disabled={isCameraLoading}
+                >
+                  <Camera className="h-4 w-4 mr-1" />
+                  Switch Camera
+                </Button>
+                
+                {facing === "environment" && (
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleFlashlight}
+                    className={`flex-1 ${isFlashlightOn ? 'bg-yellow-50 border-yellow-300' : ''}`}
+                    disabled={isCameraLoading}
+                  >
+                    <FlashLight className={`h-4 w-4 mr-1 ${isFlashlightOn ? 'text-yellow-500' : ''}`} />
+                    {isFlashlightOn ? 'Turn Off Light' : 'Turn On Light'}
+                  </Button>
+                )}
+                
+                <Button 
+                  className="flex-1 bg-titeh-primary"
+                  onClick={captureAndVerify}
+                  disabled={isVerifying || isCameraLoading}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4 mr-1" />
+                      Capture & Verify
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="text-sm text-gray-600 italic mt-4">
+          <p>
+            Note: This feature uses simulated facial recognition and license validation.
+            For demonstration purposes only.
+          </p>
+        </div>
       </div>
     </Layout>
   );
