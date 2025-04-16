@@ -63,11 +63,25 @@ export const facialMatchSimulation = (drivers: DriverData[]): MatchResult => {
  * @returns Matched driver if found, null otherwise
  */
 export const validateLicenseNumber = (licenseNumber: string, drivers: DriverData[]): DriverData | null => {
+  if (!licenseNumber || !drivers || drivers.length === 0) {
+    return null;
+  }
+  
   const normalizedLicense = licenseNumber.trim().toLowerCase();
+  
+  // Debug: log the license being searched and available licenses
+  console.log("Searching for license:", normalizedLicense);
+  console.log("Available licenses:", drivers.map(d => d.licenseNumber.toLowerCase()));
   
   const matchedDriver = drivers.find(
     driver => driver.licenseNumber.toLowerCase() === normalizedLicense
   );
+  
+  // Debug: log if a match was found
+  console.log("Match found:", !!matchedDriver);
+  if (matchedDriver) {
+    console.log("Matched driver:", matchedDriver);
+  }
   
   return matchedDriver || null;
 };

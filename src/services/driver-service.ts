@@ -4,6 +4,7 @@ import { DriverData } from "@/lib/verification-utils";
 
 class DriverService {
   private static instance: DriverService;
+  private adminDriverCache: DriverData[] | null = null;
 
   // Create a singleton instance
   public static getInstance(): DriverService {
@@ -16,16 +17,22 @@ class DriverService {
   // Get all drivers
   async getAllDrivers(): Promise<DriverData[]> {
     try {
+      // First check if there are local admin-saved drivers
+      const localDrivers = this.getLocalAdminDrivers();
+      
+      // Fetch from Supabase
       const { data, error } = await supabase
         .from("drivers")
         .select("*");
 
       if (error) {
-        console.error("Error fetching drivers:", error);
-        return [];
+        console.error("Error fetching drivers from Supabase:", error);
+        // If Supabase fetch fails, return local drivers or empty array
+        return localDrivers;
       }
 
-      return data.map((driver) => ({
+      // Map Supabase results to DriverData
+      const supabaseDrivers = data.map((driver) => ({
         id: driver.id,
         name: driver.name,
         licenseNumber: driver.license_number,
@@ -37,14 +44,38 @@ class DriverService {
         age: driver.age || "",
         notes: driver.notes || ""
       }));
+      
+      // Combine both sources of drivers, ensuring no duplicates by license number
+      const allDrivers = [...supabaseDrivers];
+      
+      // Only add local drivers that don't exist in supabase (by license number)
+      for (const localDriver of localDrivers) {
+        const exists = supabaseDrivers.some(
+          d => d.licenseNumber.toLowerCase() === localDriver.licenseNumber.toLowerCase()
+        );
+        if (!exists) {
+          allDrivers.push(localDriver);
+        }
+      }
+      
+      // Cache the combined results
+      this.adminDriverCache = allDrivers;
+      
+      return allDrivers;
     } catch (error) {
       console.error("Unexpected error fetching drivers:", error);
-      return [];
+      // Return local drivers as a fallback
+      return this.getLocalAdminDrivers();
     }
   }
 
   // Get driver by ID
   async getDriverById(id: string): Promise<DriverData | null> {
+    // Check local cache first
+    const localDrivers = this.getLocalAdminDrivers();
+    const localMatch = localDrivers.find(driver => driver.id === id);
+    if (localMatch) return localMatch;
+    
     try {
       const { data, error } = await supabase
         .from("drivers")
@@ -95,9 +126,12 @@ class DriverService {
         .single();
 
       if (error || !data) {
-        console.error("Error adding driver:", error);
+        console.error("Error adding driver to Supabase:", error);
         return null;
       }
+
+      // Invalidate cache
+      this.adminDriverCache = null;
 
       return {
         id: data.id,
@@ -140,6 +174,8 @@ class DriverService {
         return false;
       }
 
+      // Invalidate cache
+      this.adminDriverCache = null;
       return true;
     } catch (error) {
       console.error("Unexpected error updating driver:", error);
@@ -160,6 +196,8 @@ class DriverService {
         return false;
       }
 
+      // Invalidate cache
+      this.adminDriverCache = null;
       return true;
     } catch (error) {
       console.error("Unexpected error deleting driver:", error);
@@ -169,6 +207,13 @@ class DriverService {
 
   // Search drivers by license number or name
   async searchDrivers(query: string): Promise<DriverData[]> {
+    // First check local drivers
+    const localDrivers = this.getLocalAdminDrivers();
+    const localMatches = localDrivers.filter(driver => 
+      driver.name.toLowerCase().includes(query.toLowerCase()) || 
+      driver.licenseNumber.toLowerCase().includes(query.toLowerCase())
+    );
+    
     try {
       const { data, error } = await supabase
         .from("drivers")
@@ -177,10 +222,10 @@ class DriverService {
 
       if (error) {
         console.error("Error searching drivers:", error);
-        return [];
+        return localMatches;
       }
 
-      return data.map((driver) => ({
+      const supabaseMatches = data.map((driver) => ({
         id: driver.id,
         name: driver.name,
         licenseNumber: driver.license_number,
@@ -192,10 +237,58 @@ class DriverService {
         age: driver.age || "",
         notes: driver.notes || ""
       }));
+      
+      // Combine both sources of search results, avoiding duplicates
+      const allMatches = [...supabaseMatches];
+      
+      // Add local matches that don't exist in supabase results
+      for (const localMatch of localMatches) {
+        const exists = supabaseMatches.some(
+          d => d.licenseNumber.toLowerCase() === localMatch.licenseNumber.toLowerCase()
+        );
+        if (!exists) {
+          allMatches.push(localMatch);
+        }
+      }
+      
+      return allMatches;
     } catch (error) {
       console.error("Unexpected error searching drivers:", error);
+      return localMatches;
+    }
+  }
+  
+  // Get drivers stored in localStorage by admin panel
+  private getLocalAdminDrivers(): DriverData[] {
+    // Return cached drivers if available
+    if (this.adminDriverCache) {
+      return this.adminDriverCache;
+    }
+    
+    try {
+      const savedDrivers = localStorage.getItem('adminDriverRecords');
+      const localDrivers = savedDrivers ? JSON.parse(savedDrivers) : [];
+      return localDrivers;
+    } catch (error) {
+      console.error("Error loading drivers from localStorage:", error);
       return [];
     }
+  }
+  
+  // Find a driver by license number (combining both sources)
+  async findDriverByLicense(licenseNumber: string): Promise<DriverData | null> {
+    // Get all drivers from both sources
+    const allDrivers = await this.getAllDrivers();
+    
+    // Normalize input
+    const normalizedLicense = licenseNumber.trim().toLowerCase();
+    
+    // Search for a match
+    const matchedDriver = allDrivers.find(
+      driver => driver.licenseNumber.toLowerCase() === normalizedLicense
+    );
+    
+    return matchedDriver || null;
   }
 }
 

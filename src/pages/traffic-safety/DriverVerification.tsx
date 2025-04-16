@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +53,7 @@ const DriverVerification = () => {
       try {
         const drivers = await DriverService.getAllDrivers();
         setDriverDatabase(drivers);
+        console.log("Loaded drivers:", drivers);
       } catch (error) {
         console.error("Error loading drivers:", error);
         toast({
@@ -86,27 +86,58 @@ const DriverVerification = () => {
     }
   }, []);
 
-  const handleLicenseSearch = () => {
+  const handleLicenseSearch = async () => {
+    if (!licenseNumber.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a license number",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsVerifying(true);
     
-    setTimeout(() => {
-      const result = validateLicenseNumber(licenseNumber, driverDatabase);
+    try {
+      // First try with direct service method that combines both Supabase and local storage
+      const driverResult = await DriverService.findDriverByLicense(licenseNumber);
       
-      if (result) {
+      if (driverResult) {
+        console.log("Driver found:", driverResult);
         setVerificationResult({
           success: true,
-          driver: result,
+          driver: driverResult,
           message: "License verified successfully"
         });
       } else {
-        setVerificationResult({
-          success: false,
-          message: "License number not found in database"
-        });
+        console.log("No driver found with license:", licenseNumber);
+        console.log("Current driver database:", driverDatabase);
+        
+        // Fallback to the local validation utility 
+        const validatedDriver = validateLicenseNumber(licenseNumber, driverDatabase);
+        
+        if (validatedDriver) {
+          setVerificationResult({
+            success: true,
+            driver: validatedDriver,
+            message: "License verified successfully"
+          });
+        } else {
+          setVerificationResult({
+            success: false,
+            message: "License number not found in database"
+          });
+        }
       }
-      
+    } catch (error) {
+      console.error("License verification error:", error);
+      setVerificationResult({
+        success: false,
+        message: "Error during verification process"
+      });
+    } finally {
       setIsVerifying(false);
-    }, 1500);
+    }
   };
 
   const openCamera = async () => {
@@ -277,7 +308,7 @@ const DriverVerification = () => {
     }
   };
 
-  const captureImage = () => {
+  const captureImage = async () => {
     if (!videoRef.current || !canvasRef.current || !stream) return;
     
     const video = videoRef.current;
@@ -293,9 +324,13 @@ const DriverVerification = () => {
     
     setIsVerifying(true);
     
-    // Simulate facial recognition
-    setTimeout(() => {
-      const result = facialMatchSimulation(driverDatabase);
+    try {
+      // Refresh driver database before verification
+      const drivers = await DriverService.getAllDrivers();
+      setDriverDatabase(drivers);
+      
+      // Simulate facial recognition
+      const result = facialMatchSimulation(drivers);
       
       if (result.matched && result.driver) {
         setVerificationResult({
@@ -311,10 +346,16 @@ const DriverVerification = () => {
           confidence: result.confidence
         });
       }
-      
+    } catch (error) {
+      console.error("Error during facial verification:", error);
+      setVerificationResult({
+        success: false,
+        message: "Error during verification process",
+      });
+    } finally {
       closeCamera();
       setIsVerifying(false);
-    }, 2000);
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,27 +380,27 @@ const DriverVerification = () => {
       // Convert to data URL
       const imageUrl = await fileToDataUrl(file);
       
+      // Refresh driver database before verification
+      const drivers = await DriverService.getAllDrivers();
+      setDriverDatabase(drivers);
+      
       // Simulate facial recognition with delay
-      setTimeout(() => {
-        const result = facialMatchSimulation(driverDatabase);
-        
-        if (result.matched && result.driver) {
-          setVerificationResult({
-            success: true,
-            driver: result.driver,
-            message: "Face matched with database record",
-            confidence: result.confidence
-          });
-        } else {
-          setVerificationResult({
-            success: false,
-            message: "No matching face found in database",
-            confidence: result.confidence
-          });
-        }
-        
-        setIsVerifying(false);
-      }, 2000);
+      const result = facialMatchSimulation(drivers);
+      
+      if (result.matched && result.driver) {
+        setVerificationResult({
+          success: true,
+          driver: result.driver,
+          message: "Face matched with database record",
+          confidence: result.confidence
+        });
+      } else {
+        setVerificationResult({
+          success: false,
+          message: "No matching face found in database",
+          confidence: result.confidence
+        });
+      }
     } catch (error) {
       console.error("Error processing image:", error);
       toast({
@@ -367,6 +408,7 @@ const DriverVerification = () => {
         description: "Failed to process the uploaded image",
         variant: "destructive",
       });
+    } finally {
       setIsVerifying(false);
     }
   };
