@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          details: Json | null
+          id: string
+          performed_at: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          details?: Json | null
+          id?: string
+          performed_at?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          details?: Json | null
+          id?: string
+          performed_at?: string | null
+          performed_by?: string | null
+        }
+        Relationships: []
+      }
+      breaking_news: {
+        Row: {
+          author: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          expiry_date: string | null
+          id: string
+          is_published: boolean | null
+          priority: string
+          publish_date: string | null
+          title: string
+        }
+        Insert: {
+          author?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority: string
+          publish_date?: string | null
+          title: string
+        }
+        Update: {
+          author?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority?: string
+          publish_date?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           address: string | null
@@ -132,6 +195,63 @@ export type Database = {
         }
         Relationships: []
       }
+      system_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_sent: boolean | null
+          message: string
+          send_date: string | null
+          target_audience: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_sent?: boolean | null
+          message: string
+          send_date?: string | null
+          target_audience: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_sent?: boolean | null
+          message?: string
+          send_date?: string | null
+          target_audience?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -140,7 +260,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -255,6 +375,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
