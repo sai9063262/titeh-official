@@ -17,6 +17,14 @@ export interface DriverData {
   address?: string;
   age?: string;
   notes?: string;
+  email?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  medicalConditions?: string;
+  trainingCertificates?: string[];
+  documents?: { name: string; url: string; }[];
 }
 
 interface MatchResult {

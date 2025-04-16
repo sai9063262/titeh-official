@@ -59,7 +59,7 @@ class DriverService {
           d => d.licenseNumber.toLowerCase() === localDriver.licenseNumber.toLowerCase()
         );
         if (!exists) {
-          allDrivers.push(localDriver);
+          allDrivers.push(localDriver as DriverData);
         }
       }
       
@@ -254,7 +254,7 @@ class DriverService {
           d => d.licenseNumber.toLowerCase() === localMatch.licenseNumber.toLowerCase()
         );
         if (!exists) {
-          allMatches.push(localMatch);
+          allMatches.push(localMatch as DriverData);
         }
       }
       
