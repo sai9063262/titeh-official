@@ -1,6 +1,6 @@
 
 import CryptoJS from 'crypto-js';
-import { adminUsers } from '@/lib/adminConfig';
+import { adminUsers, secureAdminCredentials } from '@/lib/adminConfig';
 
 class AuthService {
   private static instance: AuthService;
@@ -10,8 +10,44 @@ class AuthService {
   private otpAttempts: number = 0;
   private lockedUntil: number | null = null;
   private adminEmail: string | null = null;
+  private lastActivity: number = Date.now();
+  private sessionTimeout: number = 30 * 60 * 1000; // 30 minutes in milliseconds
+  private sessionCheckInterval: NodeJS.Timeout | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Set up session activity tracking
+    this.setupActivityTracking();
+  }
+
+  private setupActivityTracking(): void {
+    // Clear any existing interval
+    if (this.sessionCheckInterval) {
+      clearInterval(this.sessionCheckInterval);
+    }
+    
+    // Check session timeout every minute
+    this.sessionCheckInterval = setInterval(() => {
+      if (this.isAuthenticated && (Date.now() - this.lastActivity > this.sessionTimeout)) {
+        console.log('Session timeout due to inactivity');
+        this.logout();
+      }
+    }, 60000); // Check every minute
+    
+    // Update last activity on user interactions
+    const updateActivity = () => {
+      if (this.isAuthenticated) {
+        this.lastActivity = Date.now();
+      }
+    };
+    
+    // Track user activity
+    if (typeof window !== 'undefined') {
+      window.addEventListener('click', updateActivity);
+      window.addEventListener('keypress', updateActivity);
+      window.addEventListener('scroll', updateActivity);
+      window.addEventListener('mousemove', updateActivity);
+    }
+  }
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -26,6 +62,7 @@ class AuthService {
     if (sessionExpiry && parseInt(sessionExpiry) > Date.now()) {
       this.isAuthenticated = true;
       this.adminEmail = localStorage.getItem('adminEmail');
+      this.lastActivity = Date.now(); // Update activity on session check
       return true;
     }
     
@@ -53,25 +90,10 @@ class AuthService {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     
-    // Debug login credentials
-    console.log("Attempting login with:", trimmedEmail);
-    
-    // Fix the admin credentials check - exact matching needed
-    if (trimmedEmail === "saikumarpanchagiri058@gmail.com" && trimmedPassword === "$@!|<u|\\/|@r") {
+    // Use secure validation from adminConfig
+    if (secureAdminCredentials.validateCredentials(trimmedEmail, trimmedPassword)) {
       this.adminEmail = trimmedEmail;
-      return true;
-    }
-    
-    // For OpenAI API access specifically
-    if (trimmedEmail === "adminopenaiapi.com" && trimmedPassword === "OPENAIAPIKEY") {
-      this.adminEmail = trimmedEmail;
-      return true;
-    }
-    
-    // Check against admin users config
-    const adminMatch = adminUsers.find(admin => admin.email === trimmedEmail);
-    if (adminMatch) {
-      this.adminEmail = trimmedEmail;
+      this.lastActivity = Date.now(); // Update activity on login
       return true;
     }
     
@@ -121,14 +143,16 @@ class AuthService {
     this.currentOTP = null;
     this.otpExpiry = null;
     this.otpAttempts = 0;
+    this.lastActivity = Date.now(); // Update activity on successful OTP
     
     return true;
   }
 
   public completeAuthentication(): void {
     this.isAuthenticated = true;
+    this.lastActivity = Date.now();
     
-    // Set session to expire in 24 hours
+    // Set session to expire in 24 hours (but will auto-logout after inactivity)
     const expiryTime = Date.now() + 24 * 60 * 60 * 1000;
     localStorage.setItem('adminSessionExpiry', expiryTime.toString());
     if (this.adminEmail) {
@@ -155,6 +179,14 @@ class AuthService {
 
   public isAdminByEmail(email: string): boolean {
     return adminUsers.some(user => user.email === email);
+  }
+
+  public getLastActivity(): number {
+    return this.lastActivity;
+  }
+
+  public updateActivity(): void {
+    this.lastActivity = Date.now();
   }
 
   private logAuthEvent(action: string, success: boolean): void {

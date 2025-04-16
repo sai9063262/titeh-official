@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EyeOff, Eye, RefreshCw } from "lucide-react";
+import { EyeOff, Eye, RefreshCw, InfoIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import AuthService from "@/services/auth-service";
 import { CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface LoginFormProps {
   email: string;
@@ -60,12 +61,13 @@ const LoginForm = ({ email, setEmail, password, setPassword, onSubmit, isVerifyi
             </Button>
           </div>
         </div>
-        <div className="bg-amber-50 p-3 rounded-md border border-amber-200 mt-4">
-          <p className="text-sm text-amber-800">
-            <span className="font-medium">Demo credentials:</span> Email: saikumarpanchagiri058@gmail.com
-            <br />
-            Password: $@!|&lt;u|\/|@r
-          </p>
+        <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+          <div className="flex items-start">
+            <InfoIcon className="h-4 w-4 text-blue-600 mt-0.5 mr-2" />
+            <p className="text-sm text-blue-800">
+              If you need admin access, please contact the system administrator.
+            </p>
+          </div>
         </div>
       </CardContent>
       <CardFooter>
