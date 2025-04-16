@@ -64,6 +64,7 @@ export const facialMatchSimulation = (drivers: DriverData[]): MatchResult => {
  */
 export const validateLicenseNumber = (licenseNumber: string, drivers: DriverData[]): DriverData | null => {
   if (!licenseNumber || !drivers || drivers.length === 0) {
+    console.log("No license number provided or empty driver database");
     return null;
   }
   
@@ -71,7 +72,8 @@ export const validateLicenseNumber = (licenseNumber: string, drivers: DriverData
   
   // Debug: log the license being searched and available licenses
   console.log("Searching for license:", normalizedLicense);
-  console.log("Available licenses:", drivers.map(d => d.licenseNumber.toLowerCase()));
+  console.log("Available drivers:", drivers.length);
+  console.log("License numbers in database:", drivers.map(d => d.licenseNumber.toLowerCase()));
   
   const matchedDriver = drivers.find(
     driver => driver.licenseNumber.toLowerCase() === normalizedLicense

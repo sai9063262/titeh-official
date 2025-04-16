@@ -20,6 +20,9 @@ class DriverService {
       // First check if there are local admin-saved drivers
       const localDrivers = this.getLocalAdminDrivers();
       
+      // Log the local drivers for debugging
+      console.log("Local admin drivers:", localDrivers);
+      
       // Fetch from Supabase
       const { data, error } = await supabase
         .from("drivers")
@@ -45,6 +48,8 @@ class DriverService {
         notes: driver.notes || ""
       }));
       
+      console.log("Supabase drivers:", supabaseDrivers);
+      
       // Combine both sources of drivers, ensuring no duplicates by license number
       const allDrivers = [...supabaseDrivers];
       
@@ -57,6 +62,8 @@ class DriverService {
           allDrivers.push(localDriver);
         }
       }
+      
+      console.log("All drivers after combining:", allDrivers);
       
       // Cache the combined results
       this.adminDriverCache = allDrivers;
@@ -118,9 +125,9 @@ class DriverService {
           vehicle_class: driver.vehicleClass,
           photo_url: driver.photoUrl,
           status: driver.status,
-          address: driver.address,
-          age: driver.age,
-          notes: driver.notes
+          address: driver.address || "",
+          age: driver.age || "",
+          notes: driver.notes || ""
         }])
         .select()
         .single();
@@ -163,9 +170,9 @@ class DriverService {
           vehicle_class: updates.vehicleClass,
           photo_url: updates.photoUrl,
           status: updates.status,
-          address: updates.address,
-          age: updates.age,
-          notes: updates.notes
+          address: updates.address || "",
+          age: updates.age || "",
+          notes: updates.notes || ""
         })
         .eq("id", id);
 
@@ -267,7 +274,13 @@ class DriverService {
     
     try {
       const savedDrivers = localStorage.getItem('adminDriverRecords');
-      const localDrivers = savedDrivers ? JSON.parse(savedDrivers) : [];
+      if (!savedDrivers) {
+        console.log("No drivers found in localStorage");
+        return [];
+      }
+      
+      const localDrivers = JSON.parse(savedDrivers);
+      console.log("Drivers loaded from localStorage:", localDrivers);
       return localDrivers;
     } catch (error) {
       console.error("Error loading drivers from localStorage:", error);
@@ -277,8 +290,15 @@ class DriverService {
   
   // Find a driver by license number (combining both sources)
   async findDriverByLicense(licenseNumber: string): Promise<DriverData | null> {
+    console.log("Finding driver by license number:", licenseNumber);
+    
+    // First clear the cache to ensure we're getting fresh data
+    this.adminDriverCache = null;
+    
     // Get all drivers from both sources
     const allDrivers = await this.getAllDrivers();
+    
+    console.log("Total drivers to search through:", allDrivers.length);
     
     // Normalize input
     const normalizedLicense = licenseNumber.trim().toLowerCase();
@@ -287,6 +307,8 @@ class DriverService {
     const matchedDriver = allDrivers.find(
       driver => driver.licenseNumber.toLowerCase() === normalizedLicense
     );
+    
+    console.log("Driver match result:", matchedDriver ? "Found" : "Not found");
     
     return matchedDriver || null;
   }
