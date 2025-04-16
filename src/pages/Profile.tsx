@@ -19,7 +19,6 @@ const Profile = () => {
   
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [updating, setUpdating] = useState(false);
   
@@ -31,7 +30,7 @@ const Profile = () => {
         
         const { data, error } = await supabase
           .from('profiles')
-          .select('full_name, username, avatar_url')
+          .select('full_name, avatar_url')
           .eq('id', user.id)
           .single();
         
@@ -42,7 +41,6 @@ const Profile = () => {
         
         if (data) {
           setFullName(data.full_name || '');
-          setUsername(data.username || '');
           setAvatarUrl(data.avatar_url || '');
         }
       } catch (error) {
@@ -64,14 +62,13 @@ const Profile = () => {
       const updates = {
         id: user.id,
         full_name: fullName,
-        username,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       };
       
       const { error } = await supabase
         .from('profiles')
-        .upsert(updates, { returning: 'minimal' });
+        .upsert(updates);
       
       if (error) {
         throw error;
@@ -131,16 +128,6 @@ const Profile = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your full name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Your username"
               />
             </div>
             

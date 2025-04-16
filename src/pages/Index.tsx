@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { 
   School, Settings as SettingsIcon, Badge, Bluetooth, Wifi, 
-  FileSpreadsheet, Smartphone, AlertTriangle, Leaf, MapPin 
+  FileSpreadsheet, Smartphone, AlertTriangle, Leaf, MapPin,
+  Car as CarIcon, ShieldAlert, UserCircle, CreditCard as CreditCardIcon,
 } from 'lucide-react';
 import GovernmentBranding from '@/components/GovernmentBranding';
 
@@ -35,7 +37,7 @@ const Index = () => {
         {/* Module Navigation Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <Link to="/vehicle" className="module-tile">
-            <Car className="module-icon" />
+            <CarIcon className="module-icon" />
             <span className="text-sm font-medium text-center">Vehicle Management</span>
           </Link>
           
@@ -45,17 +47,17 @@ const Index = () => {
           </Link>
           
           <Link to="/traffic-safety" className="module-tile">
-            <Shield className="module-icon" />
+            <ShieldAlert className="module-icon" />
             <span className="text-sm font-medium text-center">Traffic Enforcement & Safety</span>
           </Link>
           
           <Link to="/attendance" className="module-tile">
-            <User className="module-icon" />
+            <UserCircle className="module-icon" />
             <span className="text-sm font-medium text-center">Attendance Tracking</span>
           </Link>
           
           <Link to="/parivahan-services" className="module-tile">
-            <CreditCard className="module-icon" />
+            <CreditCardIcon className="module-icon" />
             <span className="text-sm font-medium text-center">Parivahan Services</span>
           </Link>
           
@@ -69,7 +71,7 @@ const Index = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-titeh-primary">What's New</h2>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Badge className="bg-green-50 text-green-700 border-green-200">
               Version 1.2.0
             </Badge>
           </div>
@@ -116,7 +118,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="titeh-card">
               <div className="flex items-center mb-2">
-                <Shield className="text-green-500 mr-2" />
+                <ShieldAlert className="text-green-500 mr-2" />
                 <h3 className="font-medium">AES-256 Encryption</h3>
               </div>
               <p className="text-sm text-gray-600">All your data is now protected with military-grade encryption for maximum security.</p>
