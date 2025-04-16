@@ -1,245 +1,171 @@
 
-import { useState, useEffect } from "react";
-import Layout from "@/components/Layout";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import Layout from "@/components/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, User, Camera } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState<{
-    full_name: string;
-    username: string | null;
-    avatar_url: string | null;
-  }>({
-    full_name: "",
-    username: null,
-    avatar_url: null,
-  });
-
+  const navigate = useNavigate();
+  
+  const [loading, setLoading] = useState(true);
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [updating, setUpdating] = useState(false);
+  
   useEffect(() => {
-    if (user) {
-      loadProfile();
+    async function loadProfile() {
+      try {
+        setLoading(true);
+        if (!user) return;
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, username, avatar_url')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error loading profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setFullName(data.full_name || '');
+          setUsername(data.username || '');
+          setAvatarUrl(data.avatar_url || '');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setLoading(false);
+      }
     }
+    
+    loadProfile();
   }, [user]);
 
-  const loadProfile = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
+  const handleUpdateProfile = async () => {
     try {
-      // Load profile data from the profiles table
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, username, avatar_url")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-
-      // Set the profile state with data from the database or user metadata as fallback
-      setProfile({
-        full_name: data?.full_name || user.user_metadata.full_name || "",
-        username: data?.username || null,
-        avatar_url: data?.avatar_url || null,
-      });
-    } catch (error) {
-      console.error("Error loading profile:", error);
-      // Fallback to user metadata if available
-      setProfile({
-        full_name: user.user_metadata.full_name || "",
-        username: null,
-        avatar_url: null,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    
-    setIsSaving(true);
-    try {
+      setUpdating(true);
+      
+      if (!user) return;
+      
+      const updates = {
+        id: user.id,
+        full_name: fullName,
+        username,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      };
+      
       const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: profile.full_name,
-          username: profile.username,
-          updated_at: new Date(),
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
-
+        .from('profiles')
+        .upsert(updates, { returning: 'minimal' });
+      
+      if (error) {
+        throw error;
+      }
+      
       toast({
-        title: "Profile updated",
-        description: "Your profile information has been updated successfully.",
+        title: 'Profile updated!',
+        description: 'Your profile has been successfully updated.',
       });
     } catch (error: any) {
       toast({
-        title: "Error updating profile",
+        title: 'Error updating profile',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
-      setIsSaving(false);
+      setUpdating(false);
     }
   };
-
-  const getAvatarFallback = () => {
-    if (profile.full_name) {
-      return profile.full_name
-        .split(" ")
-        .map(name => name[0])
-        .join("")
+  
+  // Get avatar fallback text from user's name or email
+  const getInitials = () => {
+    if (fullName) {
+      return fullName
+        .split(' ')
+        .map((name) => name[0])
+        .join('')
         .toUpperCase();
     }
-    return "U";
+    
+    return user?.email ? user.email[0].toUpperCase() : 'U';
   };
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Profile Settings</h1>
+      <div className="container max-w-2xl mx-auto py-6">
+        <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
         
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-titeh-primary" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
-                  <div className="relative">
-                    <Avatar className="h-24 w-24">
-                      {profile.avatar_url ? (
-                        <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                      ) : null}
-                      <AvatarFallback className="text-2xl bg-titeh-primary text-white">
-                        {getAvatarFallback()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button 
-                      size="icon" 
-                      className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-titeh-primary"
-                      onClick={() => toast({
-                        title: "Coming Soon",
-                        description: "Avatar upload will be available in a future update.",
-                      })}
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-1 text-center sm:text-left">
-                    <h3 className="font-medium text-xl">{profile.full_name || "Update your name"}</h3>
-                    <p className="text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-                
-                <Separator className="my-6" />
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      value={profile.full_name}
-                      onChange={e => setProfile({...profile, full_name: e.target.value})}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={profile.username || ""}
-                      onChange={e => setProfile({...profile, username: e.target.value})}
-                      placeholder="Choose a unique username"
-                    />
-                    <p className="text-xs text-gray-500">
-                      This will be used for mentions and your public profile.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      value={user?.email || ""}
-                      disabled
-                      className="bg-gray-50"
-                    />
-                    <p className="text-xs text-gray-500">
-                      To change your email address, please contact support.
-                    </p>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Button 
-                      onClick={handleSaveProfile} 
-                      className="bg-titeh-primary"
-                      disabled={isSaving}
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : "Save Changes"}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Avatar className="h-12 w-12 mr-4">
+                <AvatarImage src={avatarUrl} alt={fullName} />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p>{fullName || 'Update your profile'}</p>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your full name"
+              />
+            </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => toast({
-                      title: "Coming Soon",
-                      description: "Password change functionality will be available in a future update.",
-                    })}
-                    className="w-full sm:w-auto"
-                  >
-                    Change Password
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="text-red-500 border-red-200 hover:bg-red-50 w-full sm:w-auto"
-                    onClick={() => toast({
-                      title: "Coming Soon",
-                      description: "Account deletion functionality will be available in a future update.",
-                    })}
-                  >
-                    Delete Account
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Your username"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
+              <Input
+                id="avatarUrl"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+            
+            <div className="pt-2 text-sm text-gray-500">
+              <p>Email: {user?.email}</p>
+              <p>Last signed in: {user?.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'PPpp') : 'Never'}</p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
+            <Button onClick={handleUpdateProfile} disabled={updating}>
+              {updating ? 'Updating...' : 'Update Profile'}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </Layout>
   );

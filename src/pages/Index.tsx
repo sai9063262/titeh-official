@@ -1,23 +1,20 @@
-import Layout from "@/components/Layout";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Car,
-  CreditCard,
-  FileText,
-  Map,
-  BookOpen,
-  Shield,
-  Search,
-  User,
-  Bell,
-} from "lucide-react";
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  School, Settings as SettingsIcon, Badge, Bluetooth, Wifi, 
+  FileSpreadsheet, Smartphone, AlertTriangle, Leaf, MapPin 
+} from 'lucide-react';
+import GovernmentBranding from '@/components/GovernmentBranding';
 
 const Index = () => {
   const { isAuthenticated } = useAuth();
-  
+  const { toast } = useToast();
+
   return (
     <Layout>
       <div className="px-4 py-8">
@@ -63,7 +60,7 @@ const Index = () => {
           </Link>
           
           <Link to="/settings" className="module-tile">
-            <Settings className="module-icon" />
+            <SettingsIcon className="module-icon" />
             <span className="text-sm font-medium text-center">Settings</span>
           </Link>
         </div>
