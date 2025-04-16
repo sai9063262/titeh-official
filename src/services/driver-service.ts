@@ -46,7 +46,7 @@ class DriverService {
         address: driver.address || "",
         age: driver.age || "",
         notes: driver.notes || ""
-      }));
+      } as DriverData));
       
       console.log("Supabase drivers:", supabaseDrivers);
       
@@ -59,7 +59,7 @@ class DriverService {
           d => d.licenseNumber.toLowerCase() === localDriver.licenseNumber.toLowerCase()
         );
         if (!exists) {
-          allDrivers.push(localDriver as DriverData);
+          allDrivers.push(localDriver);
         }
       }
       
@@ -106,7 +106,7 @@ class DriverService {
         address: data.address || "",
         age: data.age || "",
         notes: data.notes || ""
-      };
+      } as DriverData;
     } catch (error) {
       console.error("Unexpected error fetching driver:", error);
       return null;
@@ -151,7 +151,7 @@ class DriverService {
         address: data.address || "",
         age: data.age || "",
         notes: data.notes || ""
-      };
+      } as DriverData;
     } catch (error) {
       console.error("Unexpected error adding driver:", error);
       return null;
@@ -243,7 +243,7 @@ class DriverService {
         address: driver.address || "",
         age: driver.age || "",
         notes: driver.notes || ""
-      }));
+      } as DriverData));
       
       // Combine both sources of search results, avoiding duplicates
       const allMatches = [...supabaseMatches];
@@ -254,7 +254,7 @@ class DriverService {
           d => d.licenseNumber.toLowerCase() === localMatch.licenseNumber.toLowerCase()
         );
         if (!exists) {
-          allMatches.push(localMatch as DriverData);
+          allMatches.push(localMatch);
         }
       }
       
@@ -315,3 +315,4 @@ class DriverService {
 }
 
 export default DriverService.getInstance();
+
