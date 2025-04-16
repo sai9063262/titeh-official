@@ -9,7 +9,7 @@ const RtoExam = () => {
     { icon: <School className="text-titeh-primary text-xl" />, label: "Practice Driving Licence Exam", link: "/rto-exam/practice" },
     { icon: <BookOpen className="text-titeh-primary text-xl" />, label: "Question Bank", link: "/rto-exam/questions" },
     { icon: <FileText className="text-titeh-primary text-xl" />, label: "DL Que. & Sign", link: "/traffic-signs" },
-    { icon: <PlayCircle className="text-titeh-primary text-xl" />, label: "Exam Preparation", link: "/rto-exam/preparation" },
+    { icon: <PlayCircle className="text-titeh-primary text-xl" />, label: "Exam Preparation", link: "/rto-exam/practice-exam" },
     { icon: <Store className="text-titeh-primary text-xl" />, label: "Driving Schools", link: "/rto-exam/schools" },
     { icon: <FileType className="text-titeh-primary text-xl" />, label: "License Procedure", link: "/rto-exam/license-procedure" },
     { icon: <Building className="text-titeh-primary text-xl" />, label: "RTO Offices", link: "/rto-exam/offices" },

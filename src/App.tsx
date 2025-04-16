@@ -36,6 +36,7 @@ import LicenseProcedureEnhanced from "./pages/rto-exam/LicenseProcedureEnhanced"
 import PracticeExam from "./pages/rto-exam/PracticeExam";
 import QuestionBank from "./pages/rto-exam/QuestionBank";
 import RtoOffices from "./pages/rto-exam/RtoOffices";
+import Practice from "./pages/rto-exam/Practice";
 
 // Traffic Safety pages
 import BlackSpotMap from "./pages/traffic-safety/BlackSpotMap";
@@ -44,6 +45,8 @@ import IncidentReporting from "./pages/traffic-safety/IncidentReporting";
 import PayChallan from "./pages/traffic-safety/PayChallan";
 import TrafficCameraFeed from "./pages/traffic-safety/TrafficCameraFeed";
 import VoiceComplaint from "./pages/traffic-safety/VoiceComplaint";
+import NoParkingZones from "./pages/traffic-safety/NoParkingZones";
+import SpeedAlerts from "./pages/traffic-safety/SpeedAlerts";
 
 // Vehicle calculators
 import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
@@ -92,12 +95,13 @@ function App() {
 
       {/* RTO Exam routes */}
       <Route path="/rto-exam/documents" element={<Documents />} />
-      <Route path="/rto-exam/driving-laws" element={<DrivingLaws />} />
+      <Route path="/rto-exam/laws" element={<DrivingLaws />} />
       <Route path="/rto-exam/license-procedure" element={<LicenseProcedure />} />
       <Route path="/rto-exam/license-procedure-enhanced" element={<LicenseProcedureEnhanced />} />
       <Route path="/rto-exam/practice-exam" element={<PracticeExam />} />
-      <Route path="/rto-exam/question-bank" element={<QuestionBank />} />
-      <Route path="/rto-exam/rto-offices" element={<RtoOffices />} />
+      <Route path="/rto-exam/questions" element={<QuestionBank />} />
+      <Route path="/rto-exam/offices" element={<RtoOffices />} />
+      <Route path="/rto-exam/practice" element={<Practice />} />
 
       {/* Traffic Safety routes */}
       <Route path="/traffic-safety/black-spot-map" element={<BlackSpotMap />} />
@@ -106,6 +110,8 @@ function App() {
       <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
       <Route path="/traffic-safety/traffic-camera-feed" element={<TrafficCameraFeed />} />
       <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
+      <Route path="/traffic-safety/no-parking-zones" element={<NoParkingZones />} />
+      <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
 
       {/* Vehicle Calculator routes */}
       <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />
