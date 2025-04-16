@@ -1,362 +1,392 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import Layout from "@/components/Layout";
-import { ChevronLeft, Gauge, MapPin, AlertTriangle, Bell, Clock, AlertCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { AlertCircle, Bell, Car, Map, Settings, Bell as BellIcon } from "lucide-react";
+import Layout from "@/components/Layout";
 import { useToast } from "@/hooks/use-toast";
-
-interface SpeedLimit {
-  id: string;
-  area: string;
-  maxSpeed: number;
-  description: string;
-  roadType: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-}
-
-const speedLimits: SpeedLimit[] = [
-  {
-    id: "sl-001",
-    area: "Hyderabad City Roads",
-    maxSpeed: 40,
-    description: "General city roads within Hyderabad municipal limits",
-    roadType: "City Road",
-    coordinates: {
-      lat: 17.385044,
-      lng: 78.486671
-    }
-  },
-  {
-    id: "sl-002",
-    area: "Outer Ring Road",
-    maxSpeed: 100,
-    description: "Hyderabad's 158 km orbital highway",
-    roadType: "Highway",
-    coordinates: {
-      lat: 17.420000,
-      lng: 78.380000
-    }
-  },
-  {
-    id: "sl-003",
-    area: "School Zones",
-    maxSpeed: 20,
-    description: "Areas within 100m of any educational institution",
-    roadType: "Special Zone",
-    coordinates: {
-      lat: 17.415044,
-      lng: 78.496671
-    }
-  },
-  {
-    id: "sl-004",
-    area: "PV Narasimha Rao Expressway",
-    maxSpeed: 80,
-    description: "Elevated expressway from Mehdipatnam to Aramgarh",
-    roadType: "Expressway",
-    coordinates: {
-      lat: 17.375044,
-      lng: 78.456671
-    }
-  },
-  {
-    id: "sl-005",
-    area: "Residential Areas",
-    maxSpeed: 30,
-    description: "All residential colony internal roads",
-    roadType: "Residential",
-    coordinates: {
-      lat: 17.445044,
-      lng: 78.426671
-    }
-  },
-  {
-    id: "sl-006",
-    area: "NH-65 (Hyderabad-Vijayawada)",
-    maxSpeed: 100,
-    description: "National Highway section within Telangana",
-    roadType: "Highway",
-    coordinates: {
-      lat: 17.395044,
-      lng: 78.646671
-    }
-  },
-  {
-    id: "sl-007",
-    area: "Tank Bund Road",
-    maxSpeed: 40,
-    description: "Scenic road alongside Hussain Sagar",
-    roadType: "City Road",
-    coordinates: {
-      lat: 17.425044,
-      lng: 78.476671
-    }
-  },
-  {
-    id: "sl-008",
-    area: "Hospital Zones",
-    maxSpeed: 20,
-    description: "Areas within 100m of any hospital or healthcare facility",
-    roadType: "Special Zone",
-    coordinates: {
-      lat: 17.405044,
-      lng: 78.486671
-    }
-  }
-];
 
 const SpeedAlerts = () => {
   const { toast } = useToast();
-  const [alertsEnabled, setAlertsEnabled] = useState(true);
-  const [voiceAlertsEnabled, setVoiceAlertsEnabled] = useState(true);
-  const [selectedTab, setSelectedTab] = useState("settings");
-  const [alertThreshold, setAlertThreshold] = useState(5);
-  const [selectedLimit, setSelectedLimit] = useState<SpeedLimit | null>(null);
+  const [activeTab, setActiveTab] = useState("settings");
+  const [speedLimit, setSpeedLimit] = useState(60);
+  const [schoolZoneLimit, setSchoolZoneLimit] = useState(30);
+  const [residentialLimit, setResidentialLimit] = useState(40);
+  const [geofenceRadius, setGeofenceRadius] = useState(500);
   
-  const handleToggleAlerts = (checked: boolean) => {
-    setAlertsEnabled(checked);
-    toast({
-      title: checked ? "Speed Alerts Enabled" : "Speed Alerts Disabled",
-      description: checked ? "You will now receive speed limit notifications" : "You will no longer receive speed limit notifications",
-      variant: checked ? "default" : "destructive",
-    });
-  };
-  
-  const handleToggleVoiceAlerts = (checked: boolean) => {
-    setVoiceAlertsEnabled(checked);
-    toast({
-      description: checked ? "Voice alerts enabled" : "Voice alerts disabled",
-      variant: "default",
-    });
-  };
-  
-  const viewLimitDetails = (limit: SpeedLimit) => {
-    setSelectedLimit(limit);
-    setSelectedTab("limits");
-  };
-  
-  const closeDetails = () => {
-    setSelectedLimit(null);
-  };
-  
-  const getRoadTypeColor = (roadType: string) => {
-    switch (roadType) {
-      case "Highway":
-        return "bg-blue-100 text-blue-800";
-      case "City Road":
-        return "bg-green-100 text-green-800";
-      case "Expressway":
-        return "bg-purple-100 text-purple-800";
-      case "Residential":
-        return "bg-yellow-100 text-yellow-800";
-      case "Special Zone":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Toggle states
+  const [isVoiceAlertEnabled, setIsVoiceAlertEnabled] = useState(true);
+  const [isVisualAlertEnabled, setIsVisualAlertEnabled] = useState(true);
+  const [isSchoolZoneAlertEnabled, setIsSchoolZoneAlertEnabled] = useState(true);
+  const [isResidentialAlertEnabled, setIsResidentialAlertEnabled] = useState(true);
+  const [isGeofenceAlertEnabled, setIsGeofenceAlertEnabled] = useState(true);
+
+  // Simulated alerts
+  const speedAlerts = [
+    {
+      id: 1,
+      date: "2025-04-16T09:23:00",
+      location: "NH 44, Hyderabad",
+      speed: 78,
+      limit: 60,
+      type: "Highway"
+    },
+    {
+      id: 2,
+      date: "2025-04-16T08:15:00",
+      location: "Banjara Hills Road No. 12",
+      speed: 55,
+      limit: 40,
+      type: "Residential"
+    },
+    {
+      id: 3,
+      date: "2025-04-15T14:30:00",
+      location: "Near Delhi Public School",
+      speed: 45,
+      limit: 30,
+      type: "School Zone"
     }
-  };
+  ];
   
+  // Geo-fences
+  const geofences = [
+    {
+      id: 1,
+      name: "Home",
+      location: "Jubilee Hills",
+      radius: 500,
+      limit: 40
+    },
+    {
+      id: 2,
+      name: "Office",
+      location: "Hi-Tech City",
+      radius: 300,
+      limit: 30
+    },
+    {
+      id: 3,
+      name: "Parents' Home",
+      location: "Kukatpally",
+      radius: 500,
+      limit: 40
+    }
+  ];
+
+  const handleSaveSettings = () => {
+    toast({
+      title: "Settings Saved",
+      description: "Your speed alert settings have been updated",
+    });
+  };
+
+  const handleAddGeofence = () => {
+    toast({
+      title: "Location Service Required",
+      description: "Please select a location on the map to add a geofence",
+    });
+  };
+
+  const handleClearAlerts = () => {
+    toast({
+      title: "Alerts Cleared",
+      description: "All speed alert history has been cleared",
+    });
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+  };
+
+  const getAlertColor = (speed: number, limit: number) => {
+    const difference = speed - limit;
+    if (difference >= 20) return "bg-red-500";
+    if (difference >= 10) return "bg-amber-500";
+    return "bg-blue-500";
+  };
+
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Link to="/traffic-safety" className="mr-2">
-            <ChevronLeft className="text-titeh-primary" />
-          </Link>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-titeh-primary">Speed Alerts</h1>
+          <Badge className="text-xs py-1 bg-blue-100 text-blue-800 hover:bg-blue-100">
+            <BellIcon className="h-3 w-3 mr-1" />
+            Real-time Alerts
+          </Badge>
         </div>
         
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="settings">Alert Settings</TabsTrigger>
-            <TabsTrigger value="limits">Speed Limits</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid grid-cols-3 mb-2">
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <Bell className="h-4 w-4 mr-2" />
+              Alert History
+            </TabsTrigger>
+            <TabsTrigger value="geofence">
+              <Map className="h-4 w-4 mr-2" />
+              Geo-fences
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="settings" className="space-y-4 mt-4">
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Alert Configuration</h2>
-              
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-medium">Enable Speed Alerts</div>
-                    <div className="text-sm text-gray-500">Receive notifications when exceeding speed limits</div>
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Voice Alerts</h3>
+                      <p className="text-sm text-gray-500">Get voice notifications when exceeding speed limits</p>
+                    </div>
+                    <Switch
+                      checked={isVoiceAlertEnabled}
+                      onCheckedChange={setIsVoiceAlertEnabled}
+                    />
                   </div>
-                  <Switch checked={alertsEnabled} onCheckedChange={handleToggleAlerts} />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-medium">Voice Alerts</div>
-                    <div className="text-sm text-gray-500">Get spoken alerts when exceeding limits</div>
+                  
+                  <Separator />
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Visual Alerts</h3>
+                      <p className="text-sm text-gray-500">Display on-screen alerts when exceeding speed limits</p>
+                    </div>
+                    <Switch
+                      checked={isVisualAlertEnabled}
+                      onCheckedChange={setIsVisualAlertEnabled}
+                    />
                   </div>
-                  <Switch checked={voiceAlertsEnabled} onCheckedChange={handleToggleVoiceAlerts} />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Alert Threshold</span>
-                    <span className="text-titeh-primary">{alertThreshold} km/h over limit</span>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="speedLimit">Default Speed Limit (km/h)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="speedLimit"
+                        type="number" 
+                        value={speedLimit} 
+                        onChange={(e) => setSpeedLimit(parseInt(e.target.value))}
+                        min={20}
+                        max={120}
+                      />
+                      <span className="text-sm text-gray-500">km/h</span>
+                    </div>
                   </div>
-                  <Slider 
-                    value={[alertThreshold]} 
-                    min={0} 
-                    max={20} 
-                    step={1} 
-                    onValueChange={(value) => setAlertThreshold(value[0])}
-                    disabled={!alertsEnabled}
-                  />
-                  <p className="text-sm text-gray-500">
-                    Alert when exceeding the speed limit by {alertThreshold} km/h or more
-                  </p>
                 </div>
-              </div>
+              </CardContent>
             </Card>
             
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Alert Schedule</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-medium">Day Time Alerts (6 AM - 10 PM)</div>
-                    <div className="text-sm text-gray-500">Regular alert volume during day time</div>
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold mb-4">Special Zone Alerts</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">School Zone Alerts</h3>
+                      <p className="text-sm text-gray-500">Get alerts in school zones</p>
+                    </div>
+                    <Switch
+                      checked={isSchoolZoneAlertEnabled}
+                      onCheckedChange={setIsSchoolZoneAlertEnabled}
+                    />
                   </div>
-                  <Switch defaultChecked={true} />
+                  
+                  <div className="pl-6 space-y-2">
+                    <Label htmlFor="schoolSpeedLimit">School Zone Speed Limit (km/h)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="schoolSpeedLimit"
+                        type="number" 
+                        value={schoolZoneLimit} 
+                        onChange={(e) => setSchoolZoneLimit(parseInt(e.target.value))}
+                        disabled={!isSchoolZoneAlertEnabled}
+                        min={10}
+                        max={50}
+                      />
+                      <span className="text-sm text-gray-500">km/h</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Residential Area Alerts</h3>
+                      <p className="text-sm text-gray-500">Get alerts in residential areas</p>
+                    </div>
+                    <Switch
+                      checked={isResidentialAlertEnabled}
+                      onCheckedChange={setIsResidentialAlertEnabled}
+                    />
+                  </div>
+                  
+                  <div className="pl-6 space-y-2">
+                    <Label htmlFor="residentialSpeedLimit">Residential Speed Limit (km/h)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="residentialSpeedLimit"
+                        type="number" 
+                        value={residentialLimit} 
+                        onChange={(e) => setResidentialLimit(parseInt(e.target.value))}
+                        disabled={!isResidentialAlertEnabled}
+                        min={20}
+                        max={60}
+                      />
+                      <span className="text-sm text-gray-500">km/h</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-medium">Night Time Alerts (10 PM - 6 AM)</div>
-                    <div className="text-sm text-gray-500">Quieter alerts during night hours</div>
-                  </div>
-                  <Switch defaultChecked={true} />
+                <div className="flex justify-end mt-6">
+                  <Button 
+                    className="bg-titeh-primary hover:bg-blue-700"
+                    onClick={handleSaveSettings}
+                  >
+                    Save Settings
+                  </Button>
                 </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4 bg-blue-50">
-              <div className="flex items-start">
-                <AlertCircle className="text-titeh-primary mr-3 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium">How Speed Alerts Work</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Speed alerts use your device's GPS and official speed limit data to notify you when exceeding limits.
-                    Keep in mind that GPS accuracy may vary, and alerts are provided as guidance only. The driver is
-                    always responsible for maintaining legal and safe speeds.
-                  </p>
-                </div>
-              </div>
+              </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="limits" className="space-y-4 mt-4">
-            {selectedLimit ? (
-              <Card className="p-6 mb-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold">{selectedLimit.area}</h2>
-                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${getRoadTypeColor(selectedLimit.roadType)}`}>
-                      {selectedLimit.roadType}
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={closeDetails}>
-                    Go Back
+          <TabsContent value="history">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Recent Speed Alerts</h3>
+                  <Button variant="outline" size="sm" onClick={handleClearAlerts}>
+                    Clear All
                   </Button>
                 </div>
                 
-                <div className="mt-4 p-6 border border-gray-200 rounded-md bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl font-bold text-titeh-primary">{selectedLimit.maxSpeed}</div>
-                    <div className="text-gray-500">km/h</div>
+                {speedAlerts.length > 0 ? (
+                  <div className="space-y-4">
+                    {speedAlerts.map((alert) => (
+                      <div key={alert.id} className="flex items-start gap-3 border-b pb-3">
+                        <div className={`p-1.5 rounded-full mt-0.5 ${getAlertColor(alert.speed, alert.limit)}`}>
+                          <Car className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <h4 className="font-medium">{alert.location}</h4>
+                            <Badge variant="outline" className="ml-2">
+                              {alert.type}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {formatDateTime(alert.date)}
+                          </div>
+                          <div className="mt-1 flex items-center">
+                            <span className="text-lg font-semibold">{alert.speed} km/h</span>
+                            <span className="text-sm text-gray-500 ml-1">
+                              (Limit: {alert.limit} km/h)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <h3 className="text-lg font-medium">No Alerts</h3>
+                    <p className="text-sm text-gray-500">You haven't received any speed alerts yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="geofence">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">Custom Geo-fence Zones</h3>
+                    <p className="text-sm text-gray-500">Create custom speed limit zones</p>
+                  </div>
+                  <Switch
+                    checked={isGeofenceAlertEnabled}
+                    onCheckedChange={setIsGeofenceAlertEnabled}
+                  />
+                </div>
+                
+                <div className="space-y-2 mb-6">
+                  <Label htmlFor="geofenceRadius">Default Geo-fence Radius (meters)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="geofenceRadius"
+                      type="number" 
+                      value={geofenceRadius} 
+                      onChange={(e) => setGeofenceRadius(parseInt(e.target.value))}
+                      disabled={!isGeofenceAlertEnabled}
+                      min={100}
+                      max={2000}
+                    />
+                    <span className="text-sm text-gray-500">meters</span>
                   </div>
                 </div>
                 
-                <div className="space-y-4 mt-4">
-                  <div className="flex items-start">
-                    <MapPin className="h-5 w-5 text-titeh-primary mr-3 mt-1" />
-                    <div>
-                      <p className="font-medium">Description</p>
-                      <p className="text-sm text-gray-600">{selectedLimit.description}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <AlertTriangle className="h-5 w-5 text-titeh-primary mr-3 mt-1" />
-                    <div>
-                      <p className="font-medium">Penalties</p>
-                      <p className="text-sm text-gray-600">
-                        Exceeding by 1-10 km/h: ₹1,000<br />
-                        Exceeding by 11-20 km/h: ₹2,000<br />
-                        Exceeding by >20 km/h: ₹3,000 and potential license suspension
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Button size="sm" onClick={() => window.open(`https://maps.google.com/?q=${selectedLimit.coordinates.lat},${selectedLimit.coordinates.lng}`, '_blank')}>
-                      <MapPin className="h-4 w-4 mr-2" />
-                      View on Map
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {speedLimits.map((limit) => (
-                  <Card key={limit.id} className="p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{limit.area}</h3>
+                <Button 
+                  className="w-full bg-titeh-primary hover:bg-blue-700 mb-4"
+                  disabled={!isGeofenceAlertEnabled}
+                  onClick={handleAddGeofence}
+                >
+                  Add New Geo-fence
+                </Button>
+                
+                {isGeofenceAlertEnabled && geofences.length > 0 ? (
+                  <div className="space-y-3 mt-4">
+                    {geofences.map((fence) => (
+                      <div key={fence.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <h4 className="font-medium">{fence.name}</h4>
+                          <p className="text-sm text-gray-500">{fence.location}</p>
+                          <div className="flex text-xs text-gray-500 mt-1 space-x-2">
+                            <span>{fence.radius}m radius</span>
+                            <span>•</span>
+                            <span>{fence.limit} km/h limit</span>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="ghost" className="text-red-500 h-auto py-1">
+                          Remove
+                        </Button>
                       </div>
-                      <div className="bg-red-100 px-3 py-2 rounded-md text-xl font-bold text-red-800">
-                        {limit.maxSpeed}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoadTypeColor(limit.roadType)}`}>
-                        {limit.roadType}
-                      </span>
-                    </div>
-                    
-                    <div className="mt-3 flex justify-between items-center">
-                      <div className="text-sm text-gray-600 truncate max-w-[70%]">
-                        {limit.description}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => viewLimitDetails(limit)}
-                      >
-                        Details
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-            
-            <Card className="p-4 bg-yellow-50">
-              <div className="flex items-start">
-                <AlertTriangle className="text-yellow-600 mr-3 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium">Speed Limit Guidelines</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Always adhere to posted speed limits on the road, which may differ from the general limits shown here.
-                    Speed limits may be temporarily reduced in construction zones, during bad weather, or for special events.
-                  </p>
-                </div>
-              </div>
+                    ))}
+                  </div>
+                ) : !isGeofenceAlertEnabled ? (
+                  <div className="text-center py-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">Enable geo-fence alerts to manage zones</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 bg-gray-50 rounded-lg">
+                    <Map className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <h3 className="font-medium">No Geo-fences</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Add custom speed limit zones for specific areas
+                    </p>
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

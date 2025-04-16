@@ -1,30 +1,39 @@
-
-import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { 
-  Car, 
-  School, 
-  Shield, 
-  User, 
-  Settings, 
-  AlertTriangle, 
-  Leaf, 
-  MapPin,
-  FileText,
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Car,
   CreditCard,
-  Bluetooth,
-  Smartphone,
-  Wifi,
-  FileSpreadsheet
+  FileText,
+  Map,
+  BookOpen,
+  Shield,
+  Search,
+  User,
+  Bell,
 } from "lucide-react";
-import GovernmentBranding from "@/components/GovernmentBranding";
-import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
+  const { isAuthenticated } = useAuth();
+  
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8 text-titeh-primary">Welcome to TITEH</h1>
+      <div className="px-4 py-8">
+        {!isAuthenticated && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-titeh-primary to-blue-600 rounded-lg text-white">
+            <h2 className="text-2xl font-bold mb-2">Welcome to TITEH</h2>
+            <p className="mb-4 text-blue-100">
+              Sign in to access all features and personalize your experience.
+            </p>
+            <Button asChild className="bg-white text-blue-600 hover:bg-blue-50">
+              <Link to="/auth">Login / Sign Up</Link>
+            </Button>
+          </div>
+        )}
+        
+        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">TITEH Services</h1>
         
         {/* Module Navigation Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
