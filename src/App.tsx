@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -41,6 +42,10 @@ import PracticeExam from "./pages/rto-exam/PracticeExam";
 import QuestionBank from "./pages/rto-exam/QuestionBank";
 import RtoOffices from "./pages/rto-exam/RtoOffices";
 import Practice from "./pages/rto-exam/Practice";
+import MockTest from "./pages/rto-exam/MockTest";
+import RoadSigns from "./pages/rto-exam/RoadSigns";
+import DrivingTips from "./pages/rto-exam/DrivingTips";
+import Schools from "./pages/rto-exam/Schools";
 
 // Traffic Safety pages
 import BlackSpotMap from "./pages/traffic-safety/BlackSpotMap";
@@ -114,6 +119,10 @@ function App() {
           <Route path="/rto-exam/questions" element={<QuestionBank />} />
           <Route path="/rto-exam/offices" element={<RtoOffices />} />
           <Route path="/rto-exam/practice" element={<Practice />} />
+          <Route path="/rto-exam/mock-test" element={<MockTest />} />
+          <Route path="/rto-exam/road-signs" element={<RoadSigns />} />
+          <Route path="/rto-exam/driving-tips" element={<DrivingTips />} />
+          <Route path="/rto-exam/schools" element={<Schools />} />
 
           {/* Traffic Safety routes */}
           <Route path="/traffic-safety/black-spot-map" element={<BlackSpotMap />} />
