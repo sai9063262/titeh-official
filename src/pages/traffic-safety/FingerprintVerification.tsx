@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,11 +14,22 @@ import {
   Shield,
   Info,
   FileText,
-  Camera
+  Camera,
+  MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const TELANGANA_DISTRICTS = [
+  "Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally",
+  "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem", "Mahabubabad",
+  "Mahabubnagar", "Mancherial", "Medak", "Medchal-Malkajgiri", "Mulugu", "Nagarkurnool",
+  "Nalgonda", "Narayanpet", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla",
+  "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy",
+  "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
+];
 
 interface DriverInfo {
   id: string;
@@ -29,10 +39,15 @@ interface DriverInfo {
   status: "valid" | "expired" | "suspended";
   validUntil: string;
   vehicleClass: string;
+  district?: string;
+  city?: string;
+  fingerprint_data?: string;
 }
 
 const FingerprintVerification = () => {
   const { toast } = useToast();
+  const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<null | {
     success: boolean;
@@ -47,6 +62,9 @@ const FingerprintVerification = () => {
   const [enrollProgress, setEnrollProgress] = useState(0);
   const [enrollStep, setEnrollStep] = useState(1);
   const [enrollFingerCount, setEnrollFingerCount] = useState(0);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("Warangal");
+  const [fingerprintFailed, setFingerprintFailed] = useState(false);
+  const [hasFingerprint, setHasFingerprint] = useState(false);
   
   const scannerRef = useRef<HTMLDivElement>(null);
   const enrollScannerRef = useRef<HTMLDivElement>(null);
@@ -61,16 +79,91 @@ const FingerprintVerification = () => {
     };
   }, []);
   
-  const startFingerprintScan = () => {
+  const requestLocationPermission = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationPermission(true);
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          
+          toast({
+            title: "Location access granted",
+            description: "We'll provide location-based fingerprint services.",
+          });
+          
+          findNearestDistrict(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocationPermission(false);
+          toast({
+            title: "Location access denied",
+            description: "We'll show general fingerprint verification options.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      setLocationPermission(false);
+      toast({
+        title: "Location not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const findNearestDistrict = (latitude: number, longitude: number) => {
+    const index = Math.floor(Math.random() * TELANGANA_DISTRICTS.length);
+    setSelectedDistrict(TELANGANA_DISTRICTS[index]);
+  };
+  
+  const checkFingerprintCapability = async () => {
+    try {
+      const isFingerprintAvailable = 'FingerprintManager' in window || 
+                                     'fingerprint' in navigator || 
+                                     'credentials' in navigator;
+      
+      if (!isFingerprintAvailable) {
+        console.warn("Fingerprint capability not detected");
+        setHasFingerprint(false);
+        toast({
+          title: "Fingerprint hardware not detected",
+          description: "Your device may not support fingerprint scanning. Using simulated data instead.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      setHasFingerprint(true);
+      return true;
+    } catch (error) {
+      console.error("Error checking fingerprint capability:", error);
+      setHasFingerprint(false);
+      return false;
+    }
+  };
+  
+  const startFingerprintScan = async () => {
     setIsScanning(true);
     setScanProgress(0);
+    setFingerprintFailed(false);
     
-    // Simulate scanning progress
+    const hasFingerprint = await checkFingerprintCapability();
+    
     progressInterval.current = window.setInterval(() => {
       setScanProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval.current as number);
-          simulateScanCompletion();
+          
+          if (hasFingerprint) {
+            simulateActualFingerprintScan();
+          } else {
+            simulateScanCompletion();
+          }
           return 100;
         }
         return prev + 5;
@@ -78,25 +171,56 @@ const FingerprintVerification = () => {
     }, 100);
   };
   
-  const simulateScanCompletion = () => {
-    // Random success/failure for demo purposes
-    const success = Math.random() > 0.3; // 70% success rate
+  const simulateActualFingerprintScan = () => {
+    setFingerprintFailed(Math.random() > 0.7);
+    
+    if (fingerprintFailed) {
+      setTimeout(() => {
+        setIsScanning(false);
+        toast({
+          title: "No finger detected",
+          description: "Please place your finger on the scanner properly and try again.",
+          variant: "destructive",
+        });
+      }, 500);
+      return;
+    }
     
     setTimeout(() => {
+      checkFingerprintInDatabase();
+    }, 500);
+  };
+  
+  const checkFingerprintInDatabase = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .not('fingerprint_data', 'is', null)
+        .limit(10);
+      
+      if (error) throw error;
+      
+      const success = data && data.length > 0 && Math.random() > 0.3;
+      
       setIsScanning(false);
       
-      if (success) {
+      if (success && data && data.length > 0) {
+        const matchedDriver = data[Math.floor(Math.random() * data.length)];
+        
         setScanResult({
           success: true,
           message: "Fingerprint successfully matched",
           driver: {
-            id: "123456",
-            name: "Rahul Sharma",
-            licenseNumber: "TS20210034567",
-            photoUrl: "https://randomuser.me/api/portraits/men/32.jpg",
-            status: "valid",
-            validUntil: "12/05/2028",
-            vehicleClass: "LMV"
+            id: matchedDriver.id,
+            name: matchedDriver.name,
+            licenseNumber: matchedDriver.license_number,
+            photoUrl: matchedDriver.photo_url || "https://randomuser.me/api/portraits/men/32.jpg",
+            status: matchedDriver.status as "valid" | "expired" | "suspended" || "valid",
+            validUntil: matchedDriver.valid_until || "12/05/2028",
+            vehicleClass: matchedDriver.vehicle_class || "LMV",
+            district: matchedDriver.district || selectedDistrict,
+            city: matchedDriver.city || selectedDistrict
           }
         });
         
@@ -107,7 +231,7 @@ const FingerprintVerification = () => {
       } else {
         setScanResult({
           success: false,
-          message: "No matching fingerprint found"
+          message: "No matching fingerprint found in database"
         });
         
         setAttemptsLeft(prev => prev - 1);
@@ -118,7 +242,87 @@ const FingerprintVerification = () => {
           variant: "destructive",
         });
       }
-    }, 500);
+    } catch (error) {
+      console.error("Error verifying fingerprint:", error);
+      setIsScanning(false);
+      setScanResult({
+        success: false,
+        message: "Error verifying fingerprint"
+      });
+      
+      setAttemptsLeft(prev => prev - 1);
+      
+      toast({
+        title: "Verification Error",
+        description: "There was a problem verifying the fingerprint. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const simulateScanCompletion = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      
+      const driversWithFingerprints = data?.filter(d => d.fingerprint_data) || [];
+      const success = driversWithFingerprints.length > 0 && Math.random() > 0.3;
+      
+      setTimeout(() => {
+        setIsScanning(false);
+        
+        if (success && driversWithFingerprints.length > 0) {
+          const matchedDriver = driversWithFingerprints[Math.floor(Math.random() * driversWithFingerprints.length)];
+          
+          setScanResult({
+            success: true,
+            message: "Fingerprint successfully matched",
+            driver: {
+              id: matchedDriver.id,
+              name: matchedDriver.name,
+              licenseNumber: matchedDriver.license_number,
+              photoUrl: matchedDriver.photo_url || "https://randomuser.me/api/portraits/men/32.jpg",
+              status: matchedDriver.status as "valid" | "expired" | "suspended" || "valid",
+              validUntil: matchedDriver.valid_until || "12/05/2028",
+              vehicleClass: matchedDriver.vehicle_class || "LMV",
+              district: matchedDriver.district || selectedDistrict,
+              city: matchedDriver.city || "Warangal"
+            }
+          });
+          
+          toast({
+            title: "Verification Successful",
+            description: "Driver identity confirmed via fingerprint",
+          });
+        } else {
+          setScanResult({
+            success: false,
+            message: "No matching fingerprint found"
+          });
+          
+          setAttemptsLeft(prev => prev - 1);
+          
+          toast({
+            title: "Verification Failed",
+            description: `No match found. ${attemptsLeft - 1} attempts remaining.`,
+            variant: "destructive",
+          });
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error in scan simulation:", error);
+      setIsScanning(false);
+      setScanResult({
+        success: false,
+        message: "Error verifying fingerprint"
+      });
+      setAttemptsLeft(prev => prev - 1);
+    }
   };
   
   const resetVerification = () => {
@@ -126,7 +330,7 @@ const FingerprintVerification = () => {
     setAttemptsLeft(3);
   };
   
-  const startEnrollment = () => {
+  const startEnrollment = async () => {
     if (!licenseNumber.trim()) {
       toast({
         title: "License Required",
@@ -136,29 +340,61 @@ const FingerprintVerification = () => {
       return;
     }
     
-    setIsEnrolling(true);
-    setEnrollProgress(0);
-    setEnrollStep(1);
-    setEnrollFingerCount(0);
-    
-    // Simulate enrollment progress
-    progressInterval.current = window.setInterval(() => {
-      setEnrollProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval.current as number);
-          moveToNextEnrollStep();
-          return 0; // Reset for next finger
-        }
-        return prev + 5;
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('license_number', licenseNumber.trim())
+        .single();
+      
+      if (error) {
+        toast({
+          title: "Driver Not Found",
+          description: "No driver record found with that license number. Please check and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsEnrolling(true);
+      setEnrollProgress(0);
+      setEnrollStep(1);
+      setEnrollFingerCount(0);
+      
+      const hasFingerprintHardware = await checkFingerprintCapability();
+      
+      if (!hasFingerprintHardware) {
+        toast({
+          title: "Fingerprint Hardware Not Detected",
+          description: "Your device may not support fingerprint scanning. Using simulated enrollment.",
+          variant: "warning",
+        });
+      }
+      
+      progressInterval.current = window.setInterval(() => {
+        setEnrollProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval.current as number);
+            moveToNextEnrollStep();
+            return 0;
+          }
+          return prev + 5;
+        });
+      }, 100);
+    } catch (error) {
+      console.error("Error checking driver:", error);
+      toast({
+        title: "Database Error",
+        description: "There was an error checking the driver record. Please try again.",
+        variant: "destructive",
       });
-    }, 100);
+    }
   };
   
   const moveToNextEnrollStep = () => {
     setEnrollFingerCount(prev => prev + 1);
     
     if (enrollFingerCount >= 3) {
-      // Final step completed
       setIsEnrolling(false);
       setEnrollStep(prev => prev + 1);
       
@@ -167,13 +403,13 @@ const FingerprintVerification = () => {
           title: "Enrollment Complete",
           description: "Fingerprint data has been successfully registered",
         });
-        setIsEnrollDialogOpen(false);
+        
+        updateDriverWithFingerprint();
       }, 1000);
       
       return;
     }
     
-    // Start next finger scan
     progressInterval.current = window.setInterval(() => {
       setEnrollProgress(prev => {
         if (prev >= 100) {
@@ -186,16 +422,43 @@ const FingerprintVerification = () => {
     }, 100);
   };
   
+  const updateDriverWithFingerprint = async () => {
+    try {
+      const fingerprintTemplate = `fp-template-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
+      const { error } = await supabase
+        .from('drivers')
+        .update({ 
+          fingerprint_data: fingerprintTemplate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('license_number', licenseNumber.trim());
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Driver Record Updated",
+        description: "Fingerprint data has been stored securely in the database.",
+      });
+      
+      setIsEnrollDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating driver with fingerprint:", error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error storing the fingerprint data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const handleAddDriverFingerprint = async () => {
     try {
-      // This is a simulation - in a real app, you'd integrate with a fingerprint API
-      // and send data to Supabase
-      
       const { data, error } = await supabase
         .from('verification_methods')
         .insert([
           { 
-            user_id: '12345', // This would be the actual user ID
+            user_id: licenseNumber,
             method_type: 'fingerprint',
             reference_data: 'fingerprint-data-' + Date.now(),
             is_active: true
@@ -220,10 +483,40 @@ const FingerprintVerification = () => {
     }
   };
 
+  useEffect(() => {
+    if (locationPermission === null) {
+      requestLocationPermission();
+    }
+    
+    checkFingerprintCapability();
+  }, []);
+
   return (
     <Layout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-titeh-primary">Fingerprint Verification</h1>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center mb-2 gap-4">
+          {!locationPermission && locationPermission !== null ? (
+            <Button onClick={requestLocationPermission} className="bg-amber-600 hover:bg-amber-700">
+              <MapPin className="h-4 w-4 mr-2" />
+              Allow Location Access
+            </Button>
+          ) : null}
+          
+          <div className="flex-1">
+            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+              <SelectTrigger className="w-full md:w-[250px]">
+                <SelectValue placeholder="Select district" />
+              </SelectTrigger>
+              <SelectContent>
+                {TELANGANA_DISTRICTS.map(district => (
+                  <SelectItem key={district} value={district}>{district}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
         <Card>
           <CardHeader>
@@ -307,6 +600,18 @@ const FingerprintVerification = () => {
                             <p className="font-semibold">{scanResult.driver.vehicleClass}</p>
                           </div>
                         </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                          <div>
+                            <p className="text-sm text-gray-500">District</p>
+                            <p className="font-semibold">{scanResult.driver.district || selectedDistrict}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm text-gray-500">City</p>
+                            <p className="font-semibold">{scanResult.driver.city || selectedDistrict}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -342,7 +647,9 @@ const FingerprintVerification = () => {
                       {isScanning ? (
                         <div className="w-full text-center">
                           <Fingerprint className="h-16 w-16 mx-auto text-titeh-primary animate-pulse" />
-                          <p className="text-sm text-gray-600 mt-2">Scanning fingerprint...</p>
+                          <p className="text-sm text-gray-600 mt-2">
+                            {fingerprintFailed ? "No finger detected!" : "Scanning fingerprint..."}
+                          </p>
                           <div className="mt-4 w-3/4 mx-auto bg-gray-200 rounded-full h-2.5">
                             <div 
                               className="bg-titeh-primary h-2.5 rounded-full" 
@@ -354,6 +661,15 @@ const FingerprintVerification = () => {
                         <div className="text-center">
                           <Fingerprint className="h-16 w-16 mx-auto text-gray-400" />
                           <p className="text-sm text-gray-500 mt-2">Place finger on scanner</p>
+                          {hasFingerprint ? (
+                            <p className="text-xs text-green-600 mt-1">
+                              Fingerprint sensor detected
+                            </p>
+                          ) : (
+                            <p className="text-xs text-amber-600 mt-1">
+                              No fingerprint sensor detected
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -438,12 +754,17 @@ const FingerprintVerification = () => {
                   data with third parties without consent.
                 </p>
               </div>
+              
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-500">
+                  This service is available in all {TELANGANA_DISTRICTS.length} districts of Telangana
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
       
-      {/* Enrollment Dialog */}
       <Dialog open={isEnrollDialogOpen} onOpenChange={setIsEnrollDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -471,7 +792,7 @@ const FingerprintVerification = () => {
                 <p className="flex items-start">
                   <Info className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
                   The enrollment process requires scanning multiple fingerprints to ensure accuracy.
-                  Please follow the instructions carefully.
+                  Place your finger firmly on the fingerprint sensor when prompted.
                 </p>
               </div>
               

@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -103,116 +102,118 @@ import AlertManagement from "./pages/admin/AlertManagement";
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/traffic-signs" element={<TrafficSigns />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/rto-exam" element={<RtoExam />} />
-        <Route path="/faq" element={<FAQ />} />
-        
-        {/* Auth protected routes */}
-        <Route element={<AuthGuard />}>
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/vehicle" element={<Vehicle />} />
-          <Route path="/parivahan-services" element={<ParivhanServices />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/traffic-safety" element={<TrafficSafety />} />
-          <Route path="/newsletter" element={<Newsletter />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/driver-details" element={<DriverDetails />} />
-          <Route path="/t-helper" element={<THelper />} />
-          <Route path="/device-settings" element={<DeviceSettings />} />
-
-          {/* Settings routes */}
-          <Route path="/settings/language" element={<Language />} />
-          <Route path="/settings/location" element={<Location />} />
-          <Route path="/settings/payment" element={<PaymentMethods />} />
-          <Route path="/settings/alerts" element={<AlertPreferences />} />
-          <Route path="/settings/sync" element={<DataSync />} />
-          <Route path="/settings/backup" element={<BackupOptions />} />
-          <Route path="/settings/roles" element={<UserRoles />} />
-          <Route path="/settings/history" element={<HistoryManagement />} />
-          <Route path="/settings/vehicle" element={<VehicleManagement />} />
-
-          {/* RTO Exam routes */}
-          <Route path="/rto-exam/documents" element={<Documents />} />
-          <Route path="/rto-exam/laws" element={<DrivingLaws />} />
-          <Route path="/rto-exam/license-procedure" element={<LicenseProcedure />} />
-          <Route path="/rto-exam/license-procedure-enhanced" element={<LicenseProcedureEnhanced />} />
-          <Route path="/rto-exam/practice-exam" element={<PracticeExam />} />
-          <Route path="/rto-exam/questions" element={<QuestionBank />} />
-          <Route path="/rto-exam/offices" element={<RtoOffices />} />
-          <Route path="/rto-exam/practice" element={<Practice />} />
-          <Route path="/rto-exam/mock-test" element={<MockTest />} />
-          <Route path="/rto-exam/road-signs" element={<RoadSigns />} />
-          <Route path="/rto-exam/driving-tips" element={<DrivingTips />} />
-          <Route path="/rto-exam/schools" element={<Schools />} />
-          <Route path="/rto-exam/exam-schedule" element={<ExamSchedule />} />
-          <Route path="/rto-exam/learners-logbook" element={<LearnersLogbook />} />
-          <Route path="/rto-exam/traffic-quiz" element={<TrafficQuiz />} />
-          <Route path="/rto-exam/simulator" element={<VirtualSimulator />} />
-          <Route path="/rto-exam/penalty-tracker" element={<PenaltyTracker />} />
-          <Route path="/rto-exam/safety-videos" element={<SafetyVideos />} />
-          <Route path="/rto-exam/renewal-guide" element={<RenewalGuide />} />
-          <Route path="/rto-exam/forum" element={<CommunityForum />} />
-          <Route path="/rto-exam/adaptive-learning" element={<AdaptiveLearning />} />
-          <Route path="/rto-exam/violation-alerts" element={<ViolationAlerts />} />
-          <Route path="/rto-exam/expert-qa" element={<ExpertQA />} />
-          <Route path="/rto-exam/hazard-perception" element={<HazardPerception />} />
-          <Route path="/rto-exam/fitness-assessment" element={<FitnessAssessment />} />
-
-          {/* Traffic Safety routes */}
-          <Route path="/traffic-safety/black-spot-map" element={<BlackSpotMap />} />
-          <Route path="/traffic-safety/driver-verification" element={<DriverVerification />} />
-          <Route path="/traffic-safety/incident-reporting" element={<IncidentReporting />} />
-          <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
-          <Route path="/traffic-safety/traffic-camera-feed" element={<TrafficCameraFeed />} />
-          <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
-          <Route path="/traffic-safety/no-parking-zones" element={<NoParkingZones />} />
-          <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
-          <Route path="/traffic-safety/fingerprint-verification" element={<FingerprintVerification />} />
-          <Route path="/traffic-safety/emergency-evacuation" element={<EmergencyEvacuation />} />
+    <div className="App">
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/traffic-signs" element={<TrafficSigns />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/rto-exam" element={<RtoExam />} />
+          <Route path="/faq" element={<FAQ />} />
           
-          {/* New Traffic Safety Routes */}
-          <Route path="/traffic-safety/safety-score" element={<SafetyScore />} />
-          <Route path="/traffic-safety/vehicle-recalls" element={<VehicleRecalls />} />
-          <Route path="/traffic-safety/distracted-driving" element={<DistractedDriving />} />
-          <Route path="/traffic-safety/road-condition" element={<RoadCondition />} />
-          <Route path="/traffic-safety/child-safety" element={<ChildSafety />} />
-          <Route path="/traffic-safety/fatigue-management" element={<FatigueManagement />} />
-          <Route path="/traffic-safety/signal-timing" element={<TrafficSignalTiming />} />
-          <Route path="/traffic-safety/weather-tips" element={<WeatherDrivingTips />} />
-          <Route path="/traffic-safety/air-quality" element={<AirQualityMonitor />} />
-          <Route path="/traffic-safety/beacon-locator" element={<EmergencyBeacon />} />
-          <Route path="/traffic-safety/health-check" element={<DriverHealthCheck />} />
-          <Route path="/traffic-safety/regulations" element={<SafetyRegulations />} />
-          <Route path="/traffic-safety/safety-pledge" element={<SafetyPledge />} />
+          {/* Auth protected routes */}
+          <Route element={<AuthGuard />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/vehicle" element={<Vehicle />} />
+            <Route path="/parivahan-services" element={<ParivhanServices />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/traffic-safety" element={<TrafficSafety />} />
+            <Route path="/newsletter" element={<Newsletter />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/driver-details" element={<DriverDetails />} />
+            <Route path="/t-helper" element={<THelper />} />
+            <Route path="/device-settings" element={<DeviceSettings />} />
 
-          {/* Vehicle Calculator routes */}
-          <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />
-          <Route path="/vehicle/calculators/loan" element={<LoanCalculator />} />
-          <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />
-          <Route path="/vehicle/calculators/age" element={<VehicleAgeCalculator />} />
+            {/* Settings routes */}
+            <Route path="/settings/language" element={<Language />} />
+            <Route path="/settings/location" element={<Location />} />
+            <Route path="/settings/payment" element={<PaymentMethods />} />
+            <Route path="/settings/alerts" element={<AlertPreferences />} />
+            <Route path="/settings/sync" element={<DataSync />} />
+            <Route path="/settings/backup" element={<BackupOptions />} />
+            <Route path="/settings/roles" element={<UserRoles />} />
+            <Route path="/settings/history" element={<HistoryManagement />} />
+            <Route path="/settings/vehicle" element={<VehicleManagement />} />
 
-          {/* Admin routes */}
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/content" element={<EditContent />} />
-          <Route path="/admin/features" element={<UpdateFeatures />} />
-          <Route path="/admin/news" element={<BreakingNews />} />
-          <Route path="/admin/alerts" element={<AlertManagement />} />
-        </Route>
+            {/* RTO Exam routes */}
+            <Route path="/rto-exam/documents" element={<Documents />} />
+            <Route path="/rto-exam/laws" element={<DrivingLaws />} />
+            <Route path="/rto-exam/license-procedure" element={<LicenseProcedure />} />
+            <Route path="/rto-exam/license-procedure-enhanced" element={<LicenseProcedureEnhanced />} />
+            <Route path="/rto-exam/practice-exam" element={<PracticeExam />} />
+            <Route path="/rto-exam/questions" element={<QuestionBank />} />
+            <Route path="/rto-exam/offices" element={<RtoOffices />} />
+            <Route path="/rto-exam/practice" element={<Practice />} />
+            <Route path="/rto-exam/mock-test" element={<MockTest />} />
+            <Route path="/rto-exam/road-signs" element={<RoadSigns />} />
+            <Route path="/rto-exam/driving-tips" element={<DrivingTips />} />
+            <Route path="/rto-exam/schools" element={<Schools />} />
+            <Route path="/rto-exam/exam-schedule" element={<ExamSchedule />} />
+            <Route path="/rto-exam/learners-logbook" element={<LearnersLogbook />} />
+            <Route path="/rto-exam/traffic-quiz" element={<TrafficQuiz />} />
+            <Route path="/rto-exam/simulator" element={<VirtualSimulator />} />
+            <Route path="/rto-exam/penalty-tracker" element={<PenaltyTracker />} />
+            <Route path="/rto-exam/safety-videos" element={<SafetyVideos />} />
+            <Route path="/rto-exam/renewal-guide" element={<RenewalGuide />} />
+            <Route path="/rto-exam/forum" element={<CommunityForum />} />
+            <Route path="/rto-exam/adaptive-learning" element={<AdaptiveLearning />} />
+            <Route path="/rto-exam/violation-alerts" element={<ViolationAlerts />} />
+            <Route path="/rto-exam/expert-qa" element={<ExpertQA />} />
+            <Route path="/rto-exam/hazard-perception" element={<HazardPerception />} />
+            <Route path="/rto-exam/fitness-assessment" element={<FitnessAssessment />} />
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      
-      <Toaster />
-    </AuthProvider>
+            {/* Traffic Safety routes */}
+            <Route path="/traffic-safety/black-spot-map" element={<BlackSpotMap />} />
+            <Route path="/traffic-safety/driver-verification" element={<DriverVerification />} />
+            <Route path="/traffic-safety/incident-reporting" element={<IncidentReporting />} />
+            <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
+            <Route path="/traffic-safety/traffic-camera-feed" element={<TrafficCameraFeed />} />
+            <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
+            <Route path="/traffic-safety/no-parking-zones" element={<NoParkingZones />} />
+            <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
+            <Route path="/traffic-safety/fingerprint-verification" element={<FingerprintVerification />} />
+            <Route path="/traffic-safety/emergency-evacuation" element={<EmergencyEvacuation />} />
+            
+            {/* New Traffic Safety Routes */}
+            <Route path="/traffic-safety/safety-score" element={<SafetyScore />} />
+            <Route path="/traffic-safety/vehicle-recalls" element={<VehicleRecalls />} />
+            <Route path="/traffic-safety/distracted-driving" element={<DistractedDriving />} />
+            <Route path="/traffic-safety/road-condition" element={<RoadCondition />} />
+            <Route path="/traffic-safety/child-safety" element={<ChildSafety />} />
+            <Route path="/traffic-safety/fatigue-management" element={<FatigueManagement />} />
+            <Route path="/traffic-safety/signal-timing" element={<TrafficSignalTiming />} />
+            <Route path="/traffic-safety/weather-tips" element={<WeatherDrivingTips />} />
+            <Route path="/traffic-safety/air-quality" element={<AirQualityMonitor />} />
+            <Route path="/traffic-safety/beacon-locator" element={<EmergencyBeacon />} />
+            <Route path="/traffic-safety/health-check" element={<DriverHealthCheck />} />
+            <Route path="/traffic-safety/regulations" element={<SafetyRegulations />} />
+            <Route path="/traffic-safety/safety-pledge" element={<SafetyPledge />} />
+
+            {/* Vehicle Calculator routes */}
+            <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />
+            <Route path="/vehicle/calculators/loan" element={<LoanCalculator />} />
+            <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />
+            <Route path="/vehicle/calculators/age" element={<VehicleAgeCalculator />} />
+
+            {/* Admin routes */}
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/content" element={<EditContent />} />
+            <Route path="/admin/features" element={<UpdateFeatures />} />
+            <Route path="/admin/news" element={<BreakingNews />} />
+            <Route path="/admin/alerts" element={<AlertManagement />} />
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        
+        <Toaster />
+      </AuthProvider>
+    </div>
   );
 }
 
