@@ -33,6 +33,51 @@ export type Database = {
         }
         Relationships: []
       }
+      air_quality_data: {
+        Row: {
+          aqi: number
+          city: string
+          district: string
+          health_recommendations: string | null
+          id: string
+          last_updated: string
+          latitude: number
+          location: string
+          longitude: number
+          o3: number | null
+          pm10: number | null
+          pm25: number | null
+        }
+        Insert: {
+          aqi: number
+          city: string
+          district: string
+          health_recommendations?: string | null
+          id?: string
+          last_updated?: string
+          latitude: number
+          location: string
+          longitude: number
+          o3?: number | null
+          pm10?: number | null
+          pm25?: number | null
+        }
+        Update: {
+          aqi?: number
+          city?: string
+          district?: string
+          health_recommendations?: string | null
+          id?: string
+          last_updated?: string
+          latitude?: number
+          location?: string
+          longitude?: number
+          o3?: number | null
+          pm10?: number | null
+          pm25?: number | null
+        }
+        Relationships: []
+      }
       breaking_news: {
         Row: {
           author: string | null
@@ -115,6 +160,7 @@ export type Database = {
           driver_experience_years: number | null
           email: string | null
           emergency_contact_name: string | null
+          fingerprint_data: string | null
           gender: string | null
           id: string
           language_proficiency: string[] | null
@@ -147,6 +193,7 @@ export type Database = {
           driver_experience_years?: number | null
           email?: string | null
           emergency_contact_name?: string | null
+          fingerprint_data?: string | null
           gender?: string | null
           id?: string
           language_proficiency?: string[] | null
@@ -179,6 +226,7 @@ export type Database = {
           driver_experience_years?: number | null
           email?: string | null
           emergency_contact_name?: string | null
+          fingerprint_data?: string | null
           gender?: string | null
           id?: string
           language_proficiency?: string[] | null
@@ -237,6 +285,45 @@ export type Database = {
           phone?: string
           rating?: number | null
           services?: string[] | null
+        }
+        Relationships: []
+      }
+      emergency_beacons: {
+        Row: {
+          beacon_type: string
+          city: string
+          contact_number: string | null
+          district: string
+          id: string
+          last_checked: string
+          latitude: number
+          location_name: string
+          longitude: number
+          operational_status: string
+        }
+        Insert: {
+          beacon_type: string
+          city: string
+          contact_number?: string | null
+          district: string
+          id?: string
+          last_checked?: string
+          latitude: number
+          location_name: string
+          longitude: number
+          operational_status: string
+        }
+        Update: {
+          beacon_type?: string
+          city?: string
+          contact_number?: string | null
+          district?: string
+          id?: string
+          last_checked?: string
+          latitude?: number
+          location_name?: string
+          longitude?: number
+          operational_status?: string
         }
         Relationships: []
       }
@@ -318,6 +405,54 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      road_conditions: {
+        Row: {
+          city: string | null
+          condition_type: string
+          description: string | null
+          district: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          latitude: number
+          location: string
+          longitude: number
+          reported_at: string
+          upvotes: number
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          condition_type: string
+          description?: string | null
+          district?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          latitude: number
+          location: string
+          longitude: number
+          reported_at?: string
+          upvotes?: number
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          condition_type?: string
+          description?: string | null
+          district?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number
+          location?: string
+          longitude?: number
+          reported_at?: string
+          upvotes?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -414,6 +549,87 @@ export type Database = {
         }
         Relationships: []
       }
+      safety_regulations: {
+        Row: {
+          applicable_areas: string[] | null
+          description: string
+          effective_date: string
+          expiry_date: string | null
+          id: string
+          last_updated: string
+          penalty_details: string | null
+          regulation_type: string
+          title: string
+        }
+        Insert: {
+          applicable_areas?: string[] | null
+          description: string
+          effective_date: string
+          expiry_date?: string | null
+          id?: string
+          last_updated?: string
+          penalty_details?: string | null
+          regulation_type: string
+          title: string
+        }
+        Update: {
+          applicable_areas?: string[] | null
+          description?: string
+          effective_date?: string
+          expiry_date?: string | null
+          id?: string
+          last_updated?: string
+          penalty_details?: string | null
+          regulation_type?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      safety_score_history: {
+        Row: {
+          acceleration_score: number | null
+          braking_score: number | null
+          city: string | null
+          date: string
+          distraction_score: number | null
+          district: string | null
+          driving_hours: number | null
+          id: string
+          recommendations: string | null
+          safety_score: number
+          speed_score: number | null
+          user_id: string
+        }
+        Insert: {
+          acceleration_score?: number | null
+          braking_score?: number | null
+          city?: string | null
+          date: string
+          distraction_score?: number | null
+          district?: string | null
+          driving_hours?: number | null
+          id?: string
+          recommendations?: string | null
+          safety_score: number
+          speed_score?: number | null
+          user_id: string
+        }
+        Update: {
+          acceleration_score?: number | null
+          braking_score?: number | null
+          city?: string | null
+          date?: string
+          distraction_score?: number | null
+          district?: string | null
+          driving_hours?: number | null
+          id?: string
+          recommendations?: string | null
+          safety_score?: number
+          speed_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_routes: {
         Row: {
           created_at: string
@@ -486,6 +702,48 @@ export type Database = {
         }
         Relationships: []
       }
+      traffic_signals: {
+        Row: {
+          city: string
+          current_status: string
+          district: string
+          green_duration: number
+          id: string
+          intersection_name: string
+          last_updated: string
+          latitude: number
+          longitude: number
+          red_duration: number
+          yellow_duration: number
+        }
+        Insert: {
+          city: string
+          current_status: string
+          district: string
+          green_duration: number
+          id?: string
+          intersection_name: string
+          last_updated?: string
+          latitude: number
+          longitude: number
+          red_duration: number
+          yellow_duration: number
+        }
+        Update: {
+          city?: string
+          current_status?: string
+          district?: string
+          green_duration?: number
+          id?: string
+          intersection_name?: string
+          last_updated?: string
+          latitude?: number
+          longitude?: number
+          red_duration?: number
+          yellow_duration?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -504,6 +762,51 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicle_recalls: {
+        Row: {
+          affected_parts: string[] | null
+          city: string | null
+          contact_info: string | null
+          district: string | null
+          id: string
+          manufacturer: string
+          model: string
+          recall_date: string
+          recall_reason: string
+          recommended_action: string
+          year_from: number
+          year_to: number
+        }
+        Insert: {
+          affected_parts?: string[] | null
+          city?: string | null
+          contact_info?: string | null
+          district?: string | null
+          id?: string
+          manufacturer: string
+          model: string
+          recall_date: string
+          recall_reason: string
+          recommended_action: string
+          year_from: number
+          year_to: number
+        }
+        Update: {
+          affected_parts?: string[] | null
+          city?: string | null
+          contact_info?: string | null
+          district?: string | null
+          id?: string
+          manufacturer?: string
+          model?: string
+          recall_date?: string
+          recall_reason?: string
+          recommended_action?: string
+          year_from?: number
+          year_to?: number
         }
         Relationships: []
       }

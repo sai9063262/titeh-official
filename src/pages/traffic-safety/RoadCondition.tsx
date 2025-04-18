@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,23 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { RoadCondition } from "@/types/safety";
 
-interface RoadCondition {
-  id: string;
-  condition_type: string;
-  description: string;
-  location: string;
-  reported_at: string;
-  image_url?: string;
-  upvotes: number;
-  latitude: number;
-  longitude: number;
-  city?: string;
-  district?: string;
-  user_id: string;
-}
-
-const RoadCondition = () => {
+const RoadConditionComponent = () => {
   const { toast } = useToast();
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -100,7 +85,6 @@ const RoadCondition = () => {
     }
   };
 
-  // Fetch road conditions from Supabase
   const fetchRoadConditions = async () => {
     setLoading(true);
     try {
@@ -111,12 +95,8 @@ const RoadCondition = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setRoadConditions(data);
-      } else {
-        // If no data, create mock data for demonstration
-        const mockData = generateMockRoadConditions();
-        setRoadConditions(mockData);
+      if (data) {
+        setRoadConditions(data as RoadCondition[]);
       }
     } catch (error) {
       console.error("Error fetching road conditions:", error);
@@ -175,7 +155,8 @@ const RoadCondition = () => {
         longitude: 79.5941 + (Math.random() - 0.5) * 0.05,
         city: Math.random() > 0.5 ? 'Warangal' : 'Hanamkonda',
         district: 'Warangal',
-        user_id: 'mockuser'
+        user_id: 'mockuser',
+        is_active: true
       });
     }
     
@@ -307,7 +288,8 @@ const RoadCondition = () => {
       longitude: userLocation?.longitude || 79.5941,
       city: "Warangal",
       district: "Warangal",
-      user_id: 'currentuser'
+      user_id: 'currentuser',
+      is_active: true
     };
     
     // Update state
@@ -651,4 +633,4 @@ const RoadCondition = () => {
   );
 };
 
-export default RoadCondition;
+export default RoadConditionComponent;

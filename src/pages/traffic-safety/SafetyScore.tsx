@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Award, Gauge, Clock, BarChart, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SafetyScore } from "@/types/safety";
 
 const SafetyScore = () => {
   const { toast } = useToast();
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [scores, setScores] = useState<any[]>([]);
-  const [latestScore, setLatestScore] = useState<any | null>(null);
+  const [scores, setScores] = useState<SafetyScore[]>([]);
+  const [latestScore, setLatestScore] = useState<SafetyScore | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Request location permission
   const requestLocationPermission = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -39,7 +38,6 @@ const SafetyScore = () => {
             description: "We can't provide personalized safety scores without your location",
             variant: "destructive",
           });
-          // Load generic data anyway
           fetchSafetyScores();
         }
       );
@@ -50,12 +48,10 @@ const SafetyScore = () => {
         description: "Your browser doesn't support geolocation",
         variant: "destructive",
       });
-      // Load generic data anyway
       fetchSafetyScores();
     }
   };
 
-  // Fetch safety scores from Supabase
   const fetchSafetyScores = async () => {
     setLoading(true);
     try {
@@ -67,14 +63,9 @@ const SafetyScore = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setScores(data);
-        setLatestScore(data[0]);
-      } else {
-        // If no data, create mock data for demonstration
-        const mockData = generateMockSafetyData();
-        setScores(mockData);
-        setLatestScore(mockData[0]);
+      if (data) {
+        setScores(data as SafetyScore[]);
+        setLatestScore(data[0] as SafetyScore);
       }
     } catch (error) {
       console.error("Error fetching safety scores:", error);
@@ -86,7 +77,6 @@ const SafetyScore = () => {
     }
   };
 
-  // Generate mock safety data for demonstration
   const generateMockSafetyData = () => {
     const mockData = [];
     const today = new Date();
@@ -123,14 +113,12 @@ const SafetyScore = () => {
     }
   }, []);
 
-  // Score color based on value
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-green-600";
     if (score >= 75) return "text-yellow-600";
     return "text-red-600";
   };
 
-  // Score background color based on value
   const getScoreBgColor = (score: number) => {
     if (score >= 90) return "bg-green-100";
     if (score >= 75) return "bg-yellow-100";

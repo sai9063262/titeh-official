@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,18 +7,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { VehicleRecall } from "@/types/safety";
 
 const VehicleRecalls = () => {
   const { toast } = useToast();
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [recalls, setRecalls] = useState<any[]>([]);
+  const [recalls, setRecalls] = useState<VehicleRecall[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMake, setFilterMake] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [notifiedVehicles, setNotifiedVehicles] = useState<string[]>([]);
   
-  // Request location permission
   const requestLocationPermission = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -43,7 +42,6 @@ const VehicleRecalls = () => {
             description: "We'll show general recall information.",
             variant: "destructive",
           });
-          // Load data anyway
           fetchRecallData();
         }
       );
@@ -54,12 +52,10 @@ const VehicleRecalls = () => {
         description: "Your browser doesn't support geolocation",
         variant: "destructive",
       });
-      // Load data anyway
       fetchRecallData();
     }
   };
 
-  // Fetch recall data from Supabase
   const fetchRecallData = async () => {
     setLoading(true);
     try {
@@ -70,12 +66,8 @@ const VehicleRecalls = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setRecalls(data);
-      } else {
-        // If no data, create mock data for demonstration
-        const mockData = generateMockRecallData();
-        setRecalls(mockData);
+      if (data) {
+        setRecalls(data as VehicleRecall[]);
       }
     } catch (error) {
       console.error("Error fetching recall data:", error);
@@ -86,7 +78,6 @@ const VehicleRecalls = () => {
     }
   };
 
-  // Generate mock recall data for demonstration
   const generateMockRecallData = () => {
     const manufacturers = [
       'Maruti Suzuki', 'Hyundai', 'Tata Motors', 'Mahindra', 'Toyota', 
@@ -157,7 +148,6 @@ const VehicleRecalls = () => {
     }
   }, []);
 
-  // Filter recalls based on search query and make filter
   const filteredRecalls = recalls.filter(recall => {
     const matchesSearch = searchQuery === "" || 
       recall.manufacturer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -169,10 +159,8 @@ const VehicleRecalls = () => {
     return matchesSearch && matchesMake;
   });
 
-  // Get unique manufacturers for filter
   const uniqueManufacturers = [...new Set(recalls.map(recall => recall.manufacturer))];
 
-  // Mark a vehicle as notified
   const markAsNotified = (recallId: string) => {
     setNotifiedVehicles(prev => [...prev, recallId]);
     toast({

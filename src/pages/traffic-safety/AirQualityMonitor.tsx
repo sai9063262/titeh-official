@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, MapPin, Wind, Lungs } from "lucide-react";
+import { AlertTriangle, MapPin, Wind, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const AirQualityMonitor = () => {
@@ -89,7 +88,7 @@ const AirQualityMonitor = () => {
                 Check back soon for this health-focused feature.
               </p>
               <Button className="mt-4 bg-titeh-primary">
-                <Lungs className="mr-2 h-4 w-4" />
+                <Activity className="mr-2 h-4 w-4" />
                 Get Notified When Available
               </Button>
             </div>
