@@ -72,6 +72,36 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_analytics: {
+        Row: {
+          created_at: string
+          driving_date: string
+          id: string
+          insights: string[] | null
+          metrics: Json
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          driving_date: string
+          id?: string
+          insights?: string[] | null
+          metrics: Json
+          score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          driving_date?: string
+          id?: string
+          insights?: string[] | null
+          metrics?: Json
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           address: string | null
@@ -171,6 +201,102 @@ export type Database = {
         }
         Relationships: []
       }
+      driving_schools: {
+        Row: {
+          address: string
+          created_at: string
+          fees: Json | null
+          hours: string | null
+          id: string
+          location: string
+          name: string
+          phone: string
+          rating: number | null
+          services: string[] | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          fees?: Json | null
+          hours?: string | null
+          id?: string
+          location: string
+          name: string
+          phone: string
+          rating?: number | null
+          services?: string[] | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          fees?: Json | null
+          hours?: string | null
+          id?: string
+          location?: string
+          name?: string
+          phone?: string
+          rating?: number | null
+          services?: string[] | null
+        }
+        Relationships: []
+      }
+      learning_progress: {
+        Row: {
+          activity_type: string
+          id: string
+          is_correct: boolean | null
+          question_id: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mock_test_results: {
+        Row: {
+          id: string
+          passed: boolean
+          questions_count: number
+          score: number
+          time_taken: number
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          passed: boolean
+          questions_count: number
+          score: number
+          time_taken: number
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          passed?: boolean
+          questions_count?: number
+          score?: number
+          time_taken?: number
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -192,6 +318,135 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      road_hazards: {
+        Row: {
+          description: string | null
+          expires_at: string
+          hazard_type: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          latitude: number
+          longitude: number
+          reported_at: string
+          user_id: string
+        }
+        Insert: {
+          description?: string | null
+          expires_at?: string
+          hazard_type: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          reported_at?: string
+          user_id: string
+        }
+        Update: {
+          description?: string | null
+          expires_at?: string
+          hazard_type?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          reported_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safety_features: {
+        Row: {
+          created_at: string
+          feature_type: string
+          id: string
+          metadata: Json | null
+          usage_timestamp: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_type: string
+          id?: string
+          metadata?: Json | null
+          usage_timestamp?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_type?: string
+          id?: string
+          metadata?: Json | null
+          usage_timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safety_pledges: {
+        Row: {
+          badge_id: string
+          completed_at: string
+          id: string
+          pledge_items: string[]
+          shared: boolean
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          completed_at?: string
+          id?: string
+          pledge_items: string[]
+          shared?: boolean
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          completed_at?: string
+          id?: string
+          pledge_items?: string[]
+          shared?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_routes: {
+        Row: {
+          created_at: string
+          end_point: string
+          id: string
+          is_favorite: boolean
+          route_data: Json
+          route_name: string
+          start_point: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_point: string
+          id?: string
+          is_favorite?: boolean
+          route_data: Json
+          route_name: string
+          start_point: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_point?: string
+          id?: string
+          is_favorite?: boolean
+          route_data?: Json
+          route_name?: string
+          start_point?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -248,6 +503,36 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verification_methods: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          method_type: string
+          reference_data: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          method_type: string
+          reference_data?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          method_type?: string
+          reference_data?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
