@@ -69,6 +69,8 @@ import TrafficCameraFeed from "./pages/traffic-safety/TrafficCameraFeed";
 import VoiceComplaint from "./pages/traffic-safety/VoiceComplaint";
 import NoParkingZones from "./pages/traffic-safety/NoParkingZones";
 import SpeedAlerts from "./pages/traffic-safety/SpeedAlerts";
+import FingerprintVerification from "./pages/traffic-safety/FingerprintVerification";
+import EmergencyEvacuation from "./pages/traffic-safety/EmergencyEvacuation";
 
 // Vehicle calculators
 import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
@@ -159,6 +161,8 @@ function App() {
           <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
           <Route path="/traffic-safety/no-parking-zones" element={<NoParkingZones />} />
           <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
+          <Route path="/traffic-safety/fingerprint-verification" element={<FingerprintVerification />} />
+          <Route path="/traffic-safety/emergency-evacuation" element={<EmergencyEvacuation />} />
 
           {/* Vehicle Calculator routes */}
           <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />

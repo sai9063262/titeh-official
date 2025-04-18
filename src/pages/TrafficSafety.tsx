@@ -16,7 +16,23 @@ import {
   FileText,
   Gauge,
   CircleDashed,
-  AlertCircle
+  AlertCircle,
+  Fingerprint,
+  Navigation,
+  CloudLightning,
+  Thermometer,
+  HeartPulse,
+  BarChart,
+  Car,
+  Activity,
+  Phone,
+  CloudRain,
+  Shield,
+  LifeBuoy,
+  TrafficCone,
+  BadgeAlert,
+  AirVent,
+  Locate
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -186,6 +202,171 @@ const TrafficSafety = () => {
               <MapPin className="h-5 w-5 text-titeh-primary mb-2" />
               <span className="text-sm text-center">No Parking Zones</span>
               <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Fingerprint Verification */}
+          <Link to="/traffic-safety/fingerprint-verification" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Fingerprint className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Fingerprint Verification</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Emergency Evacuation Routes */}
+          <Link to="/traffic-safety/emergency-evacuation" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Navigation className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Emergency Evacuation</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Safety Score Calculator */}
+          <Link to="/traffic-safety/safety-score" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <BarChart className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Safety Score Calculator</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Vehicle Recall Alerts */}
+          <Link to="/traffic-safety/vehicle-recalls" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Car className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Vehicle Recall Alerts</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Distracted Driving Detector */}
+          <Link to="/traffic-safety/distracted-driving" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Activity className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Distracted Driving</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Road Condition Report */}
+          <Link to="/traffic-safety/road-condition" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <TrafficCone className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Road Condition Report</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Child Safety Lock Guide */}
+          <Link to="/traffic-safety/child-safety" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Shield className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Child Safety Guide</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Fatigue Management Plan */}
+          <Link to="/traffic-safety/fatigue-management" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Thermometer className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Fatigue Management</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Traffic Signal Timing */}
+          <Link to="/traffic-safety/signal-timing" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <Locate className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Traffic Signal Timing</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Weather-Adaptive Driving Tips */}
+          <Link to="/traffic-safety/weather-tips" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <CloudRain className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Weather Driving Tips</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Real-Time Air Quality Monitor */}
+          <Link to="/traffic-safety/air-quality" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <AirVent className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Air Quality Monitor</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Emergency Beacon Locator */}
+          <Link to="/traffic-safety/beacon-locator" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <CloudLightning className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Emergency Beacon</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Driver Health Check */}
+          <Link to="/traffic-safety/health-check" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <HeartPulse className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Driver Health Check</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Safety Regulation Updates */}
+          <Link to="/traffic-safety/regulations" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <BadgeAlert className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Safety Regulations</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                New
+              </span>
+            </div>
+          </Link>
+
+          {/* New feature - Safety Pledge Campaign */}
+          <Link to="/traffic-safety/safety-pledge" className="block">
+            <div className="border rounded-lg p-4 flex flex-col items-center hover:border-titeh-primary hover:shadow-sm transition-all h-full">
+              <ShieldCheck className="h-5 w-5 text-titeh-primary mb-2" />
+              <span className="text-sm text-center">Safety Pledge</span>
+              <span className="inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                 New
               </span>
             </div>
