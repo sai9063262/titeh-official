@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Award, Gauge, Clock, BarChart, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SafetyScore } from "@/types/safety";
+import type { SafetyScore as SafetyScoreType } from "@/types/safety";
 
 const SafetyScore = () => {
   const { toast } = useToast();
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [scores, setScores] = useState<SafetyScore[]>([]);
-  const [latestScore, setLatestScore] = useState<SafetyScore | null>(null);
+  const [scores, setScores] = useState<SafetyScoreType[]>([]);
+  const [latestScore, setLatestScore] = useState<SafetyScoreType | null>(null);
   const [loading, setLoading] = useState(true);
 
   const requestLocationPermission = () => {
@@ -64,8 +64,8 @@ const SafetyScore = () => {
       if (error) throw error;
 
       if (data) {
-        setScores(data as SafetyScore[]);
-        setLatestScore(data[0] as SafetyScore);
+        setScores(data as SafetyScoreType[]);
+        setLatestScore(data[0] as SafetyScoreType);
       }
     } catch (error) {
       console.error("Error fetching safety scores:", error);

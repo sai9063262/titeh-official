@@ -34,7 +34,6 @@ const RoadConditionComponent = () => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [votedConditions, setVotedConditions] = useState<string[]>([]);
   
-  // New report form state
   const [newReport, setNewReport] = useState({
     conditionType: "",
     location: "",
@@ -47,7 +46,6 @@ const RoadConditionComponent = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  // Request location permission
   const requestLocationPermission = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -107,7 +105,6 @@ const RoadConditionComponent = () => {
     }
   };
 
-  // Generate mock road condition data for demonstration
   const generateMockRoadConditions = () => {
     const conditionTypes = [
       'Pothole', 
@@ -164,7 +161,6 @@ const RoadConditionComponent = () => {
   };
 
   useEffect(() => {
-    // Load voted conditions from local storage
     const savedVotedConditions = localStorage.getItem('votedRoadConditions');
     if (savedVotedConditions) {
       setVotedConditions(JSON.parse(savedVotedConditions));
@@ -175,7 +171,6 @@ const RoadConditionComponent = () => {
     }
   }, []);
 
-  // Filter road conditions based on search query and type filter
   const filteredConditions = roadConditions.filter(condition => {
     const matchesSearch = searchQuery === "" || 
       condition.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -187,14 +182,11 @@ const RoadConditionComponent = () => {
     return matchesSearch && matchesType;
   });
 
-  // Get unique condition types for filter
   const uniqueConditionTypes = [...new Set(roadConditions.map(condition => condition.condition_type))];
 
-  // Upvote a road condition
   const upvoteCondition = (conditionId: string) => {
     if (votedConditions.includes(conditionId)) return;
     
-    // Update local state
     setRoadConditions(prev => 
       prev.map(condition => 
         condition.id === conditionId 
@@ -203,19 +195,16 @@ const RoadConditionComponent = () => {
       )
     );
     
-    // Save to voted conditions
     const updatedVotedConditions = [...votedConditions, conditionId];
     setVotedConditions(updatedVotedConditions);
     localStorage.setItem('votedRoadConditions', JSON.stringify(updatedVotedConditions));
     
-    // In a real app, we would update the database here
     toast({
       title: "Vote recorded",
       description: "Thank you for confirming this road condition.",
     });
   };
 
-  // Open the report dialog
   const openReportDialog = () => {
     if (!locationPermission) {
       toast({
@@ -230,7 +219,6 @@ const RoadConditionComponent = () => {
     setIsReportDialogOpen(true);
   };
 
-  // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -246,7 +234,6 @@ const RoadConditionComponent = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle camera capture
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -262,7 +249,6 @@ const RoadConditionComponent = () => {
     reader.readAsDataURL(file);
   };
 
-  // Submit a new road condition report
   const submitReport = () => {
     if (!newReport.conditionType || !newReport.location || !newReport.description) {
       toast({
@@ -273,9 +259,6 @@ const RoadConditionComponent = () => {
       return;
     }
     
-    // In a real app, we would upload the image to storage and save to the database
-    
-    // Create a new road condition record
     const newCondition: RoadCondition = {
       id: `new-${Date.now()}`,
       condition_type: newReport.conditionType,
@@ -292,10 +275,8 @@ const RoadConditionComponent = () => {
       is_active: true
     };
     
-    // Update state
     setRoadConditions(prev => [newCondition, ...prev]);
     
-    // Reset form and close dialog
     setNewReport({
       conditionType: "",
       location: "",
@@ -311,7 +292,6 @@ const RoadConditionComponent = () => {
     });
   };
 
-  // Format date to readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -393,7 +373,7 @@ const RoadConditionComponent = () => {
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   {uniqueConditionTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
@@ -484,7 +464,6 @@ const RoadConditionComponent = () => {
         </Card>
       </div>
       
-      {/* Report Dialog */}
       {isReportDialogOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-lg">

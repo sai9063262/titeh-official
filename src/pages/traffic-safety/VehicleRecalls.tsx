@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -221,7 +222,7 @@ const VehicleRecalls = () => {
                   <SelectValue placeholder="All Manufacturers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Manufacturers</SelectItem>
+                  <SelectItem value="all">All Manufacturers</SelectItem>
                   {uniqueManufacturers.map((make) => (
                     <SelectItem key={make} value={make}>
                       {make}
