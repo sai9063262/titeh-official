@@ -71,6 +71,19 @@ import NoParkingZones from "./pages/traffic-safety/NoParkingZones";
 import SpeedAlerts from "./pages/traffic-safety/SpeedAlerts";
 import FingerprintVerification from "./pages/traffic-safety/FingerprintVerification";
 import EmergencyEvacuation from "./pages/traffic-safety/EmergencyEvacuation";
+import SafetyScore from "./pages/traffic-safety/SafetyScore";
+import VehicleRecalls from "./pages/traffic-safety/VehicleRecalls";
+import DistractedDriving from "./pages/traffic-safety/DistractedDriving";
+import RoadCondition from "./pages/traffic-safety/RoadCondition";
+import ChildSafety from "./pages/traffic-safety/ChildSafety";
+import FatigueManagement from "./pages/traffic-safety/FatigueManagement";
+import TrafficSignalTiming from "./pages/traffic-safety/TrafficSignalTiming";
+import WeatherDrivingTips from "./pages/traffic-safety/WeatherDrivingTips";
+import AirQualityMonitor from "./pages/traffic-safety/AirQualityMonitor";
+import EmergencyBeacon from "./pages/traffic-safety/EmergencyBeacon";
+import DriverHealthCheck from "./pages/traffic-safety/DriverHealthCheck";
+import SafetyRegulations from "./pages/traffic-safety/SafetyRegulations";
+import SafetyPledge from "./pages/traffic-safety/SafetyPledge";
 
 // Vehicle calculators
 import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
@@ -163,6 +176,21 @@ function App() {
           <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
           <Route path="/traffic-safety/fingerprint-verification" element={<FingerprintVerification />} />
           <Route path="/traffic-safety/emergency-evacuation" element={<EmergencyEvacuation />} />
+          
+          {/* New Traffic Safety Routes */}
+          <Route path="/traffic-safety/safety-score" element={<SafetyScore />} />
+          <Route path="/traffic-safety/vehicle-recalls" element={<VehicleRecalls />} />
+          <Route path="/traffic-safety/distracted-driving" element={<DistractedDriving />} />
+          <Route path="/traffic-safety/road-condition" element={<RoadCondition />} />
+          <Route path="/traffic-safety/child-safety" element={<ChildSafety />} />
+          <Route path="/traffic-safety/fatigue-management" element={<FatigueManagement />} />
+          <Route path="/traffic-safety/signal-timing" element={<TrafficSignalTiming />} />
+          <Route path="/traffic-safety/weather-tips" element={<WeatherDrivingTips />} />
+          <Route path="/traffic-safety/air-quality" element={<AirQualityMonitor />} />
+          <Route path="/traffic-safety/beacon-locator" element={<EmergencyBeacon />} />
+          <Route path="/traffic-safety/health-check" element={<DriverHealthCheck />} />
+          <Route path="/traffic-safety/regulations" element={<SafetyRegulations />} />
+          <Route path="/traffic-safety/safety-pledge" element={<SafetyPledge />} />
 
           {/* Vehicle Calculator routes */}
           <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />

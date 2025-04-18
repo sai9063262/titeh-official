@@ -1,17 +1,30 @@
-
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Upload, Save, User, FileText, Trash2, Shield, CircleCheck, CircleX, Image, X } from "lucide-react";
+import { 
+  Camera, 
+  Upload, 
+  Save, 
+  User, 
+  FileText, 
+  Trash2, 
+  Shield, 
+  CircleCheck, 
+  CircleX, 
+  Image, 
+  X,
+  Fingerprint
+} from "lucide-react";
 import FlashLight from "@/components/icons/FlashLight";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { adminUsers } from "@/lib/adminConfig";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DriverRecord {
   id: string;
@@ -32,6 +45,7 @@ interface DriverRecord {
   medicalConditions?: string;
   trainingCertificates?: string[];
   documents?: { name: string; url: string; }[];
+  fingerprintData?: string;
 }
 
 const AdminDriverDetails = () => {
@@ -57,7 +71,8 @@ const AdminDriverDetails = () => {
     emergencyContactPhone: "",
     medicalConditions: "",
     trainingCertificates: [],
-    documents: []
+    documents: [],
+    fingerprintData: ""
   });
   
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -65,6 +80,9 @@ const AdminDriverDetails = () => {
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [facing, setFacing] = useState<"user" | "environment">("environment");
   const [activeAdmin, setActiveAdmin] = useState(adminUsers[0].email);
+  const [isFingerprintEnrollOpen, setIsFingerprintEnrollOpen] = useState(false);
+  const [enrollmentStep, setEnrollmentStep] = useState(0);
+  const [enrollmentProgress, setEnrollmentProgress] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -149,7 +167,8 @@ const AdminDriverDetails = () => {
       status: "valid",
       address: "",
       age: "",
-      notes: ""
+      notes: "",
+      fingerprintData: ""
     });
     setImageSrc(null);
     
@@ -312,6 +331,11 @@ const AdminDriverDetails = () => {
     reader.onload = (event) => {
       if (event.target?.result) {
         setImageSrc(event.target.result as string);
+        
+        toast({
+          title: "Photo Uploaded",
+          description: "Driver photo has been added from your gallery",
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -320,6 +344,70 @@ const AdminDriverDetails = () => {
   const isAuthorizedAdmin = () => {
     return adminUsers.some(admin => admin.email === activeAdmin);
   };
+
+  const openFingerprintEnrollment = () => {
+    setIsFingerprintEnrollOpen(true);
+    setEnrollmentStep(0);
+    setEnrollmentProgress(0);
+    
+    // Simulate checking if fingerprint hardware is available
+    setTimeout(() => {
+      setEnrollmentStep(1);
+    }, 1500);
+  };
+
+  const simulateEnrollment = () => {
+    setEnrollmentStep(2);
+    
+    // Simulate fingerprint scanning progress
+    const intervalId = setInterval(() => {
+      setEnrollmentProgress(prev => {
+        const newProgress = prev + 20;
+        if (newProgress >= 100) {
+          clearInterval(intervalId);
+          // Generate a mock fingerprint template (in reality, this would be a secure biometric template)
+          const mockTemplate = btoa(`fingerprint-template-${Date.now()}`);
+          setNewDriver(prev => ({ ...prev, fingerprintData: mockTemplate }));
+          setTimeout(() => {
+            setEnrollmentStep(3);
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 800);
+  };
+
+  const resetFingerprintEnrollment = () => {
+    setIsFingerprintEnrollOpen(false);
+    setEnrollmentStep(0);
+    setEnrollmentProgress(0);
+  };
+
+  useEffect(() => {
+    const uploadDriverRecords = async () => {
+      // For demo purposes, we're not actually uploading to Supabase,
+      // but in a real application, we would do something like:
+      // for (const driver of drivers) {
+      //   await supabase.from('drivers').upsert({
+      //     license_number: driver.licenseNumber,
+      //     name: driver.name,
+      //     status: driver.status,
+      //     valid_until: driver.validUntil,
+      //     vehicle_class: driver.vehicleClass,
+      //     photo_url: driver.photoUrl,
+      //     fingerprint_data: driver.fingerprintData,
+      //     address: driver.address,
+      //     age: driver.age,
+      //     notes: driver.notes,
+      //     ...
+      //   });
+      // }
+    };
+
+    // Uncomment this in a real application
+    // uploadDriverRecords();
+  }, [drivers]);
 
   return (
     <Layout>
@@ -394,7 +482,7 @@ const AdminDriverDetails = () => {
                             className="flex-1"
                             onClick={() => fileInputRef.current?.click()}
                           >
-                            <Upload className="h-4 w-4 mr-1" />
+                            <Image className="h-4 w-4 mr-1" />
                             Upload
                           </Button>
                           
@@ -405,6 +493,25 @@ const AdminDriverDetails = () => {
                             accept="image/*"
                             onChange={handleFileInput}
                           />
+                        </div>
+
+                        <div className="mt-3">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={openFingerprintEnrollment}
+                          >
+                            <Fingerprint className="h-4 w-4 mr-1" />
+                            Enroll Fingerprint
+                          </Button>
+
+                          {newDriver.fingerprintData && (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center">
+                              <Fingerprint className="h-4 w-4 text-green-600 mr-2" />
+                              <span className="text-xs text-green-700">Fingerprint data enrolled</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -626,7 +733,6 @@ const AdminDriverDetails = () => {
                   </Button>
                 </div>
                 
-                {/* Camera Dialog */}
                 {isCameraOpen && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
@@ -707,6 +813,102 @@ const AdminDriverDetails = () => {
                     </div>
                   </div>
                 )}
+
+                {isFingerprintEnrollOpen && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-md overflow-hidden">
+                      <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                        <h3 className="font-medium">Fingerprint Enrollment</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-500" 
+                          onClick={resetFingerprintEnrollment}
+                        >
+                          &times;
+                        </Button>
+                      </div>
+                      
+                      <div className="p-6">
+                        {enrollmentStep === 0 && (
+                          <div className="text-center">
+                            <div className="spinner mb-4 mx-auto"></div>
+                            <p className="text-gray-700 mb-2">Checking fingerprint reader...</p>
+                            <p className="text-sm text-gray-500">Please wait while we access your device's biometric sensors</p>
+                          </div>
+                        )}
+                        
+                        {enrollmentStep === 1 && (
+                          <div className="text-center">
+                            <div className="bg-blue-100 p-4 rounded-full mb-4 mx-auto w-20 h-20 flex items-center justify-center">
+                              <Fingerprint className="h-10 w-10 text-blue-600" />
+                            </div>
+                            <h4 className="font-medium text-lg mb-2">Ready to Enroll</h4>
+                            <p className="text-sm text-gray-600 mb-6">
+                              Place your finger on the scanner when prompted and follow the instructions.
+                              You'll need to scan your finger multiple times for a complete enrollment.
+                            </p>
+                            <Button 
+                              onClick={simulateEnrollment}
+                              className="bg-titeh-primary w-full"
+                            >
+                              Start Enrollment
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {enrollmentStep === 2 && (
+                          <div className="text-center">
+                            <div className="relative mb-6 pt-6">
+                              <div className="bg-blue-50 p-8 rounded-full mb-4 mx-auto w-32 h-32 flex items-center justify-center">
+                                <Fingerprint className="h-16 w-16 text-blue-600 animate-pulse" />
+                              </div>
+                              <div className="absolute top-0 right-0 left-0 flex justify-center">
+                                <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                                  {enrollmentProgress}% Complete
+                                </span>
+                              </div>
+                            </div>
+                            <h4 className="font-medium mb-2">
+                              {enrollmentProgress < 40 ? "Place your finger on the scanner" : 
+                               enrollmentProgress < 80 ? "Keep holding your finger" : 
+                               "Almost done..."}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {enrollmentProgress < 100 ? "Do not remove your finger until the process is complete" : "Processing fingerprint data..."}
+                            </p>
+                            
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+                              <div 
+                                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                                style={{ width: `${enrollmentProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {enrollmentStep === 3 && (
+                          <div className="text-center">
+                            <div className="bg-green-100 p-4 rounded-full mb-4 mx-auto w-20 h-20 flex items-center justify-center">
+                              <CircleCheck className="h-10 w-10 text-green-600" />
+                            </div>
+                            <h4 className="font-medium text-lg mb-2">Enrollment Complete</h4>
+                            <p className="text-sm text-gray-600 mb-6">
+                              The fingerprint data has been successfully captured and secured.
+                              This will be used for future identity verification.
+                            </p>
+                            <Button 
+                              onClick={resetFingerprintEnrollment}
+                              className="bg-green-600 hover:bg-green-700 w-full"
+                            >
+                              Done
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -755,6 +957,12 @@ const AdminDriverDetails = () => {
                                 {driver.status === "valid" ? "Valid" : driver.status === "expired" ? "Expired" : "Suspended"}
                               </span>
                             </div>
+                            {driver.fingerprintData && (
+                              <div className="mt-1 flex items-center text-xs text-green-600">
+                                <Fingerprint className="h-3 w-3 mr-1" />
+                                <span>Fingerprint Verified</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
