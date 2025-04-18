@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Fingerprint, CheckCircle, AlertTriangle, Info, Loader } from "lucide-react";
@@ -34,7 +33,6 @@ const DriverFingerprintEnroller = ({
 
   const checkFingerprintCapability = async () => {
     try {
-      // Check if fingerprint API is available through various browser APIs
       const isFingerprintAvailable = 'FingerprintManager' in window || 
                                      'fingerprint' in navigator || 
                                      'credentials' in navigator;
@@ -74,12 +72,9 @@ const DriverFingerprintEnroller = ({
     setEnrollProgress(0);
     setEnrollFingerCount(0);
     
-    // Start real fingerprint enrollment if available, otherwise simulate it
     if (hasFingerprint && 'credentials' in navigator) {
       try {
-        // This is a simplified example of how you might use WebAuthn for fingerprint
-        // In a real app, you would use a more robust fingerprint API implementation
-        const publicKeyCredentialCreationOptions = {
+        const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
           challenge: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]),
           rp: {
             name: "Telangana Traffic Hub",
@@ -91,19 +86,17 @@ const DriverFingerprintEnroller = ({
             displayName: "Driver"
           },
           pubKeyCredParams: [
-            { type: "public-key", alg: -7 }, // ES256
-            { type: "public-key", alg: -257 } // RS256
+            { type: "public-key", alg: -7 },
+            { type: "public-key", alg: -257 }
           ],
           authenticatorSelection: {
-            authenticatorAttachment: "platform",
+            authenticatorAttachment: "platform" as AuthenticatorAttachment,
             requireResidentKey: false,
-            userVerification: "required"
+            userVerification: "required" as UserVerificationRequirement
           },
           timeout: 60000
         };
         
-        // Attempt to create credential using fingerprint
-        // This would trigger the fingerprint scanner on supporting devices
         try {
           await navigator.credentials.create({
             publicKey: publicKeyCredentialCreationOptions
@@ -111,7 +104,6 @@ const DriverFingerprintEnroller = ({
           moveToNextEnrollStep();
         } catch (err) {
           console.error("Error during fingerprint enrollment:", err);
-          // Fall back to simulation if real enrollment fails
           simulateEnrollment();
         }
       } catch (error) {
@@ -119,19 +111,17 @@ const DriverFingerprintEnroller = ({
         simulateEnrollment();
       }
     } else {
-      // If no fingerprint API is available, simulate enrollment
       simulateEnrollment();
     }
   };
 
   const simulateEnrollment = () => {
-    // Simulate enrollment progress
     progressInterval.current = window.setInterval(() => {
       setEnrollProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval.current as number);
           moveToNextEnrollStep();
-          return 0; // Reset for next finger
+          return 0;
         }
         return prev + 5;
       });
@@ -142,10 +132,8 @@ const DriverFingerprintEnroller = ({
     setEnrollFingerCount(prev => prev + 1);
     
     if (enrollFingerCount >= 3) {
-      // All fingers enrolled
       setIsEnrolling(false);
       
-      // Generate a fingerprint template hash 
       const fingerprintTemplate = `fp-template-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       setFingerprintData(fingerprintTemplate);
       onFingerprintEnroll(fingerprintTemplate);
@@ -158,7 +146,6 @@ const DriverFingerprintEnroller = ({
       return;
     }
     
-    // Start next finger scan
     simulateEnrollment();
   };
 

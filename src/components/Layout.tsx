@@ -1,5 +1,5 @@
-
 import { ReactNode, useState } from "react";
+import FloatingTHelper from "./t-helper/FloatingTHelper";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Home, 
@@ -127,6 +127,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main Content */}
       <main className="flex-1 p-4 container mx-auto">
         {children}
+        <FloatingTHelper />
       </main>
 
       {/* Footer */}

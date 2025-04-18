@@ -1,4 +1,4 @@
-
+import { CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -56,7 +56,6 @@ const DriverManagement = () => {
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
   const [currentPage, setCurrentPage] = useState(1);
   
-  // New driver form state
   const [driverData, setDriverData] = useState<DriverData>({
     id: "",
     name: "",
@@ -73,7 +72,6 @@ const DriverManagement = () => {
     fingerprint_data: ""
   });
   
-  // Load driver data
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
@@ -88,7 +86,6 @@ const DriverManagement = () => {
           throw error;
         }
         
-        // Transform Supabase data to match DriverData type
         const driversData: DriverData[] = data.map(driver => ({
           id: driver.id,
           name: driver.name,
@@ -110,7 +107,6 @@ const DriverManagement = () => {
       } catch (error) {
         console.error("Error fetching drivers:", error);
         
-        // Fallback to sample data if database fetch fails
         generateSampleDrivers();
         setIsLoading(false);
         
@@ -125,7 +121,6 @@ const DriverManagement = () => {
     fetchDrivers();
   }, []);
   
-  // Generate sample driver data in case of database issues
   const generateSampleDrivers = () => {
     const sampleDrivers: DriverData[] = [];
     
@@ -136,7 +131,6 @@ const DriverManagement = () => {
       const district = TELANGANA_DISTRICTS[Math.floor(Math.random() * TELANGANA_DISTRICTS.length)];
       const status = statuses[Math.floor(Math.random() * statuses.length)];
       
-      // Generate expiry date (1-5 years in future)
       const validUntil = new Date();
       validUntil.setFullYear(validUntil.getFullYear() + Math.floor(Math.random() * 5) + 1);
       
@@ -162,21 +156,17 @@ const DriverManagement = () => {
     setDrivers(sampleDrivers);
   };
   
-  // Filter drivers based on search query and filters
   useEffect(() => {
     let result = [...drivers];
     
-    // Filter by status
     if (statusFilter !== "all") {
       result = result.filter(driver => driver.status === statusFilter);
     }
     
-    // Filter by district
     if (districtFilter !== "all") {
       result = result.filter(driver => driver.district === districtFilter);
     }
     
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -188,7 +178,7 @@ const DriverManagement = () => {
     }
     
     setFilteredDrivers(result);
-    setCurrentPage(1); // Reset to page 1 when filters change
+    setCurrentPage(1);
   }, [drivers, searchQuery, statusFilter, districtFilter]);
   
   const pageSize = 10;
@@ -196,7 +186,6 @@ const DriverManagement = () => {
   const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   
   const handleAddDriver = () => {
-    // Reset form
     setDriverData({
       id: "",
       name: "",
@@ -239,7 +228,6 @@ const DriverManagement = () => {
       
       if (error) throw error;
       
-      // Remove driver from local state
       setDrivers(prev => prev.filter(d => d.id !== selectedDriver.id));
       setIsDeleteDialogOpen(false);
       
@@ -250,7 +238,6 @@ const DriverManagement = () => {
     } catch (error) {
       console.error("Error deleting driver:", error);
       
-      // Fallback for demo if database update fails
       setDrivers(prev => prev.filter(d => d.id !== selectedDriver.id));
       setIsDeleteDialogOpen(false);
       
@@ -270,7 +257,6 @@ const DriverManagement = () => {
     e.preventDefault();
     setIsFormSubmitting(true);
     
-    // Validate form
     if (!driverData.name || !driverData.licenseNumber) {
       toast({
         title: "Missing Required Fields",
@@ -283,7 +269,6 @@ const DriverManagement = () => {
     
     try {
       if (formMode === "add") {
-        // Add new driver to database
         const { data, error } = await supabase
           .from('drivers')
           .insert([{
@@ -304,7 +289,6 @@ const DriverManagement = () => {
         
         if (error) throw error;
         
-        // Add new driver to local state with proper formatting
         if (data && data.length > 0) {
           const newDriver: DriverData = {
             id: data[0].id,
@@ -330,7 +314,6 @@ const DriverManagement = () => {
           description: "New driver record has been successfully created.",
         });
       } else {
-        // Update existing driver
         const { error } = await supabase
           .from('drivers')
           .update({
@@ -351,7 +334,6 @@ const DriverManagement = () => {
         
         if (error) throw error;
         
-        // Update driver in local state
         setDrivers(prev => prev.map(d => (d.id === driverData.id ? driverData : d)));
         
         toast({
@@ -365,7 +347,6 @@ const DriverManagement = () => {
     } catch (error) {
       console.error("Error saving driver:", error);
       
-      // Fallback for demo if database update fails
       if (formMode === "add") {
         const newDriver: DriverData = {
           ...driverData,
@@ -792,7 +773,6 @@ const DriverManagement = () => {
         </div>
       </div>
       
-      {/* Add/Edit Driver Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -939,7 +919,6 @@ const DriverManagement = () => {
                 </div>
               </div>
               
-              {/* Driver Photo Section */}
               <div className="space-y-1">
                 <Label>Driver Photo</Label>
                 <DriverImageUploader 
@@ -948,7 +927,6 @@ const DriverManagement = () => {
                 />
               </div>
               
-              {/* Driver Fingerprint Section */}
               <DriverFingerprintEnroller 
                 onFingerprintEnroll={handleFingerprintEnroll} 
                 existingFingerprintData={driverData.fingerprint_data}
@@ -982,7 +960,6 @@ const DriverManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1027,7 +1004,6 @@ const DriverManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* View Driver Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -1048,7 +1024,7 @@ const DriverManagement = () => {
                     selectedDriver.status === "expired" ? "bg-amber-500" : "bg-red-500"
                   }`}>
                     {selectedDriver.status === "valid" ? 
-                      <Check className="h-4 w-4 text-white" /> : 
+                      <CheckCircle className="h-4 w-4 text-white" /> : 
                       <X className="h-4 w-4 text-white" />
                     }
                   </div>

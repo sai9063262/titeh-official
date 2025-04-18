@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -59,7 +58,6 @@ const DocumentDisplay = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [currentView, setCurrentView] = useState<"grid" | "list">("grid");
   
-  // Generate sample documents
   useEffect(() => {
     const documentTypes = ["license", "registration", "insurance", "challan", "permit", "fitness", "manual", "guide"];
     const fileFormats = ["pdf", "image", "doc", "xls"];
@@ -74,7 +72,6 @@ const DocumentDisplay = () => {
     
     const sampleDocuments: Document[] = [];
     
-    // Generate 30-40 sample documents
     const numDocuments = Math.floor(Math.random() * 10) + 30;
     
     for (let i = 0; i < numDocuments; i++) {
@@ -83,13 +80,11 @@ const DocumentDisplay = () => {
       const district = TELANGANA_DISTRICTS[Math.floor(Math.random() * TELANGANA_DISTRICTS.length)];
       const category = categories[Math.floor(Math.random() * categories.length)];
       
-      // Generate issue date within last 2 years
       const issueDate = new Date();
       issueDate.setFullYear(issueDate.getFullYear() - Math.floor(Math.random() * 2));
       issueDate.setMonth(Math.floor(Math.random() * 12));
       issueDate.setDate(Math.floor(Math.random() * 28) + 1);
       
-      // Some documents have expiry dates
       let expiryDate: string | undefined;
       if (['license', 'registration', 'insurance', 'permit', 'fitness'].includes(type)) {
         const expiry = new Date(issueDate);
@@ -157,26 +152,21 @@ const DocumentDisplay = () => {
     setIsLoading(false);
   }, []);
   
-  // Apply filters
   useEffect(() => {
     let result = [...documents];
     
-    // Filter by document type
     if (selectedDocType !== "all") {
       result = result.filter(doc => doc.type === selectedDocType);
     }
     
-    // Filter by category
     if (selectedCategory !== "all") {
       result = result.filter(doc => doc.category === selectedCategory);
     }
     
-    // Filter by district
     if (selectedDistrict !== "all") {
       result = result.filter(doc => doc.district === selectedDistrict);
     }
     
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -186,7 +176,7 @@ const DocumentDisplay = () => {
     }
     
     setFilteredDocuments(result);
-    setCurrentPage(1); // Reset to page 1 when filters change
+    setCurrentPage(1);
   }, [documents, selectedDocType, selectedCategory, selectedDistrict, searchQuery]);
   
   const pageSize = currentView === "grid" ? 12 : 8;
@@ -228,7 +218,6 @@ const DocumentDisplay = () => {
     }).format(date);
   };
   
-  // Get unique categories for the filter
   const categories = Array.from(new Set(documents.map(doc => doc.category)));
   
   const getFileIcon = (format: "pdf" | "image" | "doc" | "xls", size: string = "h-10 w-10") => {
@@ -707,7 +696,6 @@ const DocumentDisplay = () => {
         </div>
       </div>
       
-      {/* Document Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>

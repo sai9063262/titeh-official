@@ -1,4 +1,3 @@
-
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -114,7 +113,7 @@ export interface DriverData {
   address: string;
   age: string;
   notes: string;
-  district?: string;
-  city?: string;
+  district: string;
+  city: string;
   fingerprint_data?: string;
 }
