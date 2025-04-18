@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,15 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const TELANGANA_DISTRICTS = [
-  "Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally",
-  "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem", "Mahabubabad",
-  "Mahabubnagar", "Mancherial", "Medak", "Medchal-Malkajgiri", "Mulugu", "Nagarkurnool",
-  "Nalgonda", "Narayanpet", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla",
-  "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy",
-  "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
-];
+import { TELANGANA_DISTRICTS } from "@/types/safety";
 
 interface DriverInfo {
   id: string;
@@ -154,41 +147,57 @@ const FingerprintVerification = () => {
     
     const hasFingerprint = await checkFingerprintCapability();
     
+    if (hasFingerprint && 'credentials' in navigator) {
+      try {
+        // This is a simplified example of how you might use WebAuthn for fingerprint verification
+        const publicKeyCredentialRequestOptions = {
+          challenge: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]),
+          allowCredentials: [],
+          timeout: 60000,
+          userVerification: "required" as UserVerificationRequirement
+        };
+        
+        // Attempt to get credential using fingerprint
+        try {
+          await navigator.credentials.get({
+            publicKey: publicKeyCredentialRequestOptions
+          });
+          
+          // If verification is successful, check database
+          checkFingerprintInDatabase();
+        } catch (err) {
+          console.error("Error during fingerprint verification:", err);
+          setFingerprintFailed(true);
+          setTimeout(() => {
+            setIsScanning(false);
+            toast({
+              title: "Fingerprint Authentication Failed",
+              description: "Could not verify fingerprint. Please try again.",
+              variant: "destructive",
+            });
+          }, 500);
+        }
+      } catch (error) {
+        console.error("Error setting up fingerprint verification:", error);
+        simulateScanProgress();
+      }
+    } else {
+      // If no fingerprint API is available, simulate scanning
+      simulateScanProgress();
+    }
+  };
+  
+  const simulateScanProgress = () => {
     progressInterval.current = window.setInterval(() => {
       setScanProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval.current as number);
-          
-          if (hasFingerprint) {
-            simulateActualFingerprintScan();
-          } else {
-            simulateScanCompletion();
-          }
+          simulateScanCompletion();
           return 100;
         }
         return prev + 5;
       });
     }, 100);
-  };
-  
-  const simulateActualFingerprintScan = () => {
-    setFingerprintFailed(Math.random() > 0.7);
-    
-    if (fingerprintFailed) {
-      setTimeout(() => {
-        setIsScanning(false);
-        toast({
-          title: "No finger detected",
-          description: "Please place your finger on the scanner properly and try again.",
-          variant: "destructive",
-        });
-      }, 500);
-      return;
-    }
-    
-    setTimeout(() => {
-      checkFingerprintInDatabase();
-    }, 500);
   };
   
   const checkFingerprintInDatabase = async () => {
@@ -201,7 +210,7 @@ const FingerprintVerification = () => {
       
       if (error) throw error;
       
-      const success = data && data.length > 0 && Math.random() > 0.3;
+      const success = data && data.length > 0;
       
       setIsScanning(false);
       
@@ -220,7 +229,8 @@ const FingerprintVerification = () => {
             validUntil: matchedDriver.valid_until || "12/05/2028",
             vehicleClass: matchedDriver.vehicle_class || "LMV",
             district: matchedDriver.district || selectedDistrict,
-            city: matchedDriver.city || selectedDistrict
+            city: matchedDriver.city || selectedDistrict,
+            fingerprint_data: matchedDriver.fingerprint_data
           }
         });
         
@@ -271,7 +281,7 @@ const FingerprintVerification = () => {
       if (error) throw error;
       
       const driversWithFingerprints = data?.filter(d => d.fingerprint_data) || [];
-      const success = driversWithFingerprints.length > 0 && Math.random() > 0.3;
+      const success = driversWithFingerprints.length > 0;
       
       setTimeout(() => {
         setIsScanning(false);
@@ -291,7 +301,8 @@ const FingerprintVerification = () => {
               validUntil: matchedDriver.valid_until || "12/05/2028",
               vehicleClass: matchedDriver.vehicle_class || "LMV",
               district: matchedDriver.district || selectedDistrict,
-              city: matchedDriver.city || "Warangal"
+              city: matchedDriver.city || "Warangal",
+              fingerprint_data: matchedDriver.fingerprint_data
             }
           });
           
@@ -367,20 +378,52 @@ const FingerprintVerification = () => {
         toast({
           title: "Fingerprint Hardware Not Detected",
           description: "Your device may not support fingerprint scanning. Using simulated enrollment.",
-          variant: "warning",
+          variant: "destructive",
         });
       }
       
-      progressInterval.current = window.setInterval(() => {
-        setEnrollProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(progressInterval.current as number);
+      if (hasFingerprintHardware && 'credentials' in navigator) {
+        try {
+          // This is a simplified example of how you might use WebAuthn for fingerprint enrollment
+          const publicKeyCredentialCreationOptions = {
+            challenge: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]),
+            rp: {
+              name: "Telangana Traffic Hub",
+              id: window.location.hostname
+            },
+            user: {
+              id: new Uint8Array([1, 2, 3, 4, 5]),
+              name: licenseNumber,
+              displayName: "Driver"
+            },
+            pubKeyCredParams: [
+              { type: "public-key", alg: -7 }, // ES256
+              { type: "public-key", alg: -257 } // RS256
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              requireResidentKey: false,
+              userVerification: "required"
+            },
+            timeout: 60000
+          };
+          
+          try {
+            await navigator.credentials.create({
+              publicKey: publicKeyCredentialCreationOptions
+            });
             moveToNextEnrollStep();
-            return 0;
+          } catch (err) {
+            console.error("Error during fingerprint enrollment:", err);
+            simulateEnrollment();
           }
-          return prev + 5;
-        });
-      }, 100);
+        } catch (error) {
+          console.error("Error setting up fingerprint enrollment:", error);
+          simulateEnrollment();
+        }
+      } else {
+        simulateEnrollment();
+      }
     } catch (error) {
       console.error("Error checking driver:", error);
       toast({
@@ -389,6 +432,19 @@ const FingerprintVerification = () => {
         variant: "destructive",
       });
     }
+  };
+  
+  const simulateEnrollment = () => {
+    progressInterval.current = window.setInterval(() => {
+      setEnrollProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval.current as number);
+          moveToNextEnrollStep();
+          return 0;
+        }
+        return prev + 5;
+      });
+    }, 100);
   };
   
   const moveToNextEnrollStep = () => {
@@ -410,16 +466,7 @@ const FingerprintVerification = () => {
       return;
     }
     
-    progressInterval.current = window.setInterval(() => {
-      setEnrollProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval.current as number);
-          moveToNextEnrollStep();
-          return 0;
-        }
-        return prev + 5;
-      });
-    }, 100);
+    simulateEnrollment();
   };
   
   const updateDriverWithFingerprint = async () => {

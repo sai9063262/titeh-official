@@ -101,3 +101,20 @@ export interface EmergencyBeacon {
   last_checked: string;
   contact_number?: string;
 }
+
+// Driver data interface
+export interface DriverData {
+  id: string;
+  name: string;
+  licenseNumber: string;
+  validUntil: string;
+  vehicleClass: string;
+  photoUrl: string;
+  status: "valid" | "expired" | "suspended";
+  address: string;
+  age: string;
+  notes: string;
+  district?: string;
+  city?: string;
+  fingerprint_data?: string;
+}
