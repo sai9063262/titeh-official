@@ -46,6 +46,19 @@ import MockTest from "./pages/rto-exam/MockTest";
 import RoadSigns from "./pages/rto-exam/RoadSigns";
 import DrivingTips from "./pages/rto-exam/DrivingTips";
 import Schools from "./pages/rto-exam/Schools";
+import ExamSchedule from "./pages/rto-exam/ExamSchedule";
+import LearnersLogbook from "./pages/rto-exam/LearnersLogbook";
+import TrafficQuiz from "./pages/rto-exam/TrafficQuiz";
+import VirtualSimulator from "./pages/rto-exam/VirtualSimulator";
+import PenaltyTracker from "./pages/rto-exam/PenaltyTracker";
+import SafetyVideos from "./pages/rto-exam/SafetyVideos";
+import RenewalGuide from "./pages/rto-exam/RenewalGuide";
+import CommunityForum from "./pages/rto-exam/CommunityForum";
+import AdaptiveLearning from "./pages/rto-exam/AdaptiveLearning";
+import ViolationAlerts from "./pages/rto-exam/ViolationAlerts";
+import ExpertQA from "./pages/rto-exam/ExpertQA";
+import HazardPerception from "./pages/rto-exam/HazardPerception";
+import FitnessAssessment from "./pages/rto-exam/FitnessAssessment";
 
 // Traffic Safety pages
 import BlackSpotMap from "./pages/traffic-safety/BlackSpotMap";
@@ -123,6 +136,19 @@ function App() {
           <Route path="/rto-exam/road-signs" element={<RoadSigns />} />
           <Route path="/rto-exam/driving-tips" element={<DrivingTips />} />
           <Route path="/rto-exam/schools" element={<Schools />} />
+          <Route path="/rto-exam/exam-schedule" element={<ExamSchedule />} />
+          <Route path="/rto-exam/learners-logbook" element={<LearnersLogbook />} />
+          <Route path="/rto-exam/traffic-quiz" element={<TrafficQuiz />} />
+          <Route path="/rto-exam/simulator" element={<VirtualSimulator />} />
+          <Route path="/rto-exam/penalty-tracker" element={<PenaltyTracker />} />
+          <Route path="/rto-exam/safety-videos" element={<SafetyVideos />} />
+          <Route path="/rto-exam/renewal-guide" element={<RenewalGuide />} />
+          <Route path="/rto-exam/forum" element={<CommunityForum />} />
+          <Route path="/rto-exam/adaptive-learning" element={<AdaptiveLearning />} />
+          <Route path="/rto-exam/violation-alerts" element={<ViolationAlerts />} />
+          <Route path="/rto-exam/expert-qa" element={<ExpertQA />} />
+          <Route path="/rto-exam/hazard-perception" element={<HazardPerception />} />
+          <Route path="/rto-exam/fitness-assessment" element={<FitnessAssessment />} />
 
           {/* Traffic Safety routes */}
           <Route path="/traffic-safety/black-spot-map" element={<BlackSpotMap />} />

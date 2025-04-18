@@ -1,43 +1,70 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { ChevronLeft, Phone, Clock, Globe, MapPin, Star, Search } from "lucide-react";
+import { ChevronLeft, MapPin, Phone, Star, Clock, School, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-// Import driving schools data
+// Import sample data from the utility
 import { drivingSchools } from "@/utils/ExamData";
 
 const Schools = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("Hanamkonda");
+  const [userLocation, setUserLocation] = useState<GeolocationPosition | null>(null);
+  const [locationPermission, setLocationPermission] = useState<string>("prompt");
   const { toast } = useToast();
+  const [filteredSchools, setFilteredSchools] = useState(drivingSchools);
+  
+  useEffect(() => {
+    const checkLocationPermission = async () => {
+      try {
+        const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        setLocationPermission(status.state);
+        
+        if (status.state === 'granted') {
+          requestLocation();
+        }
+      } catch (error) {
+        console.error("Error checking permission:", error);
+      }
+    };
+    
+    checkLocationPermission();
+  }, []);
 
-  // Filter schools by search term and location
-  const filteredSchools = drivingSchools.filter(school => {
-    const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        school.address.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = selectedLocation === "All" || school.address.includes(selectedLocation);
-    return matchesSearch && matchesLocation;
-  });
-
-  // Handle booking appointment
-  const handleBookAppointment = (schoolName: string) => {
-    toast({
-      title: "Appointment Request Sent",
-      description: `Your appointment request with ${schoolName} has been sent. They will contact you shortly.`,
-      variant: "default",
-    });
+  const requestLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation(position);
+          toast({
+            title: "Found nearby driving schools",
+            description: "Showing driving schools in Warangal area.",
+          });
+          // We're already filtering for Warangal schools in our data,
+          // but you would use the position coordinates to filter in a real app
+          setFilteredSchools(drivingSchools.filter(school => 
+            school.address.toLowerCase().includes('warangal')
+          ));
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            title: "Location access error",
+            description: "Showing all available driving schools.",
+            variant: "destructive",
+          });
+        }
+      );
+    }
   };
 
-  // Get unique locations from schools
-  const locations = ["All", "Hanamkonda", "Warangal"];
+  const handleLocationRequest = () => {
+    requestLocation();
+  };
 
   return (
     <Layout>
@@ -48,220 +75,117 @@ const Schools = () => {
           </Link>
           <h1 className="text-2xl font-bold text-titeh-primary">Driving Schools</h1>
         </div>
-        
-        <div className="mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input 
-                placeholder="Search by name or address..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+
+        {locationPermission !== "granted" && (
+          <Card className="p-4 mb-6 border-blue-200 bg-blue-50">
+            <div className="flex items-start">
+              <div className="flex-1">
+                <h3 className="font-medium mb-1">Location Access</h3>
+                <p className="text-sm text-gray-600 mb-2">Enable location access to see nearby driving schools in Warangal.</p>
+                <Button 
+                  onClick={handleLocationRequest}
+                  size="sm"
+                  className="bg-titeh-primary hover:bg-blue-600"
+                >
+                  Show Nearby Schools
+                </Button>
+              </div>
             </div>
-            <Tabs 
-              value={selectedLocation} 
-              onValueChange={setSelectedLocation}
-              className="w-full md:w-auto"
-            >
-              <TabsList>
-                {locations.map((location, index) => (
-                  <TabsTrigger key={index} value={location}>
-                    {location}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-        
-        <div className="space-y-6 mb-6">
-          {filteredSchools.length > 0 ? (
-            filteredSchools.map((school) => (
-              <SchoolCard 
-                key={school.id} 
-                school={school} 
-                onBookAppointment={handleBookAppointment}
-              />
-            ))
-          ) : (
-            <Card className="p-6 text-center">
-              <p className="text-lg font-medium">No driving schools found</p>
-              <p className="text-sm text-gray-600">Try a different search term or location</p>
+          </Card>
+        )}
+
+        <div className="space-y-6">
+          {filteredSchools.map((school) => (
+            <Card key={school.id} className="overflow-hidden">
+              <div className="p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-1">{school.name}</h2>
+                    <div className="flex items-center text-sm text-gray-500 mb-2">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      <span>{school.address}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center bg-green-50 px-2 py-1 rounded">
+                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                    <span className="font-medium">{school.rating}</span>
+                    <span className="text-gray-500 text-sm">/5</span>
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <h3 className="font-medium mb-2">Services</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {school.services?.map((service, index) => (
+                        <Badge key={index} variant="outline" className="bg-blue-50">
+                          {service}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-2">Fees</h3>
+                    <div className="space-y-1 text-sm">
+                      <p>Two-wheeler: {school.fees?.twoWheeler}</p>
+                      <p>Four-wheeler: {school.fees?.fourWheeler}</p>
+                      {school.fees?.commercial && (
+                        <p>Commercial: {school.fees.commercial}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center">
+                    <Phone className="h-4 w-4 text-titeh-primary mr-1" />
+                    <span>{school.phone}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 text-titeh-primary mr-1" />
+                    <span>{school.timings}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-3">
+                  <Button className="bg-titeh-primary hover:bg-blue-600">
+                    <Phone className="h-4 w-4 mr-1" />
+                    Contact
+                  </Button>
+                  {school.website && (
+                    <Button variant="outline">
+                      <Info className="h-4 w-4 mr-1" />
+                      Visit Website
+                    </Button>
+                  )}
+                </div>
+              </div>
             </Card>
-          )}
+          ))}
         </div>
-        
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold mb-2">Why Choose a Registered Driving School?</h2>
-          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-            <li>Professional instructors with RTO certification</li>
-            <li>Structured learning curriculum</li>
-            <li>Access to training vehicles equipped with safety features</li>
-            <li>Higher success rate in driving tests</li>
-            <li>Assistance with license application process</li>
-          </ul>
+
+        <Card className="p-6 mt-6">
+          <div className="flex items-start">
+            <School className="text-titeh-primary mr-3 mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium">Why Choose a Certified Driving School?</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Learning to drive with a certified instructor ensures you develop safe driving habits and increases your chances of passing the RTO driving test. All schools listed here are RTO-approved.
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 mt-2">
+                <li>Professional instruction on road safety</li>
+                <li>Structured curriculum approved by RTO</li>
+                <li>Practice on diverse road conditions</li>
+                <li>Documentation assistance for license application</li>
+                <li>Modern training vehicles with safety features</li>
+              </ul>
+            </div>
+          </div>
         </Card>
       </div>
     </Layout>
-  );
-};
-
-// Driving School Card Component
-const SchoolCard = ({ 
-  school, 
-  onBookAppointment 
-}: { 
-  school: any, 
-  onBookAppointment: (schoolName: string) => void
-}) => {
-  return (
-    <Card className="overflow-hidden">
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/4 mb-4 md:mb-0">
-            <img 
-              src={school.image} 
-              alt={school.name} 
-              className="w-full h-32 object-cover rounded-md"
-            />
-          </div>
-          
-          <div className="md:w-3/4 md:pl-6">
-            <div className="flex flex-col md:flex-row md:justify-between mb-2">
-              <h3 className="text-xl font-semibold">{school.name}</h3>
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                <span className="font-medium">{school.rating}</span>
-                <span className="text-gray-500">/5</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start">
-                <MapPin className="h-4 w-4 text-gray-500 mr-2 mt-1" />
-                <p className="text-sm text-gray-600">{school.address}</p>
-              </div>
-              
-              <div className="flex items-center">
-                <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                <p className="text-sm text-gray-600">{school.phone}</p>
-              </div>
-              
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 text-gray-500 mr-2" />
-                <p className="text-sm text-gray-600">{school.timings}</p>
-              </div>
-              
-              {school.website && (
-                <div className="flex items-center">
-                  <Globe className="h-4 w-4 text-gray-500 mr-2" />
-                  <a 
-                    href={school.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    Visit Website
-                  </a>
-                </div>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold mb-2">Services:</h4>
-              <div className="flex flex-wrap gap-2">
-                {school.services.map((service: string, index: number) => (
-                  <Badge key={index} variant="outline">
-                    {service}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold mb-2">Fees:</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                <div className="text-sm">
-                  <span className="font-medium">Two Wheeler:</span> {school.fees.twoWheeler}
-                </div>
-                <div className="text-sm">
-                  <span className="font-medium">Four Wheeler:</span> {school.fees.fourWheeler}
-                </div>
-                {school.fees.commercial && (
-                  <div className="text-sm">
-                    <span className="font-medium">Commercial:</span> {school.fees.commercial}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">View Details</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>{school.name}</DialogTitle>
-                    <DialogDescription>
-                      Complete details about the driving school
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <img 
-                      src={school.image} 
-                      alt={school.name} 
-                      className="w-full h-48 object-cover rounded-md mb-4"
-                    />
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="text-sm font-semibold">Address:</h4>
-                        <p className="text-sm">{school.address}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold">Contact:</h4>
-                        <p className="text-sm">{school.phone}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold">Hours:</h4>
-                        <p className="text-sm">{school.timings}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold">Services:</h4>
-                        <ul className="list-disc pl-5 text-sm">
-                          {school.services.map((service: string, index: number) => (
-                            <li key={index}>{service}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold">Fees:</h4>
-                        <ul className="list-disc pl-5 text-sm">
-                          <li>Two Wheeler: {school.fees.twoWheeler}</li>
-                          <li>Four Wheeler: {school.fees.fourWheeler}</li>
-                          {school.fees.commercial && (
-                            <li>Commercial: {school.fees.commercial}</li>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              <Button 
-                className="bg-titeh-primary hover:bg-blue-600"
-                onClick={() => onBookAppointment(school.name)}
-              >
-                Book Appointment
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
   );
 };
 
