@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Mic, Lock, Sparkles, Camera } from "lucide-react";
+import { Send, Mic, Lock, Sparkles, Camera, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -14,6 +15,7 @@ import FacialRecognitionService from "@/services/facial-recognition-service";
 const THelper = () => {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [conversation, setConversation] = useState<{ role: string; content: string }[]>([
     { role: "assistant", content: "Hello! I'm T-Helper, your AI assistant for traffic and driver information. How can I help you today?" },
@@ -25,6 +27,8 @@ const THelper = () => {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
 
@@ -36,6 +40,13 @@ const THelper = () => {
     "What are the valid documents for RTO?",
     "How do I check license points?"
   ];
+
+  // Scroll to bottom of chat when conversation updates
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [conversation]);
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -76,41 +87,37 @@ const THelper = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
       
-      const chunks: Blob[] = [];
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          chunks.push(e.data);
+          audioChunksRef.current.push(e.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        const reader = new FileReader();
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
-        reader.onload = async () => {
-          if (reader.result && typeof reader.result === 'string') {
-            const base64Audio = reader.result.split(',')[1];
-            
-            try {
-              setIsLoading(true);
-              const transcribedText = "What can you tell me about traffic rules?";
-              setMessage(transcribedText);
-              handleSendMessage();
-            } catch (error) {
-              console.error('Error processing voice:', error);
-              toast({
-                title: "Voice Processing Error",
-                description: "Failed to process voice input. Please try again.",
-                variant: "destructive"
-              });
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        };
-
-        reader.readAsDataURL(audioBlob);
+        try {
+          setIsTranscribing(true);
+          const transcribedText = await OpenAIService.transcribeAudio(audioBlob);
+          setMessage(transcribedText);
+          
+          // Don't automatically send if user might want to edit
+          setIsTranscribing(false);
+          toast({
+            title: "Voice Transcribed",
+            description: "You can edit your message before sending.",
+          });
+        } catch (error) {
+          console.error('Error processing voice:', error);
+          toast({
+            title: "Voice Processing Error",
+            description: "Failed to process voice input. Please try typing your question.",
+            variant: "destructive"
+          });
+          setIsTranscribing(false);
+        }
       };
 
       mediaRecorder.start();
@@ -134,6 +141,10 @@ const THelper = () => {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
+      toast({
+        title: "Recording Stopped",
+        description: "Processing your voice...",
+      });
     }
   };
 
@@ -219,6 +230,15 @@ const THelper = () => {
       handleSendMessage();
     }
   };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isRecording]);
 
   return (
     <Layout>
@@ -340,7 +360,7 @@ const THelper = () => {
         </Card>
         
         <div className="bg-white rounded-lg border shadow-sm mb-4">
-          <div className="p-4 h-[400px] overflow-y-auto flex flex-col space-y-4">
+          <div ref={chatContainerRef} className="p-4 h-[400px] overflow-y-auto flex flex-col space-y-4">
             {conversation.map((msg, index) => (
               <div
                 key={index}
@@ -362,10 +382,9 @@ const THelper = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-lg p-3 bg-gray-100 text-gray-800">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce delay-100"></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce delay-200"></div>
+                  <div className="flex space-x-2 items-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-titeh-primary" />
+                    <span>T-Helper is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -379,25 +398,35 @@ const THelper = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                disabled={isLoading}
+                disabled={isLoading || isTranscribing}
               />
               <Button
-                variant="secondary"
+                variant={isRecording ? "destructive" : "secondary"}
                 size="icon"
                 onClick={handleRecordVoice}
-                className={isRecording ? "bg-red-100 text-red-500" : ""}
+                disabled={isLoading || isTranscribing}
+                className={isRecording ? "bg-red-100 text-red-500 hover:text-red-600 hover:bg-red-200" : ""}
               >
-                <Mic className="h-4 w-4" />
+                {isTranscribing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
               </Button>
-              <Button onClick={handleSendMessage} disabled={isLoading}>
-                <Send className="h-4 w-4" />
+              <Button onClick={handleSendMessage} disabled={isLoading || isTranscribing || !message.trim()}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Send
               </Button>
             </div>
           </div>
         </div>
         
         <div className="text-xs text-gray-500 text-center">
-          Powered by OpenAI. T-Helper is designed to assist with traffic-related queries.
+          Powered by OpenAI. T-Helper is designed to assist with traffic-related queries and general questions.
         </div>
       </div>
     </Layout>

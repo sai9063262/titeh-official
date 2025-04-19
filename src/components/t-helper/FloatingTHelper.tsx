@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -13,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import OpenAIService from "@/services/openai-service";
 import { useToast } from "@/components/ui/use-toast";
-import { Mic, X } from "lucide-react";
-import { useRef } from "react";
+import { Mic, X, Loader2 } from "lucide-react";
 
 const FloatingTHelper = () => {
   const navigate = useNavigate();
@@ -23,7 +23,9 @@ const FloatingTHelper = () => {
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
   const handleAskQuestion = async () => {
@@ -36,6 +38,11 @@ const FloatingTHelper = () => {
     } catch (error) {
       console.error("Error getting response:", error);
       setResponse("Sorry, I couldn't process your request. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to get a response. Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -57,46 +64,50 @@ const FloatingTHelper = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
       
-      const chunks: Blob[] = [];
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        const reader = new FileReader();
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
-        reader.onload = async () => {
-          if (reader.result && typeof reader.result === 'string') {
-            try {
-              setIsLoading(true);
-              const transcribedText = "What are the traffic rules?"; // Replace with actual transcription
-              setQuery(transcribedText);
-              handleAskQuestion();
-            } catch (error) {
-              console.error('Error processing voice:', error);
-              toast({
-                title: "Error",
-                description: "Failed to process voice input",
-                variant: "destructive"
-              });
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        };
-
-        reader.readAsDataURL(audioBlob);
+        try {
+          setIsTranscribing(true);
+          const transcribedText = await OpenAIService.transcribeAudio(audioBlob);
+          setQuery(transcribedText);
+          
+          // Automatically ask the question after transcription
+          setTimeout(() => {
+            handleAskQuestion();
+          }, 500);
+        } catch (error) {
+          console.error('Error processing voice:', error);
+          toast({
+            title: "Error",
+            description: "Failed to process voice input. Please try typing your question.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsTranscribing(false);
+        }
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      
+      toast({
+        title: "Recording Started",
+        description: "Speak clearly...",
+      });
     } catch (error) {
       console.error('Error accessing microphone:', error);
       toast({
         title: "Error",
-        description: "Microphone access denied",
+        description: "Microphone access denied. Please check your browser permissions.",
         variant: "destructive"
       });
     }
@@ -107,6 +118,11 @@ const FloatingTHelper = () => {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
+      
+      toast({
+        title: "Recording Stopped",
+        description: "Processing your voice...",
+      });
     }
   };
 
@@ -117,6 +133,15 @@ const FloatingTHelper = () => {
       stopRecording();
     }
   };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isRecording]);
 
   return (
     <div className="fixed bottom-20 right-4 z-50">
@@ -147,7 +172,12 @@ const FloatingTHelper = () => {
             </div>
           </div>
           <div className="bg-gray-50 p-2 rounded-md mb-3 h-32 overflow-y-auto text-sm">
-            {response ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-5 w-5 animate-spin text-titeh-primary" />
+                <span className="ml-2 text-gray-500">Thinking...</span>
+              </div>
+            ) : response ? (
               <p>{response}</p>
             ) : (
               <p className="text-gray-500">Ask T-Helper a quick question...</p>
@@ -161,25 +191,28 @@ const FloatingTHelper = () => {
               onKeyPress={handleKeyPress}
               size={3}
               className="text-sm"
+              disabled={isLoading || isTranscribing}
             />
             <Button 
               size="sm"
-              variant="ghost"
+              variant={isRecording ? "destructive" : "ghost"}
               onClick={handleVoiceInput}
-              className={isRecording ? "bg-red-100" : ""}
+              disabled={isLoading || isTranscribing}
+              className={isRecording ? "bg-red-100 hover:bg-red-200" : ""}
             >
-              <Mic className={`h-4 w-4 ${isRecording ? "text-red-500" : ""}`} />
+              {isTranscribing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Mic className={`h-4 w-4 ${isRecording ? "text-red-500" : ""}`} />
+              )}
             </Button>
             <Button 
               size="sm" 
               onClick={handleAskQuestion}
-              disabled={isLoading}
+              disabled={isLoading || isTranscribing || !query.trim()}
             >
               {isLoading ? (
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}

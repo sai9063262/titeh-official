@@ -1,3 +1,4 @@
+
 import CryptoJS from 'crypto-js';
 
 // Encrypted API key storage (AES-256 encryption)
@@ -82,6 +83,36 @@ class OpenAIService {
       return data.choices[0].message.content;
     } catch (error) {
       console.error("Error in T-Helper:", error);
+      throw error;
+    }
+  }
+
+  public async transcribeAudio(audioData: Blob): Promise<string> {
+    try {
+      const apiKey = this.getApiKey();
+      const formData = new FormData();
+      formData.append('file', audioData, 'audio.webm');
+      formData.append('model', 'whisper-1');
+      formData.append('language', 'en');
+      
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OpenAI Transcription API Error:", errorData);
+        throw new Error(errorData.error?.message || "Failed to transcribe audio");
+      }
+      
+      const data = await response.json();
+      return data.text;
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
       throw error;
     }
   }

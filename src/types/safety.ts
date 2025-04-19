@@ -1,4 +1,3 @@
-
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -55,53 +54,6 @@ export const TELANGANA_DISTRICTS = [
   "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
 ];
 
-// Air quality data
-export interface AirQualityData {
-  id: string;
-  aqi: number;
-  pm25: number;
-  pm10: number;
-  o3: number;
-  city: string;
-  district: string;
-  location: string;
-  latitude: number;
-  longitude: number;
-  last_updated: string;
-  health_recommendations: string;
-}
-
-// Weather driving condition type
-export interface WeatherDrivingCondition {
-  id: string;
-  condition: string;
-  description: string;
-  recommendations: string[];
-  severity: "low" | "moderate" | "high" | "extreme";
-  icon: string;
-  city: string;
-  district: string;
-  current_temperature?: number;
-  humidity?: number;
-  wind_speed?: number;
-  visibility?: string;
-  updated_at: string;
-}
-
-// Emergency beacon type
-export interface EmergencyBeacon {
-  id: string;
-  location_name: string;
-  latitude: number;
-  longitude: number;
-  beacon_type: string;
-  operational_status: string;
-  city: string;
-  district: string;
-  last_checked: string;
-  contact_number?: string;
-}
-
 // Driver data interface
 export interface DriverData {
   id: string;
@@ -150,4 +102,51 @@ export interface DriverData {
   vehicle_year: string;
   verification_status: string;
   weight: string;
+}
+
+// Air quality data
+export interface AirQualityData {
+  id: string;
+  aqi: number;
+  pm25: number;
+  pm10: number;
+  o3: number;
+  city: string;
+  district: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  last_updated: string;
+  health_recommendations: string;
+}
+
+// Weather driving condition type
+export interface WeatherDrivingCondition {
+  id: string;
+  condition: string;
+  description: string;
+  recommendations: string[];
+  severity: "low" | "moderate" | "high" | "extreme";
+  icon: string;
+  city: string;
+  district: string;
+  current_temperature?: number;
+  humidity?: number;
+  wind_speed?: number;
+  visibility?: string;
+  updated_at: string;
+}
+
+// Emergency beacon type
+export interface EmergencyBeacon {
+  id: string;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  beacon_type: string;
+  operational_status: string;
+  city: string;
+  district: string;
+  last_checked: string;
+  contact_number?: string;
 }
