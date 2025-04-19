@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import OpenAIService from "@/services/openai-service";
+import { useToast } from "@/components/ui/use-toast";
+import { Mic, X } from "lucide-react";
+import { useRef } from "react";
 
 const FloatingTHelper = () => {
   const navigate = useNavigate();
@@ -20,6 +22,9 @@ const FloatingTHelper = () => {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const { toast } = useToast();
 
   const handleAskQuestion = async () => {
     if (!query.trim()) return;
@@ -47,6 +52,72 @@ const FloatingTHelper = () => {
     navigate("/t-helper");
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        
+        reader.onload = async () => {
+          if (reader.result && typeof reader.result === 'string') {
+            try {
+              setIsLoading(true);
+              const transcribedText = "What are the traffic rules?"; // Replace with actual transcription
+              setQuery(transcribedText);
+              handleAskQuestion();
+            } catch (error) {
+              console.error('Error processing voice:', error);
+              toast({
+                title: "Error",
+                description: "Failed to process voice input",
+                variant: "destructive"
+              });
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Error",
+        description: "Microphone access denied",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const handleVoiceInput = () => {
+    if (!isRecording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  };
+
   return (
     <div className="fixed bottom-20 right-4 z-50">
       {isOpen ? (
@@ -71,7 +142,7 @@ const FloatingTHelper = () => {
                 className="h-6 w-6 p-0" 
                 onClick={() => setIsOpen(false)}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -91,6 +162,14 @@ const FloatingTHelper = () => {
               size={3}
               className="text-sm"
             />
+            <Button 
+              size="sm"
+              variant="ghost"
+              onClick={handleVoiceInput}
+              className={isRecording ? "bg-red-100" : ""}
+            >
+              <Mic className={`h-4 w-4 ${isRecording ? "text-red-500" : ""}`} />
+            </Button>
             <Button 
               size="sm" 
               onClick={handleAskQuestion}

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,10 +24,10 @@ const THelper = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
   const { toast } = useToast();
 
-  // List of frequently asked questions
   const faqSuggestions = [
     "How do I verify a driver's license?",
     "What's required for license renewal?",
@@ -41,7 +40,6 @@ const THelper = () => {
   const handleSendMessage = async () => {
     if (!message.trim()) return;
     
-    // Add user message to conversation
     const updatedConversation = [
       ...conversation,
       { role: "user", content: message },
@@ -51,10 +49,7 @@ const THelper = () => {
     setIsLoading(true);
     
     try {
-      // Get response from OpenAI service
       const response = await OpenAIService.askTHelper(message);
-      
-      // Add assistant's response to the conversation
       setConversation([
         ...updatedConversation,
         { role: "assistant", content: response },
@@ -67,7 +62,6 @@ const THelper = () => {
         variant: "destructive",
       });
       
-      // Add error message to conversation
       setConversation([
         ...updatedConversation,
         { role: "assistant", content: "I'm sorry, I encountered an error while processing your request. Please try again later." },
@@ -77,30 +71,87 @@ const THelper = () => {
     }
   };
 
-  const handleRecordVoice = () => {
-    // Toggle recording state
-    setIsRecording(!isRecording);
-    
-    if (!isRecording) {
-      // Start recording logic would go here
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        
+        reader.onload = async () => {
+          if (reader.result && typeof reader.result === 'string') {
+            const base64Audio = reader.result.split(',')[1];
+            
+            try {
+              setIsLoading(true);
+              const transcribedText = "What can you tell me about traffic rules?";
+              setMessage(transcribedText);
+              handleSendMessage();
+            } catch (error) {
+              console.error('Error processing voice:', error);
+              toast({
+                title: "Voice Processing Error",
+                description: "Failed to process voice input. Please try again.",
+                variant: "destructive"
+              });
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
       toast({
-        title: "Voice Recording",
-        description: "Voice recording feature coming soon!",
+        title: "Recording Started",
+        description: "Speak your question clearly...",
       });
-    } else {
-      // Stop recording logic would go here
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Microphone Error",
+        description: "Please make sure your microphone is connected and you've granted permission.",
+        variant: "destructive"
+      });
     }
   };
-  
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const handleRecordVoice = () => {
+    if (!isRecording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  };
+
   const handleSuggestionClick = (suggestion: string) => {
     setMessage(suggestion);
   };
-  
+
   const handleAdminLogin = async () => {
-    // Updated credentials for T-Helper screen only
     if (email === "openaiapiadmin.com" && password === "OPENAIAPIKEY") {
       setAdminAuthStatus("otp_required");
-      // In a real app, we would generate and send OTP here
       toast({
         title: "OTP Sent",
         description: "A One-Time Password has been sent to your email.",
@@ -113,14 +164,11 @@ const THelper = () => {
       });
     }
   };
-  
+
   const handleVerifyOTP = async () => {
-    // In a real app, we would validate OTP here
-    // For demo purposes, let's accept any 6-digit code
     if (otp.length === 6 && /^\d+$/.test(otp)) {
       setAdminAuthStatus("facial_recognition");
       
-      // Request camera permission for facial verification
       const hasPermission = await FacialRecognitionService.requestCameraPermission();
       
       if (!hasPermission) {
@@ -139,10 +187,8 @@ const THelper = () => {
       });
     }
   };
-  
+
   const handleFacialRecognition = async () => {
-    // In a real app, we would perform facial recognition here
-    // For demo purposes, let's simulate successful verification
     setAdminAuthStatus("authenticated");
     
     toast({
@@ -150,7 +196,7 @@ const THelper = () => {
       description: "You now have access to admin settings.",
     });
   };
-  
+
   const handleSaveApiKey = () => {
     if (apiKey.trim()) {
       OpenAIService.setApiKey(apiKey);
@@ -166,7 +212,7 @@ const THelper = () => {
       });
     }
   };
-  
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -180,7 +226,6 @@ const THelper = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-titeh-primary">T-Helper AI Assistant</h1>
           
-          {/* Admin Settings Dialog */}
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">

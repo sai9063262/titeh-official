@@ -1,4 +1,3 @@
-
 import CryptoJS from 'crypto-js';
 
 // Encrypted API key storage (AES-256 encryption)
@@ -23,7 +22,6 @@ class OpenAIService {
   private secretKey: string = "T-HELPER-SECRET-KEY";
 
   private constructor() {
-    // Try to load from localStorage on initialization
     const storedKey = localStorage.getItem('encryptedApiKey');
     if (storedKey) {
       this.encryptedApiKey = storedKey;
@@ -51,8 +49,6 @@ class OpenAIService {
     try {
       const apiKey = this.getApiKey();
       
-      console.log("Sending request to OpenAI with question:", question);
-      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -64,34 +60,29 @@ class OpenAIService {
           messages: [
             {
               role: "system",
-              content: "You are T-Helper, an AI assistant for a driver verification app in Telangana, India. Answer clearly, professionally, and helpfully. Focus on driver verification, traffic safety, app usage, vehicle management, and general questions. Provide concise but complete answers about traffic rules, license procedures, vehicle registration, or any app-related queries."
+              content: "You are T-Helper, a knowledgeable AI assistant for the TITEH (Telangana Integrated Traffic Enforcement Helper) app. You can answer questions about traffic rules, driver verification, vehicle management, app features, and any general questions. Provide clear, accurate, and helpful responses. Be professional yet friendly."
             },
             {
               role: "user",
               content: question
             }
           ],
-          max_tokens: 500
+          max_tokens: 500,
+          temperature: 0.7
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         console.error("OpenAI API Error:", errorData);
-        return "I'm sorry, I encountered an error while processing your request. Please try again later or contact support if the issue persists.";
+        throw new Error(errorData.error?.message || "Failed to get response from AI");
       }
 
       const data = await response.json();
-      
-      if (data.error) {
-        console.error("OpenAI API Error:", data.error);
-        return "I'm sorry, I encountered an error while processing your request. Please try again later or contact support if the issue persists.";
-      }
-      
       return data.choices[0].message.content;
     } catch (error) {
-      console.error("Error querying OpenAI:", error);
-      return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please check your internet connection and try again in a few moments.";
+      console.error("Error in T-Helper:", error);
+      throw error;
     }
   }
 }
