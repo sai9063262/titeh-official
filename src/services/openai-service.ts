@@ -13,7 +13,7 @@ const decryptApiKey = (encryptedApiKey: string, secretKey: string): string => {
 
 // Default encrypted API key - this is just a placeholder and will be replaced by admin
 const DEFAULT_ENCRYPTED_API_KEY = encryptApiKey(
-  "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",
+  "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",
   "T-HELPER-SECRET-KEY"
 );
 
@@ -45,6 +45,8 @@ class OpenAIService {
     try {
       const apiKey = this.getApiKey();
       
+      console.log("Sending request to OpenAI with question:", question);
+      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -56,14 +58,14 @@ class OpenAIService {
           messages: [
             {
               role: "system",
-              content: "You are T-Helper, an AI assistant for a driver verification app. Answer clearly, professionally, and concisely. Focus on driver verification, traffic safety, app usage, and general questions. Limit responses to 2-3 sentences unless more detail is required."
+              content: "You are T-Helper, an AI assistant for a driver verification app in Telangana, India. Answer clearly, professionally, and helpfully. Focus on driver verification, traffic safety, app usage, vehicle management, and general questions. Provide concise but complete answers about traffic rules, license procedures, vehicle registration, or any app-related queries."
             },
             {
               role: "user",
               content: question
             }
           ],
-          max_tokens: 150
+          max_tokens: 300
         })
       });
 
@@ -71,13 +73,13 @@ class OpenAIService {
       
       if (data.error) {
         console.error("OpenAI API Error:", data.error);
-        return "I'm sorry, I encountered an error while processing your request. Please try again later.";
+        return "I'm sorry, I encountered an error while processing your request. Please try again later or contact support if the issue persists.";
       }
       
       return data.choices[0].message.content;
     } catch (error) {
       console.error("Error querying OpenAI:", error);
-      return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again later.";
+      return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please check your internet connection and try again in a few moments.";
     }
   }
 }

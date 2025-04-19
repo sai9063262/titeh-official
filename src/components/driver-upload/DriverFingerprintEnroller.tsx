@@ -1,6 +1,7 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Fingerprint, CheckCircle, AlertTriangle, Info, Loader } from "lucide-react";
+import { Fingerprint, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -33,6 +34,7 @@ const DriverFingerprintEnroller = ({
 
   const checkFingerprintCapability = async () => {
     try {
+      // Check if device has fingerprint hardware capabilities
       const isFingerprintAvailable = 'FingerprintManager' in window || 
                                      'fingerprint' in navigator || 
                                      'credentials' in navigator;
@@ -90,9 +92,9 @@ const DriverFingerprintEnroller = ({
             { type: "public-key", alg: -257 }
           ],
           authenticatorSelection: {
-            authenticatorAttachment: "platform" as AuthenticatorAttachment,
+            authenticatorAttachment: "platform",
             requireResidentKey: false,
-            userVerification: "required" as UserVerificationRequirement
+            userVerification: "required"
           },
           timeout: 60000
         };

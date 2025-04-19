@@ -1,3 +1,4 @@
+
 import { ReactNode, useState } from "react";
 import FloatingTHelper from "./t-helper/FloatingTHelper";
 import { Link, useLocation } from "react-router-dom";
@@ -127,7 +128,6 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main Content */}
       <main className="flex-1 p-4 container mx-auto">
         {children}
-        <FloatingTHelper />
       </main>
 
       {/* Footer */}
@@ -139,6 +139,9 @@ const Layout = ({ children }: LayoutProps) => {
           <a href="#" className="hover:underline">Feedback</a>
         </div>
       </footer>
+
+      {/* Floating T-Helper, visible on all screens */}
+      <FloatingTHelper />
 
       {/* Bottom Navigation */}
       <nav className="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 flex justify-around py-2 md:px-8 shadow-lg z-10">

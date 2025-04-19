@@ -1,3 +1,4 @@
+
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -116,4 +117,37 @@ export interface DriverData {
   district: string;
   city: string;
   fingerprint_data?: string;
+  
+  // Add all other driver properties to make TypeScript happy
+  blood_type: string;
+  created_at: string;
+  criminal_record_notes: string;
+  criminal_record_status: string;
+  date_of_birth: string;
+  document_url: string;
+  driver_experience_years: number;
+  emergency_contact: string;
+  emergency_phone: string;
+  endorsements: string[];
+  health_conditions: string[];
+  height: string;
+  last_verification: string;
+  license_class: string;
+  license_issue_date: string;
+  license_points: number;
+  license_restrictions: string[];
+  organ_donor: boolean;
+  phone_number: string;
+  previous_offenses: string[];
+  profile_image: string;
+  restrictions: string[];
+  updated_at: string;
+  vehicle_color: string;
+  vehicle_make: string;
+  vehicle_model: string;
+  vehicle_plate: string;
+  vehicle_type: string;
+  vehicle_year: string;
+  verification_status: string;
+  weight: string;
 }
