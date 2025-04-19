@@ -97,8 +97,8 @@ const THelper = () => {
   };
   
   const handleAdminLogin = async () => {
-    // Simple validation
-    if (email === "adminopenaiapi.com" && password === "OPENAIAPIKEY") {
+    // Updated credentials for T-Helper screen only
+    if (email === "openaiapiadmin.com" && password === "OPENAIAPIKEY") {
       setAdminAuthStatus("otp_required");
       // In a real app, we would generate and send OTP here
       toast({

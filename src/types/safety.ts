@@ -118,7 +118,7 @@ export interface DriverData {
   city: string;
   fingerprint_data?: string;
   
-  // Add all other driver properties to make TypeScript happy
+  // Required properties for TypeScript
   blood_type: string;
   created_at: string;
   criminal_record_notes: string;

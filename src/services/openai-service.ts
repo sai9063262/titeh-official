@@ -22,7 +22,13 @@ class OpenAIService {
   private encryptedApiKey: string = DEFAULT_ENCRYPTED_API_KEY;
   private secretKey: string = "T-HELPER-SECRET-KEY";
 
-  private constructor() {}
+  private constructor() {
+    // Try to load from localStorage on initialization
+    const storedKey = localStorage.getItem('encryptedApiKey');
+    if (storedKey) {
+      this.encryptedApiKey = storedKey;
+    }
+  }
 
   public static getInstance(): OpenAIService {
     if (!OpenAIService.instance) {
@@ -65,9 +71,15 @@ class OpenAIService {
               content: question
             }
           ],
-          max_tokens: 300
+          max_tokens: 500
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OpenAI API Error:", errorData);
+        return "I'm sorry, I encountered an error while processing your request. Please try again later or contact support if the issue persists.";
+      }
 
       const data = await response.json();
       
