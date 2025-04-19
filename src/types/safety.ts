@@ -1,3 +1,4 @@
+
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -66,9 +67,6 @@ export interface DriverData {
   address: string;
   age: string;
   notes: string;
-  district: string;
-  city: string;
-  fingerprint_data?: string;
   
   // Required properties for TypeScript
   blood_type: string;
@@ -102,6 +100,11 @@ export interface DriverData {
   vehicle_year: string;
   verification_status: string;
   weight: string;
+  
+  // Additional properties that were being used
+  district: string;
+  city: string;
+  fingerprint_data?: string;
 }
 
 // Air quality data
@@ -149,4 +152,11 @@ export interface EmergencyBeacon {
   district: string;
   last_checked: string;
   contact_number?: string;
+}
+
+// Interface for WebAuthn credential creation options
+export interface AuthenticatorSelectionOptions {
+  authenticatorAttachment: "platform" | "cross-platform";
+  requireResidentKey: boolean;
+  userVerification: "required" | "preferred" | "discouraged";
 }

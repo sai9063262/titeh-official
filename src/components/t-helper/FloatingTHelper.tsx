@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, Mic, MicOff, X, Loader2, Volume2 } from "lucide-react";
 import OpenAIService from "@/services/openai-service";
 import { useToast } from "@/components/ui/use-toast";
-import { Mic, X, Loader2 } from "lucide-react";
 
 const FloatingTHelper = () => {
   const navigate = useNavigate();
@@ -24,8 +23,15 @@ const FloatingTHelper = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const durationTimerRef = useRef<number | null>(null);
+  
   const { toast } = useToast();
 
   const handleAskQuestion = async () => {
@@ -59,10 +65,16 @@ const FloatingTHelper = () => {
     navigate("/t-helper");
   };
 
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       
@@ -74,16 +86,25 @@ const FloatingTHelper = () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
         
         try {
           setIsTranscribing(true);
           const transcribedText = await OpenAIService.transcribeAudio(audioBlob);
           setQuery(transcribedText);
           
-          // Automatically ask the question after transcription
-          setTimeout(() => {
-            handleAskQuestion();
-          }, 500);
+          if (transcribedText.includes("transcribe accurately") || transcribedText.includes("couldn't transcribe")) {
+            toast({
+              title: "Transcription Notice",
+              description: "Voice service is currently running in offline mode.",
+            });
+          } else {
+            // Automatically ask the question after transcription
+            setTimeout(() => {
+              handleAskQuestion();
+            }, 500);
+          }
         } catch (error) {
           console.error('Error processing voice:', error);
           toast({
@@ -93,11 +114,21 @@ const FloatingTHelper = () => {
           });
         } finally {
           setIsTranscribing(false);
+          setRecordingDuration(0);
+          if (durationTimerRef.current) {
+            window.clearInterval(durationTimerRef.current);
+            durationTimerRef.current = null;
+          }
         }
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      
+      // Start timer for recording duration
+      durationTimerRef.current = window.setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
       
       toast({
         title: "Recording Started",
@@ -134,14 +165,52 @@ const FloatingTHelper = () => {
     }
   };
 
+  const handlePlayAudio = () => {
+    if (audioRef.current && audioUrl) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
       if (mediaRecorderRef.current && isRecording) {
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }
+      
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+      
+      if (durationTimerRef.current) {
+        window.clearInterval(durationTimerRef.current);
+      }
     };
-  }, [isRecording]);
+  }, [isRecording, audioUrl]);
+
+  // Handle audio ended event
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    
+    const handleAudioEnded = () => {
+      setIsPlaying(false);
+    };
+    
+    if (audioElement) {
+      audioElement.addEventListener('ended', handleAudioEnded);
+    }
+    
+    return () => {
+      if (audioElement) {
+        audioElement.removeEventListener('ended', handleAudioEnded);
+      }
+    };
+  }, [audioRef.current]);
 
   return (
     <div className="fixed bottom-20 right-4 z-50">
@@ -183,6 +252,35 @@ const FloatingTHelper = () => {
               <p className="text-gray-500">Ask T-Helper a quick question...</p>
             )}
           </div>
+          
+          {audioUrl && (
+            <div className="p-2 bg-gray-50 flex items-center gap-2 mb-2 rounded-md">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 p-0" 
+                onClick={handlePlayAudio}
+              >
+                {isPlaying ? <X className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+              </Button>
+              <div className="text-xs text-gray-500">Voice recording</div>
+              <audio ref={audioRef} src={audioUrl} className="hidden" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-auto text-red-500 h-5 text-xs p-0"
+                onClick={() => {
+                  if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl);
+                    setAudioUrl(null);
+                  }
+                }}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <Input 
               placeholder="Type your question..." 
@@ -198,12 +296,19 @@ const FloatingTHelper = () => {
               variant={isRecording ? "destructive" : "ghost"}
               onClick={handleVoiceInput}
               disabled={isLoading || isTranscribing}
-              className={isRecording ? "bg-red-100 hover:bg-red-200" : ""}
+              className={`relative ${isRecording ? "bg-red-100 hover:bg-red-200" : ""}`}
             >
               {isTranscribing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isRecording ? (
+                <>
+                  <MicOff className={`h-4 w-4 text-red-500`} />
+                  <span className="absolute -top-1 -right-1 text-[8px] bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                    {recordingDuration < 60 ? recordingDuration : '59+'}
+                  </span>
+                </>
               ) : (
-                <Mic className={`h-4 w-4 ${isRecording ? "text-red-500" : ""}`} />
+                <Mic className={`h-4 w-4`} />
               )}
             </Button>
             <Button 

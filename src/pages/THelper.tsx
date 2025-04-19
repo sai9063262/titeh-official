@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Mic, Lock, Sparkles, Camera, Loader2 } from "lucide-react";
+import { Send, Mic, Lock, Sparkles, Camera, Loader2, X, MicOff, Volume2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -26,9 +26,19 @@ const THelper = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [showCameraFeed, setShowCameraFeed] = useState(false);
+  
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const durationTimerRef = useRef<number | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
 
   const { toast } = useToast();
 
@@ -85,7 +95,7 @@ const THelper = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       
@@ -97,18 +107,25 @@ const THelper = () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
         
         try {
           setIsTranscribing(true);
           const transcribedText = await OpenAIService.transcribeAudio(audioBlob);
           setMessage(transcribedText);
           
-          // Don't automatically send if user might want to edit
-          setIsTranscribing(false);
-          toast({
-            title: "Voice Transcribed",
-            description: "You can edit your message before sending.",
-          });
+          if (transcribedText.includes("transcribe accurately") || transcribedText.includes("couldn't transcribe")) {
+            toast({
+              title: "Transcription Notice",
+              description: "Voice service is currently running in offline mode. You can still type your questions.",
+            });
+          } else {
+            toast({
+              title: "Voice Transcribed",
+              description: "You can edit your message before sending.",
+            });
+          }
         } catch (error) {
           console.error('Error processing voice:', error);
           toast({
@@ -116,12 +133,24 @@ const THelper = () => {
             description: "Failed to process voice input. Please try typing your question.",
             variant: "destructive"
           });
+        } finally {
           setIsTranscribing(false);
+          setRecordingDuration(0);
+          if (durationTimerRef.current) {
+            window.clearInterval(durationTimerRef.current);
+            durationTimerRef.current = null;
+          }
         }
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      
+      // Start timer for recording duration
+      durationTimerRef.current = window.setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      
       toast({
         title: "Recording Started",
         description: "Speak your question clearly...",
@@ -156,6 +185,23 @@ const THelper = () => {
     }
   };
 
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handlePlayAudio = () => {
+    if (audioRef.current && audioUrl) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const handleSuggestionClick = (suggestion: string) => {
     setMessage(suggestion);
   };
@@ -179,10 +225,28 @@ const THelper = () => {
   const handleVerifyOTP = async () => {
     if (otp.length === 6 && /^\d+$/.test(otp)) {
       setAdminAuthStatus("facial_recognition");
+      setShowCameraFeed(true);
       
-      const hasPermission = await FacialRecognitionService.requestCameraPermission();
-      
-      if (!hasPermission) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        });
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoStreamRef.current = stream;
+        }
+        
+        toast({
+          title: "Camera Activated",
+          description: "Position your face in the frame for verification.",
+        });
+      } catch (error) {
+        console.error("Error accessing camera:", error);
         toast({
           title: "Camera Access Denied",
           description: "Camera permission is required for admin verification.",
@@ -200,12 +264,51 @@ const THelper = () => {
   };
 
   const handleFacialRecognition = async () => {
-    setAdminAuthStatus("authenticated");
-    
-    toast({
-      title: "Authentication Successful",
-      description: "You now have access to admin settings.",
-    });
+    if (videoRef.current && canvasRef.current && videoStreamRef.current) {
+      try {
+        // Capture the current frame from video
+        const context = canvasRef.current.getContext('2d');
+        if (context) {
+          canvasRef.current.width = videoRef.current.videoWidth;
+          canvasRef.current.height = videoRef.current.videoHeight;
+          context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+        
+        // Simulate facial recognition (in a real app, you'd send this to a verification API)
+        toast({
+          title: "Processing",
+          description: "Verifying your identity...",
+        });
+        
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Stop the camera stream
+        videoStreamRef.current.getTracks().forEach(track => track.stop());
+        setShowCameraFeed(false);
+        setAdminAuthStatus("authenticated");
+        
+        toast({
+          title: "Authentication Successful",
+          description: "You now have access to admin settings.",
+        });
+      } catch (error) {
+        console.error("Error in facial recognition:", error);
+        toast({
+          title: "Verification Failed",
+          description: "Unable to complete facial verification. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleCancelFacialRecognition = () => {
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    setShowCameraFeed(false);
+    setAdminAuthStatus("otp_required");
   };
 
   const handleSaveApiKey = () => {
@@ -234,11 +337,46 @@ const THelper = () => {
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      // Clean up audio recording
       if (mediaRecorderRef.current && isRecording) {
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }
+      
+      // Clean up video stream
+      if (videoStreamRef.current) {
+        videoStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      // Clean up audio URL
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+      
+      // Clean up timer
+      if (durationTimerRef.current) {
+        window.clearInterval(durationTimerRef.current);
+      }
     };
-  }, [isRecording]);
+  }, [isRecording, audioUrl]);
+
+  // Handle audio ended event
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    
+    const handleAudioEnded = () => {
+      setIsPlaying(false);
+    };
+    
+    if (audioElement) {
+      audioElement.addEventListener('ended', handleAudioEnded);
+    }
+    
+    return () => {
+      if (audioElement) {
+        audioElement.removeEventListener('ended', handleAudioEnded);
+      }
+    };
+  }, [audioRef.current]);
 
   return (
     <Layout>
@@ -311,13 +449,33 @@ const THelper = () => {
               
               {adminAuthStatus === "facial_recognition" && (
                 <div className="space-y-4 py-4 text-center">
-                  <div className="mx-auto w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center">
-                    <Camera className="h-16 w-16 text-gray-400" />
-                  </div>
-                  <p className="text-sm text-gray-500">Position your face in the frame for verification</p>
-                  <DialogFooter>
-                    <Button onClick={handleFacialRecognition}>Verify Identity</Button>
-                  </DialogFooter>
+                  {showCameraFeed ? (
+                    <div className="space-y-4">
+                      <div className="relative mx-auto rounded-lg overflow-hidden border border-gray-200">
+                        <video 
+                          ref={videoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500">Position your face in the frame for verification</p>
+                      <div className="flex justify-between">
+                        <Button variant="outline" onClick={handleCancelFacialRecognition}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleFacialRecognition}>
+                          Verify Identity
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mx-auto w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Camera className="h-16 w-16 text-gray-400" />
+                    </div>
+                  )}
+                  <canvas ref={canvasRef} className="hidden" />
                 </div>
               )}
               
@@ -331,6 +489,7 @@ const THelper = () => {
                       onChange={(e) => setApiKey(e.target.value)} 
                       placeholder="Enter OpenAI API key" 
                     />
+                    <p className="text-xs text-gray-500">Enter your API key from OpenAI to enable full T-Helper functionality.</p>
                   </div>
                   <DialogFooter>
                     <Button onClick={handleSaveApiKey}>Save API Key</Button>
@@ -391,6 +550,35 @@ const THelper = () => {
             )}
           </div>
           <Separator />
+          
+          {audioUrl && (
+            <div className="p-3 bg-gray-50 flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={handlePlayAudio}
+              >
+                {isPlaying ? <X className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <div className="text-xs text-gray-500">Recorded message</div>
+              <audio ref={audioRef} src={audioUrl} className="hidden" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-auto text-red-500 h-7 text-xs"
+                onClick={() => {
+                  if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl);
+                    setAudioUrl(null);
+                  }
+                }}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
+          
           <div className="p-4">
             <div className="flex items-center space-x-2">
               <Input
@@ -405,10 +593,17 @@ const THelper = () => {
                 size="icon"
                 onClick={handleRecordVoice}
                 disabled={isLoading || isTranscribing}
-                className={isRecording ? "bg-red-100 text-red-500 hover:text-red-600 hover:bg-red-200" : ""}
+                className={`relative ${isRecording ? "bg-red-100 text-red-500 hover:text-red-600 hover:bg-red-200" : ""}`}
               >
                 {isTranscribing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isRecording ? (
+                  <>
+                    <MicOff className="h-4 w-4" />
+                    <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                      {formatDuration(recordingDuration)}
+                    </span>
+                  </>
                 ) : (
                   <Mic className="h-4 w-4" />
                 )}
