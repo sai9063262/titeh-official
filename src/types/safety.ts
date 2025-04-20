@@ -1,4 +1,3 @@
-
 export interface RoadCondition {
   id: string;
   user_id: string;
