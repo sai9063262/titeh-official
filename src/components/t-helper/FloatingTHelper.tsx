@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,11 @@ const FloatingTHelper = () => {
   const durationTimerRef = useRef<number | null>(null);
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Set the API key from your provided key
+    OpenAIService.setApiKey("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");
+  }, []);
 
   const handleAskQuestion = async () => {
     if (!query.trim()) return;

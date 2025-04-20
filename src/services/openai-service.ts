@@ -1,4 +1,3 @@
-
 import CryptoJS from 'crypto-js';
 
 // Encrypted API key storage (AES-256 encryption)
@@ -58,28 +57,58 @@ class OpenAIService {
         return this.generateMockResponse(question);
       }
 
-      const apiKey = this.getApiKey();
-      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${this.getApiKey()}`
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4",
           messages: [
             {
               role: "system",
-              content: "You are T-Helper, a knowledgeable AI assistant for the TITEH (Telangana Integrated Traffic Enforcement Helper) app. You can answer questions about traffic rules, driver verification, vehicle management, app features, and any general questions. Provide clear, accurate, and helpful responses. Be professional yet friendly. If you're not sure about something, be honest and provide the most helpful guidance you can."
+              content: `You are T-Helper, an AI assistant for the TITEH (Telangana Integrated Traffic Enforcement Helper) app. You are knowledgeable about:
+
+1. Traffic Rules & Regulations:
+- Telangana traffic laws and regulations
+- Road safety guidelines
+- Traffic violation penalties
+- License requirements and procedures
+
+2. App Features & Services:
+- Driver verification processes
+- Vehicle management
+- Traffic challan payments
+- Road condition reporting
+- Emergency services
+- Safety scores and monitoring
+- Biometric authentication
+- RTO exam preparation
+
+3. General Information:
+- Local traffic conditions
+- Road safety tips
+- Vehicle maintenance
+- Emergency procedures
+- Weather-related driving advice
+
+4. Administrative Procedures:
+- License renewal
+- Vehicle registration
+- Document requirements
+- RTO office locations
+- Payment procedures
+
+You should be helpful, friendly, and provide accurate information. If a question is outside your knowledge base, acknowledge it and suggest relevant traffic or safety-related information instead.`
             },
             {
               role: "user",
               content: question
             }
           ],
-          max_tokens: 500,
-          temperature: 0.7
+          temperature: 0.7,
+          max_tokens: 800
         })
       });
 
@@ -87,7 +116,6 @@ class OpenAIService {
         const errorData = await response.json();
         console.error("OpenAI API Error:", errorData);
         
-        // If quota exceeded or API key issue, enable mock responses
         if (errorData.error?.code === 'insufficient_quota' || 
             errorData.error?.type === 'insufficient_quota' ||
             errorData.error?.type === 'invalid_request_error') {
@@ -133,7 +161,6 @@ class OpenAIService {
         const errorData = await response.json();
         console.error("OpenAI Transcription API Error:", errorData);
         
-        // If quota exceeded or API key issue, enable mock responses
         if (errorData.error?.code === 'insufficient_quota' || 
             errorData.error?.type === 'insufficient_quota' ||
             errorData.error?.type === 'invalid_request_error') {
@@ -153,12 +180,42 @@ class OpenAIService {
     }
   }
 
-  // Generate fallback responses when the API is unavailable
   private generateMockResponse(question: string): string {
-    // Normalize the question for easier matching
     const normalizedQuestion = question.toLowerCase().trim();
     
-    // Common traffic rule questions
+    if (normalizedQuestion.includes('what can you do') || 
+        normalizedQuestion.includes('help me') || 
+        normalizedQuestion.includes('about you')) {
+      return `I'm T-Helper, your AI assistant for the TITEH app. I can help you with:
+
+1. Traffic & Driving:
+- Traffic rules and regulations
+- License procedures
+- Vehicle registration
+- Challan payments
+- Road safety information
+
+2. App Features:
+- Driver verification
+- Vehicle management
+- Safety monitoring
+- Emergency services
+- RTO exam preparation
+
+3. General Information:
+- Local traffic updates
+- Weather-related driving tips
+- Vehicle maintenance advice
+- Emergency procedures
+- Nearby facilities
+
+Feel free to ask me anything about these topics, and I'll do my best to help!`;
+    }
+    
+    if (normalizedQuestion.includes('weather') || normalizedQuestion.includes('rain')) {
+      return "I can provide real-time weather updates and driving recommendations based on current conditions. During adverse weather, I recommend: reducing speed, maintaining safe distance, using headlights appropriately, and ensuring your vehicle is properly maintained.";
+    }
+    
     if (normalizedQuestion.includes('license points') || normalizedQuestion.includes('check points')) {
       return "To check license points in Telangana, you can: 1) Visit the Telangana RTA website (transport.telangana.gov.in), 2) Use the TITEH app and navigate to Driver Verification section, 3) Visit your nearest RTA office with your license, or 4) Use the mParivahan app. Your license points reflect your driving record, with points deducted for traffic violations.";
     }
@@ -175,17 +232,16 @@ class OpenAIService {
       return "To verify a driver's license in Telangana: 1) Use the TITEH app's Driver Verification feature, 2) Visit the Telangana RTA website (transport.telangana.gov.in), 3) Use the mParivahan app, or 4) Send an SMS as per the format provided by RTA Telangana. You'll need the license number for verification.";
     }
     
-    // About the app
-    if (normalizedQuestion.includes('what can you do') || normalizedQuestion.includes('what do you do') || normalizedQuestion.includes('how can you help')) {
-      return "I'm T-Helper, your AI assistant for the TITEH app. I can help you with: information about traffic rules in Telangana, driver verification procedures, vehicle management details, challan payment processes, license renewals, and general questions about road safety or the TITEH app features. Just ask me anything traffic-related, and I'll do my best to assist you!";
+    if (normalizedQuestion.includes('about the app') || 
+        normalizedQuestion.includes('what do you do') || 
+        normalizedQuestion.includes('how can you help')) {
+      return "I'm T-Helper, your AI assistant for the TITEH (Telangana Integrated Traffic Enforcement Helper) app. I can help you with: information about traffic rules, driver verification, vehicle management, app features, and any general questions. Just ask me anything traffic-related, and I'll do my best to assist you!";
     }
     
-    // General greeting or hello
     if (normalizedQuestion.includes('hello') || normalizedQuestion.includes('hi') || normalizedQuestion.includes('hey') || normalizedQuestion === '') {
       return "Hello! I'm T-Helper, your AI assistant for the TITEH (Telangana Integrated Traffic Enforcement Helper) app. How can I help you today with traffic rules, driver verification, or other traffic-related information?";
     }
     
-    // Default response for other questions
     return "Thank you for your question. As T-Helper, I provide information about Telangana traffic rules, driver verification, vehicle management, and TITEH app features. For this specific query, please try rephrasing or ask about traffic regulations, license procedures, or app features for more accurate information.";
   }
 }
