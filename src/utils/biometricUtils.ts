@@ -2,8 +2,11 @@
 export const checkBiometricSupport = async (): Promise<boolean> => {
   try {
     // Check if device supports biometric authentication
-    const publicKeyCredentialSupport = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    return publicKeyCredentialSupport;
+    if ('PublicKeyCredential' in window) {
+      const publicKeyCredentialSupport = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      return publicKeyCredentialSupport;
+    }
+    return false;
   } catch (error) {
     console.error("Error checking biometric support:", error);
     return false;
@@ -63,7 +66,7 @@ export const enrollBiometric = async (userId: string): Promise<{ success: boolea
         { type: "public-key", alg: -257 },
       ],
       authenticatorSelection: {
-        authenticatorAttachment: "platform" as AuthenticatorAttachment,
+        authenticatorAttachment: "platform",
         requireResidentKey: true,
         userVerification: "required",
       },

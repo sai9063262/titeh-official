@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,7 +92,39 @@ const DriverManagement = () => {
         ...driver,
         district: driver.district || "Unknown",
         city: driver.city || "Unknown",
-        fingerprint_data: driver.fingerprint_data || ""
+        fingerprint_data: driver.fingerprint_data || "",
+        // Add missing required fields with default values
+        blood_type: driver.blood_type || "Unknown",
+        created_at: driver.created_at || new Date().toISOString(),
+        criminal_record_notes: driver.criminal_record_notes || "",
+        criminal_record_status: driver.criminal_record_status || "None",
+        date_of_birth: driver.date_of_birth || "",
+        document_url: driver.document_url || "",
+        driver_experience_years: driver.driver_experience_years || 0,
+        emergency_contact_name: driver.emergency_contact_name || "",
+        emergency_phone_number: driver.emergency_phone_number || "",
+        endorsements: driver.endorsements || [],
+        health_conditions: driver.health_conditions || [],
+        height: driver.height || "",
+        last_verification: driver.last_verification || new Date().toISOString(),
+        license_class: driver.license_class || "",
+        license_issue_date: driver.license_issue_date || "",
+        license_points: driver.license_points || 0,
+        license_restrictions: driver.license_restrictions || [],
+        organ_donor: driver.organ_donor || false,
+        phone_number: driver.phone_number || "",
+        previous_offenses: driver.previous_offenses || [],
+        profile_image: driver.profile_image || "",
+        restrictions: driver.restrictions || [],
+        updated_at: driver.updated_at || new Date().toISOString(),
+        vehicle_color: driver.vehicle_color || "",
+        vehicle_make: driver.vehicle_make || "",
+        vehicle_model: driver.vehicle_model || "",
+        vehicle_plate: driver.vehicle_plate || "",
+        vehicle_type: driver.vehicle_type || "",
+        vehicle_year: driver.vehicle_year || "",
+        verification_status: driver.verification_status || "Pending",
+        weight: driver.weight || ""
       })));
     } catch (error) {
       console.error("Error loading drivers:", error);
@@ -379,7 +410,7 @@ const DriverManagement = () => {
                     <SelectValue placeholder="Filter by district" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Districts</SelectItem>
+                    <SelectItem value="all">All Districts</SelectItem>
                     {TELANGANA_DISTRICTS.map((district) => (
                       <SelectItem key={district} value={district}>
                         {district}
@@ -610,9 +641,7 @@ const DriverManagement = () => {
                 <TabsTrigger value="address">Address & Contact</TabsTrigger>
                 <TabsTrigger value="license">License Details</TabsTrigger>
               </TabsList>
-              {/* Same content as Add Driver Dialog with values from driverForm */}
               <TabsContent value="basic" className="space-y-4">
-                {/* Basic Info fields - same as Add Dialog */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-name">Full Name</Label>
@@ -669,7 +698,6 @@ const DriverManagement = () => {
                 </div>
               </TabsContent>
               <TabsContent value="address" className="space-y-4">
-                {/* Address & Contact fields - same as Add Dialog */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-district">District</Label>
@@ -710,7 +738,6 @@ const DriverManagement = () => {
                 </div>
               </TabsContent>
               <TabsContent value="license" className="space-y-4">
-                {/* License Details fields - same as Add Dialog */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-licenseNumber">License Number</Label>

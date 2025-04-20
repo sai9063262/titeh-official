@@ -21,9 +21,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TELANGANA_DISTRICTS } from "@/types/safety";
+import { DriverData, TELANGANA_DISTRICTS } from "@/types/safety";
+import { checkBiometricSupport, authenticateWithBiometrics, enrollBiometric } from "@/utils/biometricUtils";
 
-interface DriverInfo {
+interface DriverInfo extends Partial<DriverData> {
   id: string;
   name: string;
   licenseNumber: string;
@@ -31,9 +32,6 @@ interface DriverInfo {
   status: "valid" | "expired" | "suspended";
   validUntil: string;
   vehicleClass: string;
-  district?: string;
-  city?: string;
-  fingerprint_data?: string;
 }
 
 const FingerprintVerification = () => {
@@ -367,7 +365,7 @@ const FingerprintVerification = () => {
       setEnrollStep(1);
       setEnrollFingerCount(0);
       
-      const hasFingerprintHardware = await checkFingerprintCapability();
+      const hasFingerprintHardware = await checkBiometricSupport();
       
       if (!hasFingerprintHardware) {
         toast({
@@ -529,7 +527,7 @@ const FingerprintVerification = () => {
       requestLocationPermission();
     }
     
-    checkFingerprintCapability();
+    checkBiometricSupport();
   }, []);
 
   return (
