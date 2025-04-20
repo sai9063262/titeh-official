@@ -1,3 +1,4 @@
+
 import { CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
@@ -34,8 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TELANGANA_DISTRICTS } from "@/types/safety";
-import { DriverData } from "@/types/safety";
+import { TELANGANA_DISTRICTS, DriverData } from "@/types/safety";
 import { supabase } from "@/integrations/supabase/client";
 import DriverImageUploader from "@/components/driver-upload/DriverImageUploader";
 import DriverFingerprintEnroller from "@/components/driver-upload/DriverFingerprintEnroller";
@@ -56,7 +56,8 @@ const DriverManagement = () => {
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
   const [currentPage, setCurrentPage] = useState(1);
   
-  const [driverData, setDriverData] = useState<DriverData>({
+  // Initialize a default DriverData object with all required properties
+  const defaultDriverData: DriverData = {
     id: "",
     name: "",
     licenseNumber: "",
@@ -69,8 +70,41 @@ const DriverManagement = () => {
     notes: "",
     district: "",
     city: "",
-    fingerprint_data: ""
-  });
+    fingerprint_data: "",
+    blood_type: "",
+    created_at: new Date().toISOString(),
+    criminal_record_notes: "",
+    criminal_record_status: "",
+    date_of_birth: "",
+    document_url: "",
+    driver_experience_years: 0,
+    emergency_contact: "",
+    emergency_phone: "",
+    endorsements: [],
+    health_conditions: [],
+    height: "",
+    last_verification: "",
+    license_class: "",
+    license_issue_date: "",
+    license_points: 0,
+    license_restrictions: [],
+    organ_donor: false,
+    phone_number: "",
+    previous_offenses: [],
+    profile_image: "",
+    restrictions: [],
+    updated_at: new Date().toISOString(),
+    vehicle_color: "",
+    vehicle_make: "",
+    vehicle_model: "",
+    vehicle_plate: "",
+    vehicle_type: "",
+    vehicle_year: "",
+    verification_status: "",
+    weight: ""
+  };
+  
+  const [driverData, setDriverData] = useState<DriverData>(defaultDriverData);
   
   useEffect(() => {
     const fetchDrivers = async () => {
@@ -99,7 +133,38 @@ const DriverManagement = () => {
           notes: driver.notes || "",
           district: driver.district || "",
           city: driver.city || "",
-          fingerprint_data: driver.fingerprint_data || ""
+          fingerprint_data: driver.fingerprint_data || "",
+          blood_type: driver.blood_type || "",
+          created_at: driver.created_at || new Date().toISOString(),
+          criminal_record_notes: driver.criminal_record_notes || "",
+          criminal_record_status: driver.criminal_record_status || "",
+          date_of_birth: driver.date_of_birth || "",
+          document_url: driver.document_url || "",
+          driver_experience_years: driver.driver_experience_years || 0,
+          emergency_contact: driver.emergency_contact || "",
+          emergency_phone: driver.emergency_phone || "",
+          endorsements: driver.endorsements || [],
+          health_conditions: driver.health_conditions || [],
+          height: driver.height || "",
+          last_verification: driver.last_verification || "",
+          license_class: driver.license_class || "",
+          license_issue_date: driver.license_issue_date || "",
+          license_points: driver.license_points || 0,
+          license_restrictions: driver.license_restrictions || [],
+          organ_donor: driver.organ_donor || false,
+          phone_number: driver.phone_number || "",
+          previous_offenses: driver.previous_offenses || [],
+          profile_image: driver.profile_image || "",
+          restrictions: driver.restrictions || [],
+          updated_at: driver.updated_at || new Date().toISOString(),
+          vehicle_color: driver.vehicle_color || "",
+          vehicle_make: driver.vehicle_make || "",
+          vehicle_model: driver.vehicle_model || "",
+          vehicle_plate: driver.vehicle_plate || "",
+          vehicle_type: driver.vehicle_type || "",
+          vehicle_year: driver.vehicle_year || "",
+          verification_status: driver.verification_status || "",
+          weight: driver.weight || ""
         }));
         
         setDrivers(driversData);
@@ -134,7 +199,8 @@ const DriverManagement = () => {
       const validUntil = new Date();
       validUntil.setFullYear(validUntil.getFullYear() + Math.floor(Math.random() * 5) + 1);
       
-      const driver: DriverData = {
+      const sampleDriver: DriverData = {
+        ...defaultDriverData,
         id: `driver-${i + 1}`,
         name: `Sample Driver ${i + 1}`,
         licenseNumber: `TS${Math.floor(Math.random() * 100).toString().padStart(2, '0')}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
@@ -147,10 +213,12 @@ const DriverManagement = () => {
         notes: "",
         district: district,
         city: district,
-        fingerprint_data: Math.random() > 0.7 ? `fp-sample-${Date.now()}-${Math.random().toString(36).substring(2, 10)}` : ""
+        fingerprint_data: Math.random() > 0.7 ? `fp-sample-${Date.now()}-${Math.random().toString(36).substring(2, 10)}` : "",
+        blood_type: ["A+", "B+", "O+", "AB+", "A-", "B-", "O-", "AB-"][Math.floor(Math.random() * 8)],
+        license_issue_date: new Date(new Date().setFullYear(new Date().getFullYear() - Math.floor(Math.random() * 5))).toISOString().split('T')[0]
       };
       
-      sampleDrivers.push(driver);
+      sampleDrivers.push(sampleDriver);
     }
     
     setDrivers(sampleDrivers);
@@ -186,22 +254,7 @@ const DriverManagement = () => {
   const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   
   const handleAddDriver = () => {
-    setDriverData({
-      id: "",
-      name: "",
-      licenseNumber: "",
-      validUntil: "",
-      vehicleClass: "",
-      photoUrl: "",
-      status: "valid",
-      address: "",
-      age: "",
-      notes: "",
-      district: "",
-      city: "",
-      fingerprint_data: ""
-    });
-    
+    setDriverData(defaultDriverData);
     setFormMode("add");
     setIsFormOpen(true);
   };

@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -149,7 +148,6 @@ const FingerprintVerification = () => {
     
     if (hasFingerprint && 'credentials' in navigator) {
       try {
-        // This is a simplified example of how you might use WebAuthn for fingerprint verification
         const publicKeyCredentialRequestOptions = {
           challenge: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]),
           allowCredentials: [],
@@ -157,13 +155,11 @@ const FingerprintVerification = () => {
           userVerification: "required" as UserVerificationRequirement
         };
         
-        // Attempt to get credential using fingerprint
         try {
           await navigator.credentials.get({
             publicKey: publicKeyCredentialRequestOptions
           });
           
-          // If verification is successful, check database
           checkFingerprintInDatabase();
         } catch (err) {
           console.error("Error during fingerprint verification:", err);
@@ -182,7 +178,6 @@ const FingerprintVerification = () => {
         simulateScanProgress();
       }
     } else {
-      // If no fingerprint API is available, simulate scanning
       simulateScanProgress();
     }
   };
@@ -384,8 +379,7 @@ const FingerprintVerification = () => {
       
       if (hasFingerprintHardware && 'credentials' in navigator) {
         try {
-          // This is a simplified example of how you might use WebAuthn for fingerprint enrollment
-          const publicKeyCredentialCreationOptions = {
+          const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
             challenge: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]),
             rp: {
               name: "Telangana Traffic Hub",
@@ -401,7 +395,7 @@ const FingerprintVerification = () => {
               { type: "public-key", alg: -257 } // RS256
             ],
             authenticatorSelection: {
-              authenticatorAttachment: "platform",
+              authenticatorAttachment: "platform" as AuthenticatorAttachment,
               requireResidentKey: false,
               userVerification: "required"
             },

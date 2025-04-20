@@ -55,7 +55,7 @@ export const TELANGANA_DISTRICTS = [
   "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
 ];
 
-// Driver data interface
+// Modified DriverData interface to explicitly include district and city
 export interface DriverData {
   id: string;
   name: string;
@@ -67,8 +67,11 @@ export interface DriverData {
   address: string;
   age: string;
   notes: string;
+  district: string;
+  city: string;
+  fingerprint_data?: string;
   
-  // Required properties for TypeScript
+  // Required properties with default values
   blood_type: string;
   created_at: string;
   criminal_record_notes: string;
@@ -100,11 +103,6 @@ export interface DriverData {
   vehicle_year: string;
   verification_status: string;
   weight: string;
-  
-  // Additional properties that were being used
-  district: string;
-  city: string;
-  fingerprint_data?: string;
 }
 
 // Air quality data
