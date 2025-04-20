@@ -1,3 +1,4 @@
+
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -78,8 +79,8 @@ export interface DriverData {
   date_of_birth: string;
   document_url: string;
   driver_experience_years: number;
-  emergency_contact: string;
-  emergency_phone: string;
+  emergency_contact_name: string;
+  emergency_phone_number: string;
   endorsements: string[];
   health_conditions: string[];
   height: string;

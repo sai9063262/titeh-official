@@ -63,7 +63,7 @@ export const enrollBiometric = async (userId: string): Promise<{ success: boolea
         { type: "public-key", alg: -257 },
       ],
       authenticatorSelection: {
-        authenticatorAttachment: "platform",
+        authenticatorAttachment: "platform" as AuthenticatorAttachment,
         requireResidentKey: true,
         userVerification: "required",
       },

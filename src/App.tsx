@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -83,6 +84,9 @@ import EmergencyBeacon from "./pages/traffic-safety/EmergencyBeacon";
 import DriverHealthCheck from "./pages/traffic-safety/DriverHealthCheck";
 import SafetyRegulations from "./pages/traffic-safety/SafetyRegulations";
 import SafetyPledge from "./pages/traffic-safety/SafetyPledge";
+import DocumentDisplay from "./pages/traffic-safety/DocumentDisplay";
+import TSafeMonitoring from "./pages/traffic-safety/TSafeMonitoring";
+import DriverManagement from "./pages/traffic-safety/DriverManagement";
 
 // Vehicle calculators
 import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
@@ -170,7 +174,7 @@ function App() {
             <Route path="/traffic-safety/driver-verification" element={<DriverVerification />} />
             <Route path="/traffic-safety/incident-reporting" element={<IncidentReporting />} />
             <Route path="/traffic-safety/pay-challan" element={<PayChallan />} />
-            <Route path="/traffic-safety/traffic-camera-feed" element={<TrafficCameraFeed />} />
+            <Route path="/traffic-safety/camera-feed" element={<TrafficCameraFeed />} />
             <Route path="/traffic-safety/voice-complaint" element={<VoiceComplaint />} />
             <Route path="/traffic-safety/no-parking-zones" element={<NoParkingZones />} />
             <Route path="/traffic-safety/speed-alerts" element={<SpeedAlerts />} />
@@ -191,6 +195,11 @@ function App() {
             <Route path="/traffic-safety/health-check" element={<DriverHealthCheck />} />
             <Route path="/traffic-safety/regulations" element={<SafetyRegulations />} />
             <Route path="/traffic-safety/safety-pledge" element={<SafetyPledge />} />
+            
+            {/* Fix for 404 errors - adding the missing routes */}
+            <Route path="/traffic-safety/document-display" element={<DocumentDisplay />} />
+            <Route path="/traffic-safety/t-safe-monitoring" element={<TSafeMonitoring />} />
+            <Route path="/traffic-safety/driver-management" element={<DriverManagement />} />
 
             {/* Vehicle Calculator routes */}
             <Route path="/vehicle/calculators/gst" element={<GstCalculator />} />
