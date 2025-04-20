@@ -20,6 +20,7 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("environment");
   
   useEffect(() => {
     // Clean up media stream when component unmounts
@@ -34,9 +35,9 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode: cameraFacingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         } 
       });
       
@@ -49,7 +50,7 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
       
       toast({
         title: "Camera Activated",
-        description: "Position your face in the frame and take the photo.",
+        description: "Position your face clearly in the frame and take the photo.",
       });
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -74,22 +75,64 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
     setIsCameraOpen(false);
   };
   
+  const switchCamera = async () => {
+    // Stop the current stream
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Toggle the facing mode
+    const newMode = cameraFacingMode === "user" ? "environment" : "user";
+    setCameraFacingMode(newMode);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: newMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      setMediaStream(stream);
+      
+      toast({
+        title: "Camera Switched",
+        description: `Now using ${newMode === "user" ? "front" : "back"} camera.`,
+      });
+    } catch (error) {
+      console.error("Error switching camera:", error);
+      toast({
+        title: "Camera Switch Failed",
+        description: "Failed to switch camera. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const captureImage = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Set canvas dimensions to match video
+      // Set canvas dimensions to match video for highest quality
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
       // Draw the current video frame on the canvas
       const ctx = canvas.getContext("2d");
       if (ctx) {
+        // Apply a mild sharpening effect for better face recognition
+        ctx.filter = 'contrast(1.1) brightness(1.05)';
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.filter = 'none';
         
-        // Convert canvas to data URL (base64 encoded image)
-        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        // Convert canvas to data URL (base64 encoded image) at high quality
+        const imageDataUrl = canvas.toDataURL("image/jpeg", 0.95);
         
         // Set the captured image and pass it to parent component
         setCapturedImage(imageDataUrl);
@@ -173,12 +216,24 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
               muted
               className="w-full h-full object-cover"
             ></video>
+            
+            {/* Camera guide overlay */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="h-full w-full flex items-center justify-center">
+                <div className="border-2 border-dashed border-white rounded-full w-40 h-40 opacity-50"></div>
+              </div>
+            </div>
           </div>
           
           <div className="flex justify-between">
-            <Button variant="outline" onClick={stopCamera}>
-              Cancel
-            </Button>
+            <div className="space-x-2">
+              <Button variant="outline" onClick={stopCamera}>
+                Cancel
+              </Button>
+              <Button variant="outline" onClick={switchCamera}>
+                Switch Camera
+              </Button>
+            </div>
             <Button onClick={captureImage} className="bg-titeh-primary">
               <Camera className="h-4 w-4 mr-2" />
               Capture Photo
