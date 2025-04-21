@@ -1,11 +1,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, Image, Trash, AlertCircle } from "lucide-react";
+import { Camera, Upload, Trash, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-// import { supabase } from "@/integrations/supabase/client";
-// ^ If you have storage for production image uploads, use supabase.
-//   For now, all features below are local/temporary as before.
 import { validateFaceInImage } from "@/utils/faceDetectionUtils";
 
 interface DriverImageUploaderProps {
@@ -19,13 +16,15 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [faceValidationMsg, setFaceValidationMsg] = useState<string | null>(null);
   const [faceValidationStatus, setFaceValidationStatus] = useState<"success" | "warning" | "error" | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [faceBox, setFaceBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("environment");
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("user");
 
   useEffect(() => {
     // Clean up media stream when component unmounts
@@ -40,17 +39,22 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
   useEffect(() => {
     setFaceValidationMsg(null);
     setFaceValidationStatus(null);
+    setFaceBox(null);
   }, [capturedImage, isCameraOpen]);
 
   const startCamera = async () => {
     try {
+      // Request permission with better constraints for face detection
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: cameraFacingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        } 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        },
+        audio: false
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -58,13 +62,13 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
       setIsCameraOpen(true);
       toast({
         title: "Camera Activated",
-        description: "Position your face clearly in the frame and take the photo.",
+        description: "Position your face clearly in the center of the frame.",
       });
     } catch (error) {
       console.error("Error accessing camera:", error);
       toast({
         title: "Camera Access Failed",
-        description: "Could not access your camera. Please check permissions.",
+        description: "Could not access your camera. Please check permissions or try uploading a photo instead.",
         variant: "destructive",
       });
     }
@@ -94,9 +98,10 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: newMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        } 
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -116,56 +121,79 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
     }
   };
 
-  // ---------- ENHANCED FACE VALIDATION FUNCTION ----------
+  // Enhanced face validation function
   async function runFaceValidation(imageDataUrl: string) {
-    setFaceValidationMsg("Assessing image quality and detecting face...");
+    setIsProcessing(true);
+    setFaceValidationMsg("Analyzing image quality and detecting face...");
     setFaceValidationStatus(null);
+    
     try {
-      // Simulate async detection and basic feedback
-      const { valid, message, status } = await validateFaceInImage(imageDataUrl);
-      setFaceValidationMsg(message);
-      setFaceValidationStatus(status);
-      if (!valid) {
+      // Use the enhanced validation function
+      const validationResult = await validateFaceInImage(imageDataUrl);
+      
+      setFaceValidationMsg(validationResult.message);
+      setFaceValidationStatus(validationResult.status);
+      setFaceBox(validationResult.faceBox || null);
+      
+      if (!validationResult.valid) {
         toast({
-          title: "Photo Could Not Be Used",
-          description: message,
-          variant: "destructive",
+          title: "Face Detection Issue",
+          description: validationResult.message,
+          variant: validationResult.status === "warning" ? "default" : "destructive",
         });
       }
-      return valid;
+      
+      setIsProcessing(false);
+      return validationResult.valid;
     } catch (e) {
+      console.error("Face validation error:", e);
       setFaceValidationMsg("An error occurred while verifying the image.");
       setFaceValidationStatus("error");
+      setIsProcessing(false);
       return false;
     }
   }
 
   const captureImage = async () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      // Set canvas dimensions to match video for highest quality
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      // Draw the current video frame on the canvas
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.filter = 'contrast(1.1) brightness(1.05)';
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        ctx.filter = 'none';
-        const imageDataUrl = canvas.toDataURL("image/jpeg", 0.95);
-        // Face validation step
-        const isValid = await runFaceValidation(imageDataUrl);
-        if (!isValid) return;
-        setCapturedImage(imageDataUrl);
-        onImageCapture(imageDataUrl);
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    // Set canvas dimensions to match video for highest quality
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the current video frame on the canvas with enhancements
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    // Apply subtle image enhancements for better facial recognition
+    ctx.filter = 'contrast(1.1) brightness(1.05)';
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.filter = 'none';
+    
+    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    
+    // Face validation step
+    const isValid = await runFaceValidation(imageDataUrl);
+    
+    // Proceed even with warnings, but stop on errors
+    if (faceValidationStatus === "error") return;
+    
+    setCapturedImage(imageDataUrl);
+    onImageCapture(imageDataUrl);
+    
+    // Don't stop camera immediately so user can see validation result
+    setTimeout(() => {
+      if (isValid) {
         stopCamera();
         toast({
           title: "Photo Captured",
-          description: "Driver photo has been successfully captured.",
+          description: "Driver photo has been successfully captured and validated.",
         });
       }
-    }
+    }, 1500);
   };
 
   const deleteImage = () => {
@@ -173,6 +201,7 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
     onImageCapture('');
     setFaceValidationMsg(null);
     setFaceValidationStatus(null);
+    setFaceBox(null);
     toast({
       title: "Photo Deleted",
       description: "Driver photo has been removed.",
@@ -181,30 +210,38 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid File",
-          description: "Please select an image file.",
-          variant: "destructive",
-        });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageDataUrl = e.target?.result as string;
-        // Face validation for uploaded photo
-        const isValid = await runFaceValidation(imageDataUrl);
-        if (!isValid) return;
-        setCapturedImage(imageDataUrl);
-        onImageCapture(imageDataUrl);
-        toast({
-          title: "Image Uploaded",
-          description: "Driver photo has been successfully uploaded.",
-        });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
     }
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const imageDataUrl = e.target?.result as string;
+      
+      // Face validation for uploaded photo
+      const isValid = await runFaceValidation(imageDataUrl);
+      
+      // Proceed even with warnings, but stop on errors
+      if (faceValidationStatus === "error") return;
+      
+      setCapturedImage(imageDataUrl);
+      onImageCapture(imageDataUrl);
+      
+      toast({
+        title: "Image Uploaded",
+        description: isValid 
+          ? "Driver photo has been successfully validated." 
+          : "Photo uploaded but may have quality issues.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const openFileSelector = () => {
@@ -225,7 +262,7 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} className="hidden"></canvas>
 
-      {/* ----------- Camera vs Uploaded UI separation ----------- */}
+      {/* Camera view or captured image */}
       {isCameraOpen ? (
         <div className="space-y-4">
           <div className="relative w-full h-64 md:h-80 bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
@@ -236,50 +273,75 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
               muted
               className="w-full h-full object-cover"
             ></video>
-            {/* Camera guide overlay */}
+            {/* Face detection guide overlay */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="h-full w-full flex items-center justify-center">
-                <div className="border-2 border-dashed border-white rounded-full w-40 h-40 opacity-50" />
+                <div className="border-2 border-dashed border-white rounded-full w-40 h-40 opacity-60" />
               </div>
             </div>
           </div>
+          
+          {/* Camera controls */}
           <div className="flex justify-between">
             <div className="space-x-2">
               <Button variant="outline" onClick={stopCamera}>
                 Cancel
               </Button>
               <Button variant="outline" onClick={switchCamera}>
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Switch Camera
               </Button>
             </div>
-            <Button onClick={captureImage} className="bg-titeh-primary">
+            <Button 
+              onClick={captureImage} 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isProcessing}
+            >
               <Camera className="h-4 w-4 mr-2" />
-              Capture Photo
+              {isProcessing ? "Processing..." : "Capture Photo"}
             </Button>
           </div>
         </div>
       ) : (
-        // ----------- NEW: rearranged upload option below the "Take Photo" button and no overlap with other sections ----------- 
-        <div className="space-y-2">
+        // Photo upload and display
+        <div className="space-y-4">
           {capturedImage ? (
-            <div className="space-y-2">
+            // Show captured/uploaded image
+            <div className="space-y-4">
               <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-gray-300">
                 <img 
                   src={capturedImage} 
                   alt="Driver"
                   className="w-full h-full object-cover"
                 />
+                {/* Show detected face box if available */}
+                {faceBox && (
+                  <div 
+                    className="absolute border-2 border-green-500 rounded-sm"
+                    style={{
+                      left: `${faceBox.x * 100}%`,
+                      top: `${faceBox.y * 100}%`,
+                      width: `${faceBox.width * 100}%`,
+                      height: `${faceBox.height * 100}%`
+                    }}
+                  />
+                )}
               </div>
+              
+              {/* Validation feedback */}
               {faceValidationMsg && (
-                <div className={`flex items-center px-3 py-2 rounded-md text-xs mb-1
+                <div className={`flex items-center px-3 py-2 rounded-md text-sm
                   ${faceValidationStatus === "success" ? "bg-green-50 text-green-800 border border-green-200" : ""}
                   ${faceValidationStatus === "warning" ? "bg-amber-50 text-amber-900 border border-amber-200" : ""}
                   ${faceValidationStatus === "error" ? "bg-red-50 text-red-700 border border-red-200" : ""}
+                  ${!faceValidationStatus ? "bg-blue-50 text-blue-800 border border-blue-200" : ""}
                 `}>
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span>{faceValidationMsg}</span>
                 </div>
               )}
+              
+              {/* Image controls */}
               <div className="flex justify-between">
                 <Button variant="outline" onClick={deleteImage} className="text-red-500 hover:text-red-700">
                   <Trash className="h-4 w-4 mr-2" />
@@ -298,40 +360,53 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {/* ---------- First: Camera option ---------- */}
-              <div className="flex justify-center items-center w-full h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <div className="text-center">
-                  <Camera className="h-12 w-12 mx-auto text-titeh-primary mb-3" />
-                  <Button onClick={startCamera} className="bg-titeh-primary">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Take Photo
-                  </Button>
-                  <div>
-                    <p className="mt-1 text-gray-500 text-xs">Use device camera to capture driver's face.</p>
+            // No image yet - show options
+            <div>
+              {/* Take photo option */}
+              <div className="mb-4">
+                <div 
+                  className="flex justify-center items-center w-full h-48 bg-gray-50 rounded-lg 
+                  border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={startCamera}
+                >
+                  <div className="text-center">
+                    <Camera className="h-12 w-12 mx-auto text-blue-500 mb-3" />
+                    <Button onClick={startCamera} className="bg-blue-600 hover:bg-blue-700">
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
+                    <p className="mt-2 text-gray-500 text-sm">
+                      Use device camera to capture driver's face
+                    </p>
                   </div>
                 </div>
               </div>
-              {/* ---------- Second: Upload from device (below the camera) ---------- */}
-              <div className="flex justify-center items-center w-full h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 mt-2">
-                <div className="text-center">
-                  <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
-                  <Button onClick={openFileSelector} variant="outline">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Photo
-                  </Button>
-                  <p className="mt-1 text-gray-500 text-xs">JPG, PNG or GIF, up to 5MB</p>
+              
+              {/* Upload photo option - now clearly separated and below camera option */}
+              <div>
+                <div 
+                  className="flex justify-center items-center w-full h-48 bg-gray-50 rounded-lg 
+                  border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={openFileSelector}
+                >
+                  <div className="text-center">
+                    <Upload className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <Button onClick={openFileSelector} variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                    <p className="mt-2 text-gray-500 text-sm">
+                      JPG, PNG or GIF, up to 5MB
+                    </p>
+                  </div>
                 </div>
               </div>
-              {/* -------------- Face validation feedback below upload --------------- */}
-              {faceValidationMsg && (
-                <div className={`flex items-center px-3 py-2 rounded-md text-xs mt-1
-                  ${faceValidationStatus === "success" ? "bg-green-50 text-green-800 border border-green-200" : ""}
-                  ${faceValidationStatus === "warning" ? "bg-amber-50 text-amber-900 border border-amber-200" : ""}
-                  ${faceValidationStatus === "error" ? "bg-red-50 text-red-700 border border-red-200" : ""}
-                `}>
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  <span>{faceValidationMsg}</span>
+              
+              {/* Processing feedback */}
+              {isProcessing && (
+                <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
+                  <div className="mr-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                  Processing image...
                 </div>
               )}
             </div>
@@ -343,4 +418,3 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
 };
 
 export default DriverImageUploader;
-
