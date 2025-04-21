@@ -1,3 +1,4 @@
+
 /**
  * Enhanced face detection and validation for uploaded/captured images.
  * This utility provides more accurate facial recognition feedback.
@@ -153,15 +154,30 @@ export async function verifyFaceWithDatabase(imageDataUrl: string): Promise<{ ma
   // Here we randomly simulate matching for user demo/testing
   await new Promise(res => setTimeout(res, 900));
   if (!imageDataUrl) return { matched: false, confidence: 0 };
-  // Simulate a ~60% match rate, random confidence
+  
+  // Enhanced simulation with better matching probability
   const demoNames = ["Suresh", "Arjun R", "Priya M", "Kiran Kumar"];
   const rand = Math.random();
   let confidence = 50 + rand * 50;
-  if (rand > 0.42) {
+  
+  // More deterministic results - if we've seen a match before, more likely to match again
+  const lastMatchedName = localStorage.getItem('lastMatchedDriverName');
+  if (lastMatchedName && rand > 0.25) {
     return {
       matched: true,
       confidence: Math.round(confidence * 100) / 100,
-      driverName: demoNames[Math.floor(rand * demoNames.length)]
+      driverName: lastMatchedName
+    };
+  }
+  
+  if (rand > 0.42) {
+    const driverName = demoNames[Math.floor(rand * demoNames.length)];
+    // Save this match for more consistent future results
+    localStorage.setItem('lastMatchedDriverName', driverName);
+    return {
+      matched: true,
+      confidence: Math.round(confidence * 100) / 100,
+      driverName
     };
   } else {
     return {

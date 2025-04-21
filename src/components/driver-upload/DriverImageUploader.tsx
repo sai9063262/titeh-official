@@ -1,8 +1,10 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, Trash, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { validateFaceInImage } from "@/utils/faceDetectionUtils";
+import FaceMatchButton from "./FaceMatchButton";
 
 interface DriverImageUploaderProps {
   onImageCapture: (imageUrl: string) => void;
@@ -253,38 +255,6 @@ const DriverImageUploader = ({
     fileInputRef.current?.click();
   };
 
-  // ########## NEW: Handle face match button ##########
-  const [faceMatchResult, setFaceMatchResult] = useState<{
-    matched: boolean;
-    confidence: number;
-    driverName?: string;
-    error?: string;
-  } | null>(null);
-
-  async function handleFaceMatch() {
-    setIsProcessing(true);
-    setFaceMatchResult(null);
-    try {
-      // Simulate API/database match (replace with real API call as needed)
-      const response = await fetch('/api/facerecognition/match', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: capturedImage }),
-      });
-      if (!response.ok) throw new Error("API error matching face");
-      const result = await response.json();
-      setFaceMatchResult(result);
-      if (onFaceMatch) onFaceMatch(result);
-    } catch (err: any) {
-      setFaceMatchResult({ matched: false, confidence: 0, error: "Unable to check match." });
-    } finally {
-      setIsProcessing(false);
-    }
-  }
-  // ########## END ##########
-
-  // #################### UI UPDATE for stacking ####################
-
   return (
     <div className="space-y-4">
       {/* Hidden file input for gallery selection */}
@@ -339,38 +309,32 @@ const DriverImageUploader = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {/* --- CAMERA BUTTON ------- */}
-          <div>
-            <div
-              className="flex flex-col items-center w-full"
+          {/* CAMERA BUTTON - First option */}
+          <div className="w-full flex flex-col items-center pb-4 border-b border-gray-200">
+            <Button
+              onClick={startCamera}
+              className="mb-2 bg-blue-600 hover:bg-blue-700 w-full"
             >
-              <Button
-                onClick={startCamera}
-                className="mb-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Take Photo
-              </Button>
-              <p className="text-gray-500 text-xs mb-1">Use device camera to capture driver's face</p>
-            </div>
+              <Camera className="h-4 w-4 mr-2" />
+              Take Photo
+            </Button>
+            <p className="text-gray-500 text-xs mb-1">Use device camera to capture driver's face</p>
           </div>
-          {/* --- UPLOAD BUTTON now directly below camera, NOT overlapping! ------- */}
-          <div>
-            <div
-              className="flex flex-col items-center w-full"
-            >
-              <Button onClick={openFileSelector} variant="outline" className="mb-2">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Photo
-              </Button>
-              <p className="text-gray-500 text-xs">
-                JPG, PNG or GIF, up to 5MB. Upload a clear photo.
-              </p>
-            </div>
+          
+          {/* UPLOAD BUTTON - Second option with clear spacing */}
+          <div className="w-full flex flex-col items-center pt-2 pb-4 border-b border-gray-200">
+            <Button onClick={openFileSelector} variant="outline" className="mb-2 w-full">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Photo
+            </Button>
+            <p className="text-gray-500 text-xs">
+              JPG, PNG or GIF, up to 5MB. Upload a clear photo.
+            </p>
           </div>
-          {/* --- IMAGE PREVIEW & VERIFICATION BUTTON (if uploaded/captured) ------- */}
+          
+          {/* IMAGE PREVIEW & VERIFICATION BUTTON (if uploaded/captured) */}
           {capturedImage && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2">
               <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-300">
                 <img
                   src={capturedImage}
@@ -389,7 +353,8 @@ const DriverImageUploader = ({
                   />
                 )}
               </div>
-              {/* Show validation and match result */}
+              
+              {/* Show validation message */}
               {faceValidationMsg && (
                 <div className={`flex items-center px-3 py-2 rounded-md text-sm
                  ${faceValidationStatus === "success" ? "bg-green-50 text-green-800 border border-green-200" : ""}
@@ -401,34 +366,14 @@ const DriverImageUploader = ({
                   <span>{faceValidationMsg}</span>
                 </div>
               )}
-              {/* Button to verify against database */}
-              <Button
-                onClick={handleFaceMatch}
-                className="w-full bg-green-700 hover:bg-green-800"
-                disabled={!capturedImage || isProcessing}
-                type="button"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Verify Driver in Database
-              </Button>
-              {/* Show face match result */}
-              {faceMatchResult && (
-                <div>
-                  {faceMatchResult.matched ? (
-                    <div className="text-green-700 font-semibold text-sm border border-green-300 rounded p-2 text-center">
-                      ✅ Match found: {faceMatchResult.driverName || "Driver"} (Confidence: {faceMatchResult.confidence}%)
-                    </div>
-                  ) : (
-                    <div className="text-red-600 font-semibold text-sm border border-red-300 rounded p-2 text-center">
-                      ❌ No driver match found in database ({Math.round(faceMatchResult.confidence)}%)
-                    </div>
-                  )}
-                  {faceMatchResult.error && (
-                    <div className="text-red-600 text-xs">{faceMatchResult.error}</div>
-                  )}
-                </div>
-              )}
-              <div className="flex justify-between mt-2">
+              
+              {/* Use the enhanced FaceMatchButton component */}
+              <FaceMatchButton 
+                imageDataUrl={capturedImage} 
+                onResult={onFaceMatch} 
+              />
+              
+              <div className="flex justify-end mt-2">
                 <Button variant="outline" onClick={deleteImage} className="text-red-500 hover:text-red-700">
                   <Trash className="h-4 w-4 mr-2" />
                   Remove
@@ -436,6 +381,7 @@ const DriverImageUploader = ({
               </div>
             </div>
           )}
+          
           {/* Processing feedback */}
           {isProcessing && (
             <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
