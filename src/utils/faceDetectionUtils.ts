@@ -1,4 +1,3 @@
-
 /**
  * Enhanced face detection and validation for uploaded/captured images.
  * This utility provides more accurate facial recognition feedback.
@@ -143,6 +142,36 @@ export async function validateFaceInImage(imageDataUrl: string): Promise<{
     };
   }
 }
+
+// Add: Facial recognition MATCH simulation
+// This would normally call a backend or ML API, but we simulate for demo
+
+export async function verifyFaceWithDatabase(imageDataUrl: string): Promise<{ matched: boolean; confidence: number; driverName?: string }> {
+  // NOTE: In a real app, you would:
+  //   - Extract facial embedding using a library (face-api.js or cloud API)
+  //   - Compare with server/database stored features
+  // Here we randomly simulate matching for user demo/testing
+  await new Promise(res => setTimeout(res, 900));
+  if (!imageDataUrl) return { matched: false, confidence: 0 };
+  // Simulate a ~60% match rate, random confidence
+  const demoNames = ["Suresh", "Arjun R", "Priya M", "Kiran Kumar"];
+  const rand = Math.random();
+  let confidence = 50 + rand * 50;
+  if (rand > 0.42) {
+    return {
+      matched: true,
+      confidence: Math.round(confidence * 100) / 100,
+      driverName: demoNames[Math.floor(rand * demoNames.length)]
+    };
+  } else {
+    return {
+      matched: false,
+      confidence: Math.round(rand * 40) // 0-40%
+    };
+  }
+}
+
+export { validateFaceInImage };
 
 // Helper functions for face detection
 

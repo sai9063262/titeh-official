@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, Trash, AlertCircle, RefreshCw } from "lucide-react";
@@ -8,9 +7,15 @@ import { validateFaceInImage } from "@/utils/faceDetectionUtils";
 interface DriverImageUploaderProps {
   onImageCapture: (imageUrl: string) => void;
   existingImageUrl?: string;
+  // Add optional prop for instantly verifying against driver DB
+  onFaceMatch?: (result: { matched: boolean; confidence: number; driverName?: string }) => void;
 }
 
-const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUploaderProps) => {
+const DriverImageUploader = ({
+  onImageCapture,
+  existingImageUrl,
+  onFaceMatch
+}: DriverImageUploaderProps) => {
   const { toast } = useToast();
   const [capturedImage, setCapturedImage] = useState<string | null>(existingImageUrl || null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -248,17 +253,48 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
     fileInputRef.current?.click();
   };
 
+  // ########## NEW: Handle face match button ##########
+  const [faceMatchResult, setFaceMatchResult] = useState<{
+    matched: boolean;
+    confidence: number;
+    driverName?: string;
+    error?: string;
+  } | null>(null);
+
+  async function handleFaceMatch() {
+    setIsProcessing(true);
+    setFaceMatchResult(null);
+    try {
+      // Simulate API/database match (replace with real API call as needed)
+      const response = await fetch('/api/facerecognition/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: capturedImage }),
+      });
+      if (!response.ok) throw new Error("API error matching face");
+      const result = await response.json();
+      setFaceMatchResult(result);
+      if (onFaceMatch) onFaceMatch(result);
+    } catch (err: any) {
+      setFaceMatchResult({ matched: false, confidence: 0, error: "Unable to check match." });
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+  // ########## END ##########
+
+  // #################### UI UPDATE for stacking ####################
+
   return (
     <div className="space-y-4">
       {/* Hidden file input for gallery selection */}
-      <input 
+      <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/*"
         className="hidden"
       />
-      
       {/* Hidden canvas for image capture */}
       <canvas ref={canvasRef} className="hidden"></canvas>
 
@@ -266,21 +302,20 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
       {isCameraOpen ? (
         <div className="space-y-4">
           <div className="relative w-full h-64 md:h-80 bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-            <video 
+            <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
               className="w-full h-full object-cover"
             ></video>
-            {/* Face detection guide overlay */}
+            {/* Overlay guide */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="h-full w-full flex items-center justify-center">
                 <div className="border-2 border-dashed border-white rounded-full w-40 h-40 opacity-60" />
               </div>
             </div>
           </div>
-          
           {/* Camera controls */}
           <div className="flex justify-between">
             <div className="space-x-2">
@@ -292,8 +327,8 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
                 Switch Camera
               </Button>
             </div>
-            <Button 
-              onClick={captureImage} 
+            <Button
+              onClick={captureImage}
               className="bg-blue-600 hover:bg-blue-700"
               disabled={isProcessing}
             >
@@ -303,20 +338,47 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
           </div>
         </div>
       ) : (
-        // Photo upload and display
         <div className="space-y-4">
-          {capturedImage ? (
-            // Show captured/uploaded image
-            <div className="space-y-4">
-              <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-gray-300">
-                <img 
-                  src={capturedImage} 
+          {/* --- CAMERA BUTTON ------- */}
+          <div>
+            <div
+              className="flex flex-col items-center w-full"
+            >
+              <Button
+                onClick={startCamera}
+                className="mb-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo
+              </Button>
+              <p className="text-gray-500 text-xs mb-1">Use device camera to capture driver's face</p>
+            </div>
+          </div>
+          {/* --- UPLOAD BUTTON now directly below camera, NOT overlapping! ------- */}
+          <div>
+            <div
+              className="flex flex-col items-center w-full"
+            >
+              <Button onClick={openFileSelector} variant="outline" className="mb-2">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Photo
+              </Button>
+              <p className="text-gray-500 text-xs">
+                JPG, PNG or GIF, up to 5MB. Upload a clear photo.
+              </p>
+            </div>
+          </div>
+          {/* --- IMAGE PREVIEW & VERIFICATION BUTTON (if uploaded/captured) ------- */}
+          {capturedImage && (
+            <div className="space-y-2">
+              <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-300">
+                <img
+                  src={capturedImage}
                   alt="Driver"
                   className="w-full h-full object-cover"
                 />
-                {/* Show detected face box if available */}
                 {faceBox && (
-                  <div 
+                  <div
                     className="absolute border-2 border-green-500 rounded-sm"
                     style={{
                       left: `${faceBox.x * 100}%`,
@@ -327,88 +389,58 @@ const DriverImageUploader = ({ onImageCapture, existingImageUrl }: DriverImageUp
                   />
                 )}
               </div>
-              
-              {/* Validation feedback */}
+              {/* Show validation and match result */}
               {faceValidationMsg && (
                 <div className={`flex items-center px-3 py-2 rounded-md text-sm
-                  ${faceValidationStatus === "success" ? "bg-green-50 text-green-800 border border-green-200" : ""}
-                  ${faceValidationStatus === "warning" ? "bg-amber-50 text-amber-900 border border-amber-200" : ""}
-                  ${faceValidationStatus === "error" ? "bg-red-50 text-red-700 border border-red-200" : ""}
-                  ${!faceValidationStatus ? "bg-blue-50 text-blue-800 border border-blue-200" : ""}
-                `}>
+                 ${faceValidationStatus === "success" ? "bg-green-50 text-green-800 border border-green-200" : ""}
+                 ${faceValidationStatus === "warning" ? "bg-amber-50 text-amber-900 border border-amber-200" : ""}
+                 ${faceValidationStatus === "error" ? "bg-red-50 text-red-700 border border-red-200" : ""}
+                 ${!faceValidationStatus ? "bg-blue-50 text-blue-800 border border-blue-200" : ""}
+               `}>
                   <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span>{faceValidationMsg}</span>
                 </div>
               )}
-              
-              {/* Image controls */}
-              <div className="flex justify-between">
+              {/* Button to verify against database */}
+              <Button
+                onClick={handleFaceMatch}
+                className="w-full bg-green-700 hover:bg-green-800"
+                disabled={!capturedImage || isProcessing}
+                type="button"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Verify Driver in Database
+              </Button>
+              {/* Show face match result */}
+              {faceMatchResult && (
+                <div>
+                  {faceMatchResult.matched ? (
+                    <div className="text-green-700 font-semibold text-sm border border-green-300 rounded p-2 text-center">
+                      ✅ Match found: {faceMatchResult.driverName || "Driver"} (Confidence: {faceMatchResult.confidence}%)
+                    </div>
+                  ) : (
+                    <div className="text-red-600 font-semibold text-sm border border-red-300 rounded p-2 text-center">
+                      ❌ No driver match found in database ({Math.round(faceMatchResult.confidence)}%)
+                    </div>
+                  )}
+                  {faceMatchResult.error && (
+                    <div className="text-red-600 text-xs">{faceMatchResult.error}</div>
+                  )}
+                </div>
+              )}
+              <div className="flex justify-between mt-2">
                 <Button variant="outline" onClick={deleteImage} className="text-red-500 hover:text-red-700">
                   <Trash className="h-4 w-4 mr-2" />
                   Remove
                 </Button>
-                <div className="space-x-2">
-                  <Button variant="outline" onClick={startCamera}>
-                    <Camera className="h-4 w-4 mr-2" />
-                    Retake
-                  </Button>
-                  <Button variant="outline" onClick={openFileSelector}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Change
-                  </Button>
-                </div>
               </div>
             </div>
-          ) : (
-            // No image yet - show options
-            <div>
-              {/* Take photo option */}
-              <div className="mb-4">
-                <div 
-                  className="flex justify-center items-center w-full h-48 bg-gray-50 rounded-lg 
-                  border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={startCamera}
-                >
-                  <div className="text-center">
-                    <Camera className="h-12 w-12 mx-auto text-blue-500 mb-3" />
-                    <Button onClick={startCamera} className="bg-blue-600 hover:bg-blue-700">
-                      <Camera className="h-4 w-4 mr-2" />
-                      Take Photo
-                    </Button>
-                    <p className="mt-2 text-gray-500 text-sm">
-                      Use device camera to capture driver's face
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Upload photo option - now clearly separated and below camera option */}
-              <div>
-                <div 
-                  className="flex justify-center items-center w-full h-48 bg-gray-50 rounded-lg 
-                  border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={openFileSelector}
-                >
-                  <div className="text-center">
-                    <Upload className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <Button onClick={openFileSelector} variant="outline">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Photo
-                    </Button>
-                    <p className="mt-2 text-gray-500 text-sm">
-                      JPG, PNG or GIF, up to 5MB
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Processing feedback */}
-              {isProcessing && (
-                <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
-                  <div className="mr-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                  Processing image...
-                </div>
-              )}
+          )}
+          {/* Processing feedback */}
+          {isProcessing && (
+            <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
+              <div className="mr-2 animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+              Processing image...
             </div>
           )}
         </div>
