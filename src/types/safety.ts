@@ -1,4 +1,3 @@
-
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -55,7 +54,7 @@ export const TELANGANA_DISTRICTS = [
   "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
 ];
 
-// Modified DriverData interface to explicitly include district and city
+// Modified DriverData interface to explicitly include district, city and align with verification-utils.ts
 export interface DriverData {
   id: string;
   name: string;

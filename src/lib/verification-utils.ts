@@ -18,7 +18,6 @@ export interface DriverData {
   notes?: string;
   email?: string;
   phoneNumber?: string;
-  emergencyContactName?: string;
   emergencyContactPhone?: string;
   medicalConditions?: string[];
   trainingCertificates?: string[];
@@ -58,16 +57,7 @@ export interface DriverData {
   vehicle_year?: string;
   verification_status?: string;
   weight?: string;
-  
-  // Alias properties to maintain compatibility with driver database queries
-  // These getter functions provide a consistent interface regardless of schema changes
-  get dateOfBirth(): string | undefined {
-    return this.date_of_birth;
-  }
-  
-  get emergencyContactName(): string | undefined {
-    return this.emergency_contact_name;
-  }
+  emergency_contact_name?: string;
 }
 
 interface MatchResult {
