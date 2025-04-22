@@ -60,49 +60,50 @@ export interface DriverData {
   id: string;
   name: string;
   licenseNumber: string;
-  validUntil: string;
-  vehicleClass: string;
-  photoUrl: string;
-  status: "valid" | "expired" | "suspended";
-  address: string;
-  age: string;
-  notes: string;
-  district: string;
-  city: string;
+  validUntil?: string;
+  vehicleClass?: string;
+  photoUrl?: string;
+  status?: "valid" | "expired" | "suspended";
+  address?: string;
+  age?: string;
+  notes?: string;
+  district?: string;
+  city?: string;
   fingerprint_data?: string;
   
   // Add all fields from verification-utils.ts to ensure compatibility
-  blood_type: string;
-  created_at: string;
-  criminal_record_notes: string;
-  criminal_record_status: string;
-  date_of_birth: string;
-  document_url: string;
-  driver_experience_years: number;
-  emergency_contact_name: string;
-  emergency_phone_number: string;
-  endorsements: string[];
-  health_conditions: string[];
-  height: string;
-  last_verification: string;
-  license_class: string;
-  license_issue_date: string;
-  license_points: number;
-  license_restrictions: string[];
-  organ_donor: boolean;
-  phone_number: string;
-  previous_offenses: string[];
-  profile_image: string;
-  restrictions: string[];
-  updated_at: string;
-  vehicle_color: string;
-  vehicle_make: string;
-  vehicle_model: string;
-  vehicle_plate: string;
-  vehicle_type: string;
-  vehicle_year: string;
-  verification_status: string;
-  weight: string;
+  blood_type?: string;
+  created_at?: string;
+  criminal_record_notes?: string;
+  criminal_record_status?: string;
+  date_of_birth?: string;
+  document_url?: string;
+  driver_experience_years?: number;
+  emergency_contact_name?: string;
+  emergencyContactName?: string; // Alias for compatibility
+  emergency_phone_number?: string;
+  endorsements?: string[];
+  health_conditions?: string[];
+  height?: string;
+  last_verification?: string;
+  license_class?: string;
+  license_issue_date?: string;
+  license_points?: number;
+  license_restrictions?: string[];
+  organ_donor?: boolean;
+  phone_number?: string;
+  previous_offenses?: string[];
+  profile_image?: string;
+  restrictions?: string[];
+  updated_at?: string;
+  vehicle_color?: string;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_plate?: string;
+  vehicle_type?: string;
+  vehicle_year?: string;
+  verification_status?: string;
+  weight?: string;
   
   // Optional fields to maintain compatibility with both interfaces
   email?: string;
@@ -111,6 +112,9 @@ export interface DriverData {
   medicalConditions?: string[];
   trainingCertificates?: string[];
   documents?: { name: string; url: string; }[];
+  
+  // Aliases for compatibility
+  dateOfBirth?: string;
 }
 
 // Air quality data

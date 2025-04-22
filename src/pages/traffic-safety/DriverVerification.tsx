@@ -944,7 +944,7 @@ const DriverVerification = () => {
                 
                 <div>
                   <p className="text-sm text-gray-500">Emergency Contact</p>
-                  <p className="font-medium">{driver.emergencyContactName || driver.emergency_contact_name || "Not available"}</p>
+                  <p className="font-medium">{driver.emergencyContactName || "Not available"}</p>
                 </div>
                 
                 <div>

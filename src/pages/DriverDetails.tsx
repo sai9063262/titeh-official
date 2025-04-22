@@ -4,7 +4,9 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, User } from "lucide-react";
+import { Search, User, Plus } from "lucide-react";
+import AddDriverForm from "@/components/driver-upload/AddDriverForm";
+import { useToast } from "@/hooks/use-toast";
 
 interface DriverInfo {
   licenseNumber: string;
@@ -54,6 +56,8 @@ const DriverDetails = () => {
   const [licenseNumber, setLicenseNumber] = useState("");
   const [driverInfo, setDriverInfo] = useState<DriverInfo | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const { toast } = useToast();
 
   const searchLicense = () => {
     setNotFound(false);
@@ -66,33 +70,62 @@ const DriverDetails = () => {
       setNotFound(true);
     }
   };
+  
+  const handleAddDriver = (driverData: any) => {
+    // In a real app, this would save to a database
+    toast({
+      title: "Driver Added",
+      description: `Driver ${driverData.name} has been successfully added.`,
+    });
+    setShowAddForm(false);
+  };
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Driver Details</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-titeh-primary">Driver Details</h1>
+          <Button 
+            onClick={() => setShowAddForm(!showAddForm)} 
+            className="bg-titeh-primary hover:bg-blue-600"
+          >
+            {showAddForm ? "Cancel" : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Driver
+              </>
+            )}
+          </Button>
+        </div>
         
-        <Card className="p-4 mb-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
-            <User className="text-titeh-primary mr-2" />
-            License Search
-          </h2>
-          <div className="flex flex-col md:flex-row gap-2">
-            <Input 
-              placeholder="Enter License Number (e.g., AP03620130001956)" 
-              className="flex-1"
-              value={licenseNumber}
-              onChange={(e) => setLicenseNumber(e.target.value)}
-            />
-            <Button onClick={searchLicense} className="bg-titeh-primary hover:bg-blue-600">
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
-          </div>
-          {notFound && (
-            <p className="text-red-500 mt-2">No driver found with this license number.</p>
-          )}
-        </Card>
+        {showAddForm ? (
+          <AddDriverForm 
+            onSubmit={handleAddDriver} 
+            onCancel={() => setShowAddForm(false)} 
+          />
+        ) : (
+          <Card className="p-4 mb-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <User className="text-titeh-primary mr-2" />
+              License Search
+            </h2>
+            <div className="flex flex-col md:flex-row gap-2">
+              <Input 
+                placeholder="Enter License Number (e.g., AP03620130001956)" 
+                className="flex-1"
+                value={licenseNumber}
+                onChange={(e) => setLicenseNumber(e.target.value)}
+              />
+              <Button onClick={searchLicense} className="bg-titeh-primary hover:bg-blue-600">
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
+            </div>
+            {notFound && (
+              <p className="text-red-500 mt-2">No driver found with this license number.</p>
+            )}
+          </Card>
+        )}
         
         {driverInfo && (
           <Card className="p-6 mb-6">

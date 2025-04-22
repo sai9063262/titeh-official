@@ -9,22 +9,24 @@ export interface DriverData {
   id: string;
   name: string;
   licenseNumber: string;
-  validUntil: string;
-  vehicleClass: string;
-  photoUrl: string;
-  status: "valid" | "expired" | "suspended";
+  validUntil?: string;
+  vehicleClass?: string;
+  photoUrl?: string;
+  status?: "valid" | "expired" | "suspended";
   address?: string;
   age?: string;
   notes?: string;
   email?: string;
   phoneNumber?: string;
   emergencyContactPhone?: string;
+  emergencyContactName?: string;
   medicalConditions?: string[];
   trainingCertificates?: string[];
   documents?: { name: string; url: string; }[];
   district?: string;
   city?: string;
   fingerprint_data?: string;
+  dateOfBirth?: string;
   
   // These fields are marked optional to maintain compatibility with existing code
   blood_type?: string;

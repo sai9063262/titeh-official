@@ -93,6 +93,9 @@ import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
 import LoanCalculator from "./pages/vehicle/calculators/LoanCalculator";
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
 import VehicleAgeCalculator from "./pages/vehicle/calculators/VehicleAgeCalculator";
+import FuelStation from "./pages/vehicle/nearby/FuelStation";
+import InsuranceOffice from "./pages/vehicle/nearby/InsuranceOffice";
+import CarDealer from "./pages/vehicle/nearby/CarDealer";
 
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
@@ -206,6 +209,11 @@ function App() {
             <Route path="/vehicle/calculators/loan" element={<LoanCalculator />} />
             <Route path="/vehicle/calculators/mileage" element={<MileageCalculator />} />
             <Route path="/vehicle/calculators/age" element={<VehicleAgeCalculator />} />
+            
+            {/* Nearby places routes */}
+            <Route path="/vehicle/nearby/fuel" element={<FuelStation />} />
+            <Route path="/vehicle/nearby/insurance" element={<InsuranceOffice />} />
+            <Route path="/vehicle/nearby/dealer" element={<CarDealer />} />
 
             {/* Admin routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />

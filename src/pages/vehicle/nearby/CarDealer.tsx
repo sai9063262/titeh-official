@@ -1,0 +1,474 @@
+
+import { useState, useEffect } from "react";
+import Layout from "@/components/Layout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { MapPin, Navigation, Car, Phone, Clock, Info, Star, Loader2, ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface CarDealer {
+  id: string;
+  name: string;
+  distance: number;
+  address: string;
+  latitude: number;
+  longitude: number;
+  brands: string[];
+  openingHours: string;
+  contactNumber?: string;
+  website?: string;
+  services: string[];
+  rating: number;
+  vehicleTypes: string[];
+}
+
+const CarDealer = () => {
+  const { toast } = useToast();
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyDealers, setNearbyDealers] = useState<CarDealer[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [radius, setRadius] = useState<string>("10");
+  const [vehicleType, setVehicleType] = useState<string>("all");
+  const [mapApiKey, setMapApiKey] = useState<string>("");
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Check if we have a stored API key
+    const storedKey = localStorage.getItem("mapbox_api_key");
+    if (storedKey) {
+      setMapApiKey(storedKey);
+      setShowApiKeyInput(false);
+    }
+  }, []);
+
+  const handleApiKeySubmit = () => {
+    if (mapApiKey.trim()) {
+      localStorage.setItem("mapbox_api_key", mapApiKey);
+      setShowApiKeyInput(false);
+      toast({
+        title: "API Key Saved",
+        description: "Your Mapbox API key has been saved for this session.",
+      });
+    } else {
+      toast({
+        title: "API Key Required",
+        description: "Please enter a valid Mapbox API key to use location services.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const getCurrentLocation = () => {
+    setLoading(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          fetchNearbyCarDealers(latitude, longitude);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast({
+            title: "Location Error",
+            description: "Could not access your location. Please check your device settings.",
+            variant: "destructive",
+          });
+          setLoading(false);
+        }
+      );
+    } else {
+      toast({
+        title: "Location Not Supported",
+        description: "Geolocation is not supported by your browser.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+  
+  const fetchNearbyCarDealers = (latitude: number, longitude: number) => {
+    // In a real app, this would be an API call to a service like Mapbox or Google Places
+    setTimeout(() => {
+      // Mock data for demonstration
+      const mockDealers: CarDealer[] = [
+        {
+          id: "cd1",
+          name: "Varun Motors - Maruti Suzuki",
+          distance: 4.5,
+          address: "Hanamkonda Main Road, Near Bus Station, Warangal",
+          latitude: latitude + 0.02,
+          longitude: longitude - 0.02,
+          brands: ["Maruti Suzuki"],
+          vehicleTypes: ["Hatchback", "Sedan", "SUV"],
+          openingHours: "10:00 AM - 7:00 PM (Mon-Sat), 11:00 AM - 5:00 PM (Sun)",
+          contactNumber: "040-23456789",
+          website: "https://www.marutisuzuki.com",
+          services: ["New Cars", "Service Center", "Test Drive", "Insurance"],
+          rating: 4.2
+        },
+        {
+          id: "cd2",
+          name: "PPS Hyundai",
+          distance: 5.3,
+          address: "Kazipet Road, Warangal",
+          latitude: latitude - 0.025,
+          longitude: longitude + 0.028,
+          brands: ["Hyundai"],
+          vehicleTypes: ["Hatchback", "Sedan", "SUV", "Electric"],
+          openingHours: "9:30 AM - 7:30 PM (Mon-Sat), 10:00 AM - 4:00 PM (Sun)",
+          contactNumber: "040-23498765",
+          website: "https://www.hyundai.com",
+          services: ["New Cars", "Used Cars", "Service Center", "Test Drive", "Finance"],
+          rating: 4.5
+        },
+        {
+          id: "cd3",
+          name: "KCH Tata Motors",
+          distance: 7.1,
+          address: "NH 163, Warangal",
+          latitude: latitude + 0.04,
+          longitude: longitude + 0.02,
+          brands: ["Tata Motors"],
+          vehicleTypes: ["Hatchback", "Sedan", "SUV", "Electric", "Commercial"],
+          openingHours: "10:00 AM - 7:00 PM (All days)",
+          contactNumber: "040-23452345",
+          website: "https://www.tatamotors.com",
+          services: ["New Cars", "Used Cars", "Service Center", "Spare Parts", "Test Drive"],
+          rating: 4.0
+        },
+        {
+          id: "cd4",
+          name: "Royal Enfield Showroom",
+          distance: 3.5,
+          address: "Collector Office Road, Warangal",
+          latitude: latitude - 0.01,
+          longitude: longitude - 0.015,
+          brands: ["Royal Enfield"],
+          vehicleTypes: ["Motorcycles"],
+          openingHours: "9:30 AM - 7:00 PM (Mon-Sat)",
+          contactNumber: "040-23457890",
+          website: "https://www.royalenfield.com",
+          services: ["New Bikes", "Used Bikes", "Service Center", "Accessories", "Test Ride"],
+          rating: 4.7
+        },
+        {
+          id: "cd5",
+          name: "Honda BigWing",
+          distance: 8.2,
+          address: "MGM Highway, Warangal",
+          latitude: latitude + 0.05,
+          longitude: longitude - 0.04,
+          brands: ["Honda"],
+          vehicleTypes: ["Motorcycles", "Scooters"],
+          openingHours: "10:00 AM - 8:00 PM (All days)",
+          contactNumber: "040-23451234",
+          website: "https://www.honda2wheelersindia.com",
+          services: ["New Bikes", "Service Center", "Accessories", "Test Ride", "Finance"],
+          rating: 4.3
+        }
+      ];
+      
+      // Filter by radius and vehicle type if needed
+      const radiusValue = parseFloat(radius);
+      const filteredDealers = mockDealers.filter(dealer => {
+        const withinRadius = dealer.distance <= radiusValue;
+        const hasVehicleType = vehicleType === "all" || 
+                             dealer.vehicleTypes.some(type => 
+                               type.toLowerCase().includes(vehicleType.toLowerCase()));
+        
+        return withinRadius && hasVehicleType;
+      });
+      
+      setNearbyDealers(filteredDealers);
+      setLoading(false);
+      
+      if (filteredDealers.length > 0) {
+        toast({
+          title: "Car Dealers Found",
+          description: `Found ${filteredDealers.length} car dealers near you.`,
+        });
+      } else {
+        toast({
+          title: "No Dealers Found",
+          description: "No car dealers found matching your criteria.",
+        });
+      }
+    }, 1500);
+  };
+  
+  const getDirections = (dealer: CarDealer) => {
+    if (!userLocation) return;
+    
+    // Open in Google Maps
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${dealer.latitude},${dealer.longitude}&travelmode=driving`;
+    window.open(url, '_blank');
+  };
+  
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-titeh-primary">Nearby Car Dealers</h1>
+        
+        {showApiKeyInput ? (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Enter Mapbox API Key</CardTitle>
+              <CardDescription>
+                To use location services, you need to provide a Mapbox API key.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mapApiKey">Mapbox API Key</Label>
+                  <Input
+                    id="mapApiKey"
+                    value={mapApiKey}
+                    onChange={(e) => setMapApiKey(e.target.value)}
+                    placeholder="Enter your Mapbox API key"
+                  />
+                  <p className="text-xs text-gray-500">
+                    You can get an API key from{" "}
+                    <a 
+                      href="https://account.mapbox.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-titeh-primary hover:underline"
+                    >
+                      Mapbox
+                    </a>
+                  </p>
+                </div>
+                <Button onClick={handleApiKeySubmit} className="bg-titeh-primary">
+                  Save API Key
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-titeh-primary" />
+                  Find Car Dealers Near Me
+                </CardTitle>
+                <CardDescription>
+                  Locate nearby car and bike dealers based on your current location
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="radius">Search Radius (km)</Label>
+                    <Select value={radius} onValueChange={setRadius}>
+                      <SelectTrigger id="radius">
+                        <SelectValue placeholder="Select radius" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 km</SelectItem>
+                        <SelectItem value="10">10 km</SelectItem>
+                        <SelectItem value="15">15 km</SelectItem>
+                        <SelectItem value="25">25 km</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicleType">Vehicle Type</Label>
+                    <Select value={vehicleType} onValueChange={setVehicleType}>
+                      <SelectTrigger id="vehicleType">
+                        <SelectValue placeholder="Select vehicle type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="car">Cars</SelectItem>
+                        <SelectItem value="suv">SUVs</SelectItem>
+                        <SelectItem value="motorcycle">Motorcycles</SelectItem>
+                        <SelectItem value="electric">Electric Vehicles</SelectItem>
+                        <SelectItem value="commercial">Commercial Vehicles</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button 
+                      onClick={getCurrentLocation} 
+                      className="bg-titeh-primary w-full"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="mr-2 h-4 w-4" />
+                          Find Nearby Dealers
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {userLocation && nearbyDealers.length > 0 ? (
+              <div className="space-y-4">
+                {nearbyDealers.map((dealer) => (
+                  <Card key={dealer.id} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="grid grid-cols-1 md:grid-cols-3">
+                        <div className="md:col-span-2 p-6">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-lg font-semibold">{dealer.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                {dealer.brands.map((brand, index) => (
+                                  <span key={index} className="text-xs font-medium bg-blue-50 text-titeh-primary px-2 py-1 rounded">
+                                    {brand}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-sm text-gray-500 flex items-center mt-2">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {dealer.address}
+                              </p>
+                              <p className="text-sm text-titeh-primary mt-1">
+                                <b>{dealer.distance}</b> km away
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="bg-titeh-primary text-white text-sm font-bold rounded-full h-8 w-8 flex items-center justify-center mr-1">
+                                {dealer.rating}
+                              </span>
+                              <Star className="h-4 w-4 text-yellow-400" />
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <p className="text-sm font-medium">Vehicle Types:</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {dealer.vehicleTypes.map((type, index) => (
+                                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {type}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 grid grid-cols-1 gap-2">
+                            <div className="flex items-center text-sm">
+                              <Clock className="h-4 w-4 mr-1 text-gray-500" />
+                              <span>{dealer.openingHours}</span>
+                            </div>
+                            {dealer.contactNumber && (
+                              <div className="flex items-center text-sm">
+                                <Phone className="h-4 w-4 mr-1 text-gray-500" />
+                                <span>{dealer.contactNumber}</span>
+                              </div>
+                            )}
+                            {dealer.website && (
+                              <div className="flex items-center text-sm">
+                                <ExternalLink className="h-4 w-4 mr-1 text-gray-500" />
+                                <a 
+                                  href={dealer.website} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-titeh-primary hover:underline"
+                                >
+                                  {dealer.website.replace(/^https?:\/\//, '')}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-4">
+                            <p className="text-sm font-medium">Services:</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {dealer.services.map((service, index) => (
+                                <span key={index} className="text-xs bg-blue-50 text-titeh-primary px-2 py-1 rounded">
+                                  <Car className="h-3 w-3 inline-block mr-1" />
+                                  {service}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-100 p-6 flex flex-col justify-between">
+                          <div className="text-center mb-4">
+                            <div className="text-2xl font-bold text-titeh-primary">
+                              {dealer.distance} km
+                            </div>
+                            <p className="text-sm text-gray-500">from your location</p>
+                          </div>
+                          
+                          <Button 
+                            onClick={() => getDirections(dealer)} 
+                            className="bg-titeh-primary w-full mb-2"
+                          >
+                            <Navigation className="mr-2 h-4 w-4" />
+                            Get Directions
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            className="w-full mb-2"
+                            onClick={() => {
+                              window.open(`tel:${dealer.contactNumber}`, '_self');
+                            }}
+                            disabled={!dealer.contactNumber}
+                          >
+                            <Phone className="mr-2 h-4 w-4" />
+                            Call Dealer
+                          </Button>
+                          
+                          {dealer.website && (
+                            <Button 
+                              variant="outline" 
+                              className="w-full"
+                              onClick={() => {
+                                window.open(dealer.website, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Visit Website
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : userLocation && nearbyDealers.length === 0 ? (
+              <Card className="p-6 text-center">
+                <Info className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                <h3 className="text-lg font-medium">No Car Dealers Found</h3>
+                <p className="text-gray-500">Try increasing the search radius or changing the vehicle type.</p>
+              </Card>
+            ) : null}
+            
+            <div className="text-xs text-gray-500 mt-6">
+              <p>
+                Note: You may need to contact the dealer to confirm inventory availability and showroom hours.
+                <br />
+                This feature uses location services to find nearby car and bike dealers.
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+export default CarDealer;
