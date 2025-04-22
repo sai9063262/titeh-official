@@ -1,4 +1,3 @@
-
 /**
  * This module simulates facial recognition for driver verification.
  * In a production application, this would be replaced with actual facial recognition API calls.
@@ -19,7 +18,6 @@ export interface DriverData {
   notes?: string;
   email?: string;
   phoneNumber?: string;
-  dateOfBirth?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   medicalConditions?: string[];
@@ -29,7 +27,7 @@ export interface DriverData {
   city?: string;
   fingerprint_data?: string;
   
-  // These fields are marked optional to maintain compatibility
+  // These fields are marked optional to maintain compatibility with existing code
   blood_type?: string;
   created_at?: string;
   criminal_record_notes?: string;
@@ -60,6 +58,16 @@ export interface DriverData {
   vehicle_year?: string;
   verification_status?: string;
   weight?: string;
+  
+  // Alias properties to maintain compatibility with driver database queries
+  // These getter functions provide a consistent interface regardless of schema changes
+  get dateOfBirth(): string | undefined {
+    return this.date_of_birth;
+  }
+  
+  get emergencyContactName(): string | undefined {
+    return this.emergency_contact_name;
+  }
 }
 
 interface MatchResult {

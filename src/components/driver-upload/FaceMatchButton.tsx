@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { verifyFaceWithDatabase } from "@/utils/faceDetectionUtils";
-import { Camera, UserCheck } from "lucide-react";
+import { UserCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * FaceMatchButton
@@ -18,6 +19,7 @@ const FaceMatchButton = ({
 }) => {
   const [isChecking, setIsChecking] = useState(false);
   const [result, setResult] = useState<{ matched: boolean; confidence: number; driverName?: string } | null>(null);
+  const { toast } = useToast();
 
   const handleCheck = async () => {
     if (!imageDataUrl) return;
@@ -27,8 +29,28 @@ const FaceMatchButton = ({
       const res = await verifyFaceWithDatabase(imageDataUrl);
       setResult(res);
       if (onResult) onResult(res);
+      
+      // Show a toast notification with the result
+      if (res.matched) {
+        toast({
+          title: "Driver Verified",
+          description: `Match found: ${res.driverName || 'Unknown driver'} (${Math.round(res.confidence)}% confidence)`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "No Match Found",
+          description: `Could not verify driver (${Math.round(res.confidence)}% confidence)`,
+          variant: "destructive",
+        });
+      }
     } catch (err) {
       console.error("Face verification error:", err);
+      toast({
+        title: "Verification Error",
+        description: "An error occurred during driver verification",
+        variant: "destructive",
+      });
     } finally {
       setIsChecking(false);
     }
@@ -55,15 +77,15 @@ const FaceMatchButton = ({
         )}
       </Button>
       {result && (
-        <div className={`rounded p-2 text-sm border ${result.matched ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700"} mt-1 text-center`}>
+        <div className={`rounded p-3 text-sm border ${result.matched ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700"} mt-1 text-center flex flex-col gap-1`}>
           {result.matched ? (
             <>
-              <span className="font-semibold">✅ Match: {result.driverName || 'Driver'}</span>
+              <span className="font-semibold text-base">✅ Match: {result.driverName || 'Driver'}</span>
               <div className="text-xs mt-1">Confidence: {Math.round(result.confidence)}%</div>
             </>
           ) : (
             <>
-              <span className="font-semibold">❌ No Match Found</span>
+              <span className="font-semibold text-base">❌ No Match Found</span>
               <div className="text-xs mt-1">Confidence: {Math.round(result.confidence)}%</div>
             </>
           )}

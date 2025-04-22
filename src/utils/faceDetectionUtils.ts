@@ -187,8 +187,6 @@ export async function verifyFaceWithDatabase(imageDataUrl: string): Promise<{ ma
   }
 }
 
-export { validateFaceInImage };
-
 // Helper functions for face detection
 
 // Simulates face detection (in a real app would use ML libraries like tensorflow.js/face-api.js)
