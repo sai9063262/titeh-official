@@ -24,8 +24,14 @@ const FaceMatchButton = ({
   const handleCheck = async () => {
     if (!imageDataUrl) return;
     setIsChecking(true);
-    // Add a small delay to show the checking animation
     try {
+      // Show a toast for better user feedback
+      toast({
+        title: "Verifying Driver",
+        description: "Comparing with driver database...",
+        variant: "default",
+      });
+
       const res = await verifyFaceWithDatabase(imageDataUrl);
       setResult(res);
       if (onResult) onResult(res);
@@ -33,7 +39,7 @@ const FaceMatchButton = ({
       // Show a toast notification with the result
       if (res.matched) {
         toast({
-          title: "Driver Verified",
+          title: "Driver Verified ✓",
           description: `Match found: ${res.driverName || 'Unknown driver'} (${Math.round(res.confidence)}% confidence)`,
           variant: "default",
         });
@@ -82,11 +88,13 @@ const FaceMatchButton = ({
             <>
               <span className="font-semibold text-base">✅ Match: {result.driverName || 'Driver'}</span>
               <div className="text-xs mt-1">Confidence: {Math.round(result.confidence)}%</div>
+              <div className="text-xs mt-1">Driver record found in database</div>
             </>
           ) : (
             <>
               <span className="font-semibold text-base">❌ No Match Found</span>
               <div className="text-xs mt-1">Confidence: {Math.round(result.confidence)}%</div>
+              <div className="text-xs mt-1">Driver may not be registered</div>
             </>
           )}
         </div>

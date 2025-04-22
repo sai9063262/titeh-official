@@ -334,7 +334,7 @@ const DriverImageUploader = ({
           
           {/* IMAGE PREVIEW & VERIFICATION BUTTON (if uploaded/captured) */}
           {capturedImage && (
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2 pt-2 mb-6">
               <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-300">
                 <img
                   src={capturedImage}

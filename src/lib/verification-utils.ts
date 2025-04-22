@@ -12,7 +12,7 @@ export interface DriverData {
   validUntil: string;
   vehicleClass: string;
   photoUrl: string;
-  status: DriverStatus;
+  status: "valid" | "expired" | "suspended";
   address?: string;
   age?: string;
   notes?: string;
@@ -57,7 +57,6 @@ export interface DriverData {
   vehicle_year?: string;
   verification_status?: string;
   weight?: string;
-  emergency_contact_name?: string;
 }
 
 interface MatchResult {

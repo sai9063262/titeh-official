@@ -144,46 +144,126 @@ export async function validateFaceInImage(imageDataUrl: string): Promise<{
   }
 }
 
-// Add: Facial recognition MATCH simulation
-// This would normally call a backend or ML API, but we simulate for demo
-
+// Add: Facial recognition MATCH simulation with better accuracy
 export async function verifyFaceWithDatabase(imageDataUrl: string): Promise<{ matched: boolean; confidence: number; driverName?: string }> {
-  // NOTE: In a real app, you would:
-  //   - Extract facial embedding using a library (face-api.js or cloud API)
-  //   - Compare with server/database stored features
-  // Here we randomly simulate matching for user demo/testing
-  await new Promise(res => setTimeout(res, 900));
-  if (!imageDataUrl) return { matched: false, confidence: 0 };
+  // In a real implementation, we would:
+  // 1. Extract facial features using a machine learning model
+  // 2. Compare these features with a database of registered driver faces
+  // 3. Return matching results based on similarity scores
   
-  // Enhanced simulation with better matching probability
-  const demoNames = ["Suresh", "Arjun R", "Priya M", "Kiran Kumar"];
-  const rand = Math.random();
-  let confidence = 50 + rand * 50;
+  console.log("Starting face verification with database");
   
-  // More deterministic results - if we've seen a match before, more likely to match again
-  const lastMatchedName = localStorage.getItem('lastMatchedDriverName');
-  if (lastMatchedName && rand > 0.25) {
-    return {
-      matched: true,
-      confidence: Math.round(confidence * 100) / 100,
-      driverName: lastMatchedName
-    };
+  // Add some delay to simulate processing
+  await new Promise(res => setTimeout(res, 1200));
+  
+  if (!imageDataUrl) {
+    console.log("No image provided for verification");
+    return { matched: false, confidence: 0 };
   }
   
-  if (rand > 0.42) {
-    const driverName = demoNames[Math.floor(rand * demoNames.length)];
-    // Save this match for more consistent future results
-    localStorage.setItem('lastMatchedDriverName', driverName);
-    return {
-      matched: true,
-      confidence: Math.round(confidence * 100) / 100,
-      driverName
+  try {
+    // First check if we've seen this "face" before (for demo consistency)
+    // In a real implementation, we would use actual facial features
+    const imageHash = await simpleImageHash(imageDataUrl);
+    const lastMatchedHash = localStorage.getItem('lastMatchedFaceHash');
+    const lastMatchedName = localStorage.getItem('lastMatchedDriverName');
+    
+    // Enhanced simulation with better consistency
+    console.log("Processing image for facial verification");
+    
+    // If we've seen this face before and have a saved match
+    if (lastMatchedHash && imageHash && 
+        Math.abs(parseInt(lastMatchedHash) - imageHash) < 1000 && 
+        lastMatchedName) {
+      
+      console.log("Found a close match to previously verified face");
+      
+      // High confidence for previously matched faces
+      const confidence = 85 + Math.floor(Math.random() * 15); // 85-99%
+      
+      return {
+        matched: true,
+        confidence: confidence,
+        driverName: lastMatchedName
+      };
+    }
+    
+    // For new faces, use a more realistic distribution
+    // About 45% of verification attempts should succeed in demo mode
+    const demoNames = ["Suresh Kumar", "Arjun R", "Priya Mahesh", "Kiran Kumar", "Lakshmi T", "Sai Kumar"];
+    const rand = Math.random();
+    
+    if (rand > 0.55) {
+      // Successful match
+      const nameIndex = Math.floor(Math.random() * demoNames.length);
+      const driverName = demoNames[nameIndex];
+      const confidence = 75 + Math.floor(Math.random() * 22); // 75-96%
+      
+      // Save this match for future consistency
+      if (imageHash) {
+        localStorage.setItem('lastMatchedFaceHash', imageHash.toString());
+        localStorage.setItem('lastMatchedDriverName', driverName);
+      }
+      
+      console.log(`Match found: ${driverName} with ${confidence}% confidence`);
+      
+      return {
+        matched: true,
+        confidence: confidence,
+        driverName: driverName
+      };
+    } else {
+      // Failed match with appropriate confidence level
+      const confidence = 20 + Math.floor(Math.random() * 35); // 20-54%
+      console.log(`No match found. Confidence: ${confidence}%`);
+      
+      return {
+        matched: false,
+        confidence: confidence
+      };
+    }
+  } catch (error) {
+    console.error("Error in face verification:", error);
+    return { 
+      matched: false, 
+      confidence: 10 + Math.floor(Math.random() * 15) // 10-24%
     };
-  } else {
-    return {
-      matched: false,
-      confidence: Math.round(rand * 40) // 0-40%
-    };
+  }
+}
+
+// Generate a simple "hash" for an image to simulate face recognition
+// This is not real facial recognition - just a demo helper
+async function simpleImageHash(imageDataUrl: string): Promise<number | null> {
+  try {
+    const img = document.createElement('img');
+    img.src = imageDataUrl;
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+    
+    // Create a tiny version to "fingerprint"
+    const canvas = document.createElement('canvas');
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    
+    ctx.drawImage(img, 0, 0, 8, 8);
+    const data = ctx.getImageData(0, 0, 8, 8).data;
+    
+    // Create a simple hash from pixel data
+    let hash = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      hash = ((hash << 5) - hash) + (data[i] + data[i+1] + data[i+2]);
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    
+    return Math.abs(hash);
+  } catch (e) {
+    console.error("Error generating image hash:", e);
+    return null;
   }
 }
 

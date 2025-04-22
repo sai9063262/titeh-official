@@ -1,3 +1,4 @@
+
 export interface RoadCondition {
   id: string;
   user_id: string;
@@ -54,7 +55,7 @@ export const TELANGANA_DISTRICTS = [
   "Warangal", "Hanamkonda", "Yadadri Bhuvanagiri"
 ];
 
-// Modified DriverData interface to explicitly include district, city and align with verification-utils.ts
+// DriverData interface aligned with verification-utils.ts
 export interface DriverData {
   id: string;
   name: string;
@@ -70,7 +71,7 @@ export interface DriverData {
   city: string;
   fingerprint_data?: string;
   
-  // Required properties with default values
+  // Add all fields from verification-utils.ts to ensure compatibility
   blood_type: string;
   created_at: string;
   criminal_record_notes: string;
@@ -102,6 +103,14 @@ export interface DriverData {
   vehicle_year: string;
   verification_status: string;
   weight: string;
+  
+  // Optional fields to maintain compatibility with both interfaces
+  email?: string;
+  phoneNumber?: string;
+  emergencyContactPhone?: string;
+  medicalConditions?: string[];
+  trainingCertificates?: string[];
+  documents?: { name: string; url: string; }[];
 }
 
 // Air quality data
