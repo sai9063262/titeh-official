@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -21,6 +20,13 @@ import DriverDetails from "./pages/DriverDetails";
 import THelper from "./pages/THelper";
 import DeviceSettings from "./pages/DeviceSettings";
 import Profile from "./pages/Profile";
+import PersonalLoan from "./pages/vehicle/loans/PersonalLoan";
+import NewBikeLoan from "./pages/vehicle/loans/NewBikeLoan";
+import UsedCarLoan from "./pages/vehicle/loans/UsedCarLoan";
+import OldBikeLoan from "./pages/vehicle/loans/OldBikeLoan";
+import FuelStation from "./pages/vehicle/nearby/FuelStation";
+import InsuranceOffice from "./pages/vehicle/nearby/InsuranceOffice";
+import CarDealer from "./pages/vehicle/nearby/CarDealer";
 
 // Settings pages
 import Language from "./pages/settings/Language";
@@ -93,9 +99,6 @@ import GstCalculator from "./pages/vehicle/calculators/GstCalculator";
 import LoanCalculator from "./pages/vehicle/calculators/LoanCalculator";
 import MileageCalculator from "./pages/vehicle/calculators/MileageCalculator";
 import VehicleAgeCalculator from "./pages/vehicle/calculators/VehicleAgeCalculator";
-import FuelStation from "./pages/vehicle/nearby/FuelStation";
-import InsuranceOffice from "./pages/vehicle/nearby/InsuranceOffice";
-import CarDealer from "./pages/vehicle/nearby/CarDealer";
 
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
@@ -214,7 +217,13 @@ function App() {
             <Route path="/vehicle/nearby/fuel" element={<FuelStation />} />
             <Route path="/vehicle/nearby/insurance" element={<InsuranceOffice />} />
             <Route path="/vehicle/nearby/dealer" element={<CarDealer />} />
-
+            
+            {/* Vehicle Loan Routes */}
+            <Route path="/vehicle/loans/personal" element={<PersonalLoan />} />
+            <Route path="/vehicle/loans/new-bike" element={<NewBikeLoan />} />
+            <Route path="/vehicle/loans/used-car" element={<UsedCarLoan />} />
+            <Route path="/vehicle/loans/old-bike" element={<OldBikeLoan />} />
+            
             {/* Admin routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/admin-driver-details" element={<AdminDriverDetails />} />
