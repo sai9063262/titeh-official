@@ -1,29 +1,53 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { verifyFaceWithDatabase } from "@/utils/faceDetectionUtils";
-import { UserCheck } from "lucide-react";
+import { UserCheck, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import driverService from "@/services/driver-service";
 
 /**
  * FaceMatchButton
  * Enhanced button to verify driver photo with database using facial recognition
- * Now with improved UI feedback and animation
+ * Now with improved UI feedback, animation, and real driver detection
  */
 const FaceMatchButton = ({
   imageDataUrl,
   onResult
 }: {
   imageDataUrl: string | null;
-  onResult?: (result: { matched: boolean; confidence: number; driverName?: string }) => void;
+  onResult?: (result: { matched: boolean; confidence: number; driverName?: string; driverId?: string }) => void;
 }) => {
   const [isChecking, setIsChecking] = useState(false);
-  const [result, setResult] = useState<{ matched: boolean; confidence: number; driverName?: string } | null>(null);
+  const [result, setResult] = useState<{ matched: boolean; confidence: number; driverName?: string; driverId?: string } | null>(null);
   const { toast } = useToast();
+  const [driverDetails, setDriverDetails] = useState<any>(null);
+
+  // When we get a driver ID from verification, fetch their details
+  useEffect(() => {
+    if (result?.matched && result?.driverId) {
+      const fetchDriverDetails = async () => {
+        try {
+          const driver = await driverService.getDriverById(result.driverId);
+          if (driver) {
+            setDriverDetails(driver);
+          }
+        } catch (err) {
+          console.error("Error fetching driver details:", err);
+        }
+      };
+      
+      fetchDriverDetails();
+    } else {
+      setDriverDetails(null);
+    }
+  }, [result]);
 
   const handleCheck = async () => {
     if (!imageDataUrl) return;
     setIsChecking(true);
+    setResult(null);
+    
     try {
       // Show a toast for better user feedback
       toast({
@@ -72,7 +96,7 @@ const FaceMatchButton = ({
       >
         {isChecking ? (
           <>
-            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             <span>Verifying with Database...</span>
           </>
         ) : (
@@ -82,12 +106,52 @@ const FaceMatchButton = ({
           </>
         )}
       </Button>
+      
       {result && (
         <div className={`rounded p-3 text-sm border ${result.matched ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700"} mt-1 text-center flex flex-col gap-1`}>
           {result.matched ? (
             <>
               <span className="font-semibold text-base">✅ Match: {result.driverName || 'Driver'}</span>
               <div className="text-xs mt-1">Confidence: {Math.round(result.confidence)}%</div>
+              
+              {/* Show driver details when matched */}
+              {driverDetails && (
+                <div className="mt-2 text-left p-2 bg-white rounded border border-green-200">
+                  <h4 className="font-medium text-sm border-b border-green-100 pb-1 mb-2">Driver Details:</h4>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                    <span className="font-medium">License:</span>
+                    <span>{driverDetails.licenseNumber}</span>
+                    
+                    {driverDetails.validUntil && (
+                      <>
+                        <span className="font-medium">Valid Until:</span>
+                        <span>{driverDetails.validUntil}</span>
+                      </>
+                    )}
+                    
+                    {driverDetails.vehicleClass && (
+                      <>
+                        <span className="font-medium">Class:</span>
+                        <span>{driverDetails.vehicleClass}</span>
+                      </>
+                    )}
+                    
+                    {driverDetails.status && (
+                      <>
+                        <span className="font-medium">Status:</span>
+                        <span className={`
+                          ${driverDetails.status === 'valid' ? 'text-green-600' : ''}
+                          ${driverDetails.status === 'expired' ? 'text-amber-600' : ''}
+                          ${driverDetails.status === 'suspended' ? 'text-red-600' : ''}
+                        `}>
+                          {driverDetails.status.charAt(0).toUpperCase() + driverDetails.status.slice(1)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <div className="text-xs mt-1">Driver record found in database</div>
             </>
           ) : (

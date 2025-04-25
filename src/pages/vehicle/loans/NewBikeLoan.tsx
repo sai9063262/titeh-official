@@ -1,63 +1,51 @@
 
+import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Bike, Calculator, ArrowRight } from "lucide-react";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreditCard, Calculator, ArrowRight, FileDown } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const NewBikeLoan = () => {
-  const [bikePrice, setBikePrice] = useState(100000);
-  const [downPayment, setDownPayment] = useState(20000);
-  const [interestRate, setInterestRate] = useState(8.5);
+  const [bikePrice, setBikePrice] = useState(80000);
+  const [downPayment, setDownPayment] = useState(10000);
+  const [interestRate, setInterestRate] = useState(9.5);
   const [tenure, setTenure] = useState(36);
   const [bikeModel, setBikeModel] = useState("");
   const { toast } = useToast();
 
+  // Calculate loan amount after down payment
+  const loanAmount = bikePrice - downPayment;
+
+  // Calculate EMI using the formula: EMI = [P x R x (1+R)^N]/[(1+R)^N-1]
   const calculateEMI = () => {
-    const principal = bikePrice - downPayment;
+    const principal = loanAmount;
     const ratePerMonth = interestRate / 12 / 100;
     const time = tenure;
-    
-    if (principal <= 0) return "0.00";
     
     const emi = principal * ratePerMonth * Math.pow(1 + ratePerMonth, time) / (Math.pow(1 + ratePerMonth, time) - 1);
     
     return emi.toFixed(2);
   };
 
-  const handleApply = () => {
-    if (!bikeModel) {
-      toast({
-        title: "Please Select a Bike Model",
-        description: "You need to select a bike model to proceed with the application.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Application Submitted",
-      description: `Your loan application for ${bikeModel} has been submitted successfully. Our team will contact you soon.`,
-    });
+  // Calculate total interest payable
+  const calculateTotalInterest = () => {
+    const emi = parseFloat(calculateEMI());
+    const totalAmount = emi * tenure;
+    const totalInterest = totalAmount - loanAmount;
+    return totalInterest.toFixed(2);
   };
 
-  const popularBikes = [
-    "Honda Activa 6G",
-    "TVS Jupiter",
-    "Bajaj Pulsar 150",
-    "Hero Splendor Plus",
-    "Royal Enfield Classic 350",
-    "Yamaha MT-15",
-    "Suzuki Access 125",
-    "KTM Duke 200",
-    "Hero HF Deluxe",
-    "Honda Shine"
-  ];
+  const handleApply = () => {
+    toast({
+      title: "Application Submitted",
+      description: `Your bike loan application for ₹${loanAmount.toLocaleString()} has been submitted successfully. Our team will contact you soon.`,
+    });
+  };
 
   return (
     <Layout>
@@ -68,11 +56,11 @@ const NewBikeLoan = () => {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Bike className="mr-2 h-5 w-5 text-titeh-primary" />
+                <CreditCard className="mr-2 h-5 w-5 text-titeh-primary" />
                 Apply for New Bike Loan
               </CardTitle>
               <CardDescription>
-                Quick financing options for your dream bike
+                Quick and easy financing for your new bike purchase
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -80,13 +68,17 @@ const NewBikeLoan = () => {
                 <Label htmlFor="bikeModel">Bike Model</Label>
                 <Select value={bikeModel} onValueChange={setBikeModel}>
                   <SelectTrigger id="bikeModel">
-                    <SelectValue placeholder="Select Bike Model" />
+                    <SelectValue placeholder="Select bike model" />
                   </SelectTrigger>
                   <SelectContent>
-                    {popularBikes.map((bike) => (
-                      <SelectItem key={bike} value={bike}>{bike}</SelectItem>
-                    ))}
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="hero_splendor">Hero Splendor+</SelectItem>
+                    <SelectItem value="honda_shine">Honda Shine</SelectItem>
+                    <SelectItem value="bajaj_pulsar">Bajaj Pulsar</SelectItem>
+                    <SelectItem value="tvs_apache">TVS Apache</SelectItem>
+                    <SelectItem value="yamaha_fz">Yamaha FZ</SelectItem>
+                    <SelectItem value="royal_enfield">Royal Enfield Classic</SelectItem>
+                    <SelectItem value="ktm_duke">KTM Duke</SelectItem>
+                    <SelectItem value="other">Other (Specify)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -99,20 +91,20 @@ const NewBikeLoan = () => {
                     type="number" 
                     value={bikePrice}
                     onChange={(e) => setBikePrice(Number(e.target.value))}
-                    min={30000}
+                    min={20000}
                     max={500000}
                   />
                 </div>
                 <Slider 
                   value={[bikePrice]} 
-                  min={30000} 
+                  min={20000} 
                   max={500000}
-                  step={10000}
+                  step={5000}
                   onValueChange={(value) => setBikePrice(value[0])}
                   className="mt-2"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>₹30,000</span>
+                  <span>₹20,000</span>
                   <span>₹5,00,000</span>
                 </div>
               </div>
@@ -126,21 +118,22 @@ const NewBikeLoan = () => {
                     value={downPayment}
                     onChange={(e) => setDownPayment(Number(e.target.value))}
                     min={0}
-                    max={bikePrice * 0.7}
+                    max={bikePrice * 0.5}
                   />
                 </div>
                 <Slider 
                   value={[downPayment]} 
                   min={0} 
-                  max={bikePrice * 0.7}
-                  step={5000}
+                  max={bikePrice * 0.5}
+                  step={1000}
                   onValueChange={(value) => setDownPayment(value[0])}
                   className="mt-2"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>₹0</span>
-                  <span>₹{(bikePrice * 0.7).toLocaleString()}</span>
+                  <span>₹{(bikePrice * 0.5).toLocaleString()}</span>
                 </div>
+                <p className="text-xs text-gray-500">Recommended: At least 10% of bike price</p>
               </div>
               
               <div className="space-y-2">
@@ -158,7 +151,7 @@ const NewBikeLoan = () => {
                 </div>
                 <Slider 
                   value={[interestRate]} 
-                  min={7} 
+                  min={7}
                   max={18}
                   step={0.5}
                   onValueChange={(value) => setInterestRate(value[0])}
@@ -184,7 +177,7 @@ const NewBikeLoan = () => {
                 </div>
                 <Slider 
                   value={[tenure]} 
-                  min={12} 
+                  min={12}
                   max={60}
                   step={12}
                   onValueChange={(value) => setTenure(value[0])}
@@ -233,7 +226,7 @@ const NewBikeLoan = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Loan Amount</p>
-                    <p className="text-lg font-semibold">₹{(bikePrice - downPayment).toLocaleString()}</p>
+                    <p className="text-lg font-semibold">₹{loanAmount.toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Interest Rate</p>
@@ -245,7 +238,7 @@ const NewBikeLoan = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total Interest</p>
-                    <p className="text-lg font-semibold">₹{(calculateEMI() * tenure - (bikePrice - downPayment)).toFixed(2)}</p>
+                    <p className="text-lg font-semibold">₹{calculateTotalInterest()}</p>
                   </div>
                 </div>
                 
@@ -255,11 +248,25 @@ const NewBikeLoan = () => {
                     <li>PAN Card</li>
                     <li>Aadhaar Card</li>
                     <li>Income Proof (Salary Slips/IT Returns)</li>
-                    <li>3 months Bank Statement</li>
                     <li>Address Proof</li>
-                    <li>Bike quotation from dealer</li>
+                    <li>Bank Statement (3 months)</li>
+                    <li>2 Passport size photographs</li>
                   </ul>
                 </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2 flex items-center justify-center"
+                  onClick={() => {
+                    toast({
+                      title: "Information Downloaded",
+                      description: "Loan details and required documents have been downloaded.",
+                    });
+                  }}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Download Information
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -269,7 +276,7 @@ const NewBikeLoan = () => {
           <CardContent className="p-4">
             <p className="text-sm text-gray-600">
               <strong>Note:</strong> The above EMI calculation is approximate and may vary based on actual approval and terms.
-              Interest rates are subject to credit profile assessment. Processing fee and other charges may apply.
+              Interest rates are subject to credit profile assessment and may vary based on bike model and manufacturer.
             </p>
           </CardContent>
         </Card>
