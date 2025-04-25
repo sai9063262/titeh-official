@@ -161,6 +161,13 @@ class DriverService {
   // Update driver
   async updateDriver(id: string, updates: Partial<DriverData>): Promise<boolean> {
     try {
+      // Check if this is a local driver (IDs that start with 'drv-')
+      if (id.startsWith('drv-')) {
+        // For local drivers, update in localStorage
+        return this.updateLocalDriver(id, updates);
+      }
+      
+      // For database drivers, update in Supabase
       const { error } = await supabase
         .from("drivers")
         .update({
@@ -193,6 +200,13 @@ class DriverService {
   // Delete driver
   async deleteDriver(id: string): Promise<boolean> {
     try {
+      // Check if this is a local driver (IDs that start with 'drv-')
+      if (id.startsWith('drv-')) {
+        // For local drivers, delete from localStorage
+        return this.deleteLocalDriver(id);
+      }
+      
+      // For database drivers, delete from Supabase
       const { error } = await supabase
         .from("drivers")
         .delete()
@@ -288,6 +302,58 @@ class DriverService {
     }
   }
   
+  // Update local driver in localStorage
+  private updateLocalDriver(id: string, updates: Partial<DriverData>): boolean {
+    try {
+      const localDrivers = this.getLocalAdminDrivers();
+      const driverIndex = localDrivers.findIndex(driver => driver.id === id);
+      
+      if (driverIndex === -1) {
+        return false;
+      }
+      
+      // Update the driver
+      localDrivers[driverIndex] = {
+        ...localDrivers[driverIndex],
+        ...updates
+      };
+      
+      // Save back to localStorage
+      localStorage.setItem('adminDriverRecords', JSON.stringify(localDrivers));
+      
+      // Invalidate cache
+      this.adminDriverCache = null;
+      
+      return true;
+    } catch (error) {
+      console.error("Error updating local driver:", error);
+      return false;
+    }
+  }
+  
+  // Delete local driver from localStorage
+  private deleteLocalDriver(id: string): boolean {
+    try {
+      const localDrivers = this.getLocalAdminDrivers();
+      const filteredDrivers = localDrivers.filter(driver => driver.id !== id);
+      
+      if (filteredDrivers.length === localDrivers.length) {
+        return false; // No driver was removed
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('adminDriverRecords', JSON.stringify(filteredDrivers));
+      
+      // Invalidate cache
+      this.adminDriverCache = null;
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting local driver:", error);
+      return false;
+    }
+  }
+  
   // Find a driver by license number (combining both sources)
   async findDriverByLicense(licenseNumber: string): Promise<DriverData | null> {
     console.log("Finding driver by license number:", licenseNumber);
@@ -315,4 +381,3 @@ class DriverService {
 }
 
 export default DriverService.getInstance();
-

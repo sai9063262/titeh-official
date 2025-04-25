@@ -32,6 +32,13 @@ const PersonalLoan = () => {
     });
   };
 
+  const calculateTotalInterest = () => {
+    const emi = parseFloat(calculateEMI());
+    const totalAmount = emi * tenure;
+    const totalInterest = totalAmount - loanAmount;
+    return totalInterest.toFixed(2);
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
@@ -169,7 +176,7 @@ const PersonalLoan = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total Interest</p>
-                    <p className="text-lg font-semibold">₹{(calculateEMI() * tenure - loanAmount).toFixed(2)}</p>
+                    <p className="text-lg font-semibold">₹{calculateTotalInterest()}</p>
                   </div>
                 </div>
                 
