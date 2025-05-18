@@ -9,30 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_audit_logs: {
-        Row: {
-          action: string
-          details: Json | null
-          id: string
-          performed_at: string | null
-          performed_by: string | null
-        }
-        Insert: {
-          action: string
-          details?: Json | null
-          id?: string
-          performed_at?: string | null
-          performed_by?: string | null
-        }
-        Update: {
-          action?: string
-          details?: Json | null
-          id?: string
-          performed_at?: string | null
-          performed_by?: string | null
-        }
-        Relationships: []
-      }
       air_quality_data: {
         Row: {
           aqi: number
@@ -40,7 +16,7 @@ export type Database = {
           district: string
           health_recommendations: string | null
           id: string
-          last_updated: string
+          last_updated: string | null
           latitude: number
           location: string
           longitude: number
@@ -54,7 +30,7 @@ export type Database = {
           district: string
           health_recommendations?: string | null
           id?: string
-          last_updated?: string
+          last_updated?: string | null
           latitude: number
           location: string
           longitude: number
@@ -68,7 +44,7 @@ export type Database = {
           district?: string
           health_recommendations?: string | null
           id?: string
-          last_updated?: string
+          last_updated?: string | null
           latitude?: number
           location?: string
           longitude?: number
@@ -78,278 +54,29 @@ export type Database = {
         }
         Relationships: []
       }
-      breaking_news: {
-        Row: {
-          author: string | null
-          content: string
-          created_at: string | null
-          created_by: string | null
-          expiry_date: string | null
-          id: string
-          is_published: boolean | null
-          priority: string
-          publish_date: string | null
-          title: string
-        }
-        Insert: {
-          author?: string | null
-          content: string
-          created_at?: string | null
-          created_by?: string | null
-          expiry_date?: string | null
-          id?: string
-          is_published?: boolean | null
-          priority: string
-          publish_date?: string | null
-          title: string
-        }
-        Update: {
-          author?: string | null
-          content?: string
-          created_at?: string | null
-          created_by?: string | null
-          expiry_date?: string | null
-          id?: string
-          is_published?: boolean | null
-          priority?: string
-          publish_date?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
-      driver_analytics: {
-        Row: {
-          created_at: string
-          driving_date: string
-          id: string
-          insights: string[] | null
-          metrics: Json
-          score: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          driving_date: string
-          id?: string
-          insights?: string[] | null
-          metrics: Json
-          score: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          driving_date?: string
-          id?: string
-          insights?: string[] | null
-          metrics?: Json
-          score?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      drivers: {
-        Row: {
-          address: string | null
-          age: string | null
-          blood_type: string | null
-          created_at: string
-          criminal_record_notes: string | null
-          criminal_record_status: string | null
-          date_of_birth: string | null
-          document_url: string | null
-          driver_experience_years: number | null
-          email: string | null
-          emergency_contact_name: string | null
-          fingerprint_data: string | null
-          gender: string | null
-          id: string
-          language_proficiency: string[] | null
-          license_number: string
-          medical_conditions: string | null
-          name: string
-          nationality: string | null
-          notes: string | null
-          phone_number: string | null
-          photo_url: string | null
-          preferred_contact_method: string | null
-          previous_employers: string | null
-          safety_training_date: string | null
-          status: string | null
-          training_certificates: string[] | null
-          updated_at: string
-          valid_until: string | null
-          vehicle_class: string | null
-          vehicle_color: string | null
-        }
-        Insert: {
-          address?: string | null
-          age?: string | null
-          blood_type?: string | null
-          created_at?: string
-          criminal_record_notes?: string | null
-          criminal_record_status?: string | null
-          date_of_birth?: string | null
-          document_url?: string | null
-          driver_experience_years?: number | null
-          email?: string | null
-          emergency_contact_name?: string | null
-          fingerprint_data?: string | null
-          gender?: string | null
-          id?: string
-          language_proficiency?: string[] | null
-          license_number: string
-          medical_conditions?: string | null
-          name: string
-          nationality?: string | null
-          notes?: string | null
-          phone_number?: string | null
-          photo_url?: string | null
-          preferred_contact_method?: string | null
-          previous_employers?: string | null
-          safety_training_date?: string | null
-          status?: string | null
-          training_certificates?: string[] | null
-          updated_at?: string
-          valid_until?: string | null
-          vehicle_class?: string | null
-          vehicle_color?: string | null
-        }
-        Update: {
-          address?: string | null
-          age?: string | null
-          blood_type?: string | null
-          created_at?: string
-          criminal_record_notes?: string | null
-          criminal_record_status?: string | null
-          date_of_birth?: string | null
-          document_url?: string | null
-          driver_experience_years?: number | null
-          email?: string | null
-          emergency_contact_name?: string | null
-          fingerprint_data?: string | null
-          gender?: string | null
-          id?: string
-          language_proficiency?: string[] | null
-          license_number?: string
-          medical_conditions?: string | null
-          name?: string
-          nationality?: string | null
-          notes?: string | null
-          phone_number?: string | null
-          photo_url?: string | null
-          preferred_contact_method?: string | null
-          previous_employers?: string | null
-          safety_training_date?: string | null
-          status?: string | null
-          training_certificates?: string[] | null
-          updated_at?: string
-          valid_until?: string | null
-          vehicle_class?: string | null
-          vehicle_color?: string | null
-        }
-        Relationships: []
-      }
-      driving_schools: {
-        Row: {
-          address: string
-          created_at: string
-          fees: Json | null
-          hours: string | null
-          id: string
-          location: string
-          name: string
-          phone: string
-          rating: number | null
-          services: string[] | null
-        }
-        Insert: {
-          address: string
-          created_at?: string
-          fees?: Json | null
-          hours?: string | null
-          id?: string
-          location: string
-          name: string
-          phone: string
-          rating?: number | null
-          services?: string[] | null
-        }
-        Update: {
-          address?: string
-          created_at?: string
-          fees?: Json | null
-          hours?: string | null
-          id?: string
-          location?: string
-          name?: string
-          phone?: string
-          rating?: number | null
-          services?: string[] | null
-        }
-        Relationships: []
-      }
-      emergency_beacons: {
-        Row: {
-          beacon_type: string
-          city: string
-          contact_number: string | null
-          district: string
-          id: string
-          last_checked: string
-          latitude: number
-          location_name: string
-          longitude: number
-          operational_status: string
-        }
-        Insert: {
-          beacon_type: string
-          city: string
-          contact_number?: string | null
-          district: string
-          id?: string
-          last_checked?: string
-          latitude: number
-          location_name: string
-          longitude: number
-          operational_status: string
-        }
-        Update: {
-          beacon_type?: string
-          city?: string
-          contact_number?: string | null
-          district?: string
-          id?: string
-          last_checked?: string
-          latitude?: number
-          location_name?: string
-          longitude?: number
-          operational_status?: string
-        }
-        Relationships: []
-      }
       learning_progress: {
         Row: {
           activity_type: string
           id: string
-          is_correct: boolean | null
-          question_id: string | null
-          timestamp: string
+          is_correct: boolean
+          question_id: string
+          timestamp: string | null
           user_id: string
         }
         Insert: {
           activity_type: string
           id?: string
-          is_correct?: boolean | null
-          question_id?: string | null
-          timestamp?: string
+          is_correct: boolean
+          question_id: string
+          timestamp?: string | null
           user_id: string
         }
         Update: {
           activity_type?: string
           id?: string
-          is_correct?: boolean | null
-          question_id?: string | null
-          timestamp?: string
+          is_correct?: boolean
+          question_id?: string
+          timestamp?: string | null
           user_id?: string
         }
         Relationships: []
@@ -361,7 +88,7 @@ export type Database = {
           questions_count: number
           score: number
           time_taken: number
-          timestamp: string
+          timestamp: string | null
           user_id: string
         }
         Insert: {
@@ -370,7 +97,7 @@ export type Database = {
           questions_count: number
           score: number
           time_taken: number
-          timestamp?: string
+          timestamp?: string | null
           user_id: string
         }
         Update: {
@@ -379,7 +106,7 @@ export type Database = {
           questions_count?: number
           score?: number
           time_taken?: number
-          timestamp?: string
+          timestamp?: string | null
           user_id?: string
         }
         Relationships: []
@@ -387,381 +114,21 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string | null
           full_name: string | null
           id: string
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string | null
           full_name?: string | null
           id: string
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string | null
           full_name?: string | null
           id?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      road_conditions: {
-        Row: {
-          city: string | null
-          condition_type: string
-          description: string | null
-          district: string | null
-          id: string
-          image_url: string | null
-          is_active: boolean
-          latitude: number
-          location: string
-          longitude: number
-          reported_at: string
-          upvotes: number
-          user_id: string
-        }
-        Insert: {
-          city?: string | null
-          condition_type: string
-          description?: string | null
-          district?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          latitude: number
-          location: string
-          longitude: number
-          reported_at?: string
-          upvotes?: number
-          user_id: string
-        }
-        Update: {
-          city?: string | null
-          condition_type?: string
-          description?: string | null
-          district?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          latitude?: number
-          location?: string
-          longitude?: number
-          reported_at?: string
-          upvotes?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      road_hazards: {
-        Row: {
-          description: string | null
-          expires_at: string
-          hazard_type: string
-          id: string
-          image_url: string | null
-          is_active: boolean
-          latitude: number
-          longitude: number
-          reported_at: string
-          user_id: string
-        }
-        Insert: {
-          description?: string | null
-          expires_at?: string
-          hazard_type: string
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          latitude: number
-          longitude: number
-          reported_at?: string
-          user_id: string
-        }
-        Update: {
-          description?: string | null
-          expires_at?: string
-          hazard_type?: string
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          latitude?: number
-          longitude?: number
-          reported_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      safety_features: {
-        Row: {
-          created_at: string
-          feature_type: string
-          id: string
-          metadata: Json | null
-          usage_timestamp: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          feature_type: string
-          id?: string
-          metadata?: Json | null
-          usage_timestamp?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          feature_type?: string
-          id?: string
-          metadata?: Json | null
-          usage_timestamp?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      safety_pledges: {
-        Row: {
-          badge_id: string
-          completed_at: string
-          id: string
-          pledge_items: string[]
-          shared: boolean
-          user_id: string
-        }
-        Insert: {
-          badge_id: string
-          completed_at?: string
-          id?: string
-          pledge_items: string[]
-          shared?: boolean
-          user_id: string
-        }
-        Update: {
-          badge_id?: string
-          completed_at?: string
-          id?: string
-          pledge_items?: string[]
-          shared?: boolean
-          user_id?: string
-        }
-        Relationships: []
-      }
-      safety_regulations: {
-        Row: {
-          applicable_areas: string[] | null
-          description: string
-          effective_date: string
-          expiry_date: string | null
-          id: string
-          last_updated: string
-          penalty_details: string | null
-          regulation_type: string
-          title: string
-        }
-        Insert: {
-          applicable_areas?: string[] | null
-          description: string
-          effective_date: string
-          expiry_date?: string | null
-          id?: string
-          last_updated?: string
-          penalty_details?: string | null
-          regulation_type: string
-          title: string
-        }
-        Update: {
-          applicable_areas?: string[] | null
-          description?: string
-          effective_date?: string
-          expiry_date?: string | null
-          id?: string
-          last_updated?: string
-          penalty_details?: string | null
-          regulation_type?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      safety_score_history: {
-        Row: {
-          acceleration_score: number | null
-          braking_score: number | null
-          city: string | null
-          date: string
-          distraction_score: number | null
-          district: string | null
-          driving_hours: number | null
-          id: string
-          recommendations: string | null
-          safety_score: number
-          speed_score: number | null
-          user_id: string
-        }
-        Insert: {
-          acceleration_score?: number | null
-          braking_score?: number | null
-          city?: string | null
-          date: string
-          distraction_score?: number | null
-          district?: string | null
-          driving_hours?: number | null
-          id?: string
-          recommendations?: string | null
-          safety_score: number
-          speed_score?: number | null
-          user_id: string
-        }
-        Update: {
-          acceleration_score?: number | null
-          braking_score?: number | null
-          city?: string | null
-          date?: string
-          distraction_score?: number | null
-          district?: string | null
-          driving_hours?: number | null
-          id?: string
-          recommendations?: string | null
-          safety_score?: number
-          speed_score?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      saved_routes: {
-        Row: {
-          created_at: string
-          end_point: string
-          id: string
-          is_favorite: boolean
-          route_data: Json
-          route_name: string
-          start_point: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          end_point: string
-          id?: string
-          is_favorite?: boolean
-          route_data: Json
-          route_name: string
-          start_point: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          end_point?: string
-          id?: string
-          is_favorite?: boolean
-          route_data?: Json
-          route_name?: string
-          start_point?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      system_alerts: {
-        Row: {
-          alert_type: string
-          created_at: string | null
-          created_by: string | null
-          id: string
-          is_sent: boolean | null
-          message: string
-          send_date: string | null
-          target_audience: string
-          title: string
-        }
-        Insert: {
-          alert_type: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          is_sent?: boolean | null
-          message: string
-          send_date?: string | null
-          target_audience: string
-          title: string
-        }
-        Update: {
-          alert_type?: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          is_sent?: boolean | null
-          message?: string
-          send_date?: string | null
-          target_audience?: string
-          title?: string
-        }
-        Relationships: []
-      }
-      traffic_signals: {
-        Row: {
-          city: string
-          current_status: string
-          district: string
-          green_duration: number
-          id: string
-          intersection_name: string
-          last_updated: string
-          latitude: number
-          longitude: number
-          red_duration: number
-          yellow_duration: number
-        }
-        Insert: {
-          city: string
-          current_status: string
-          district: string
-          green_duration: number
-          id?: string
-          intersection_name: string
-          last_updated?: string
-          latitude: number
-          longitude: number
-          red_duration: number
-          yellow_duration: number
-        }
-        Update: {
-          city?: string
-          current_status?: string
-          district?: string
-          green_duration?: number
-          id?: string
-          intersection_name?: string
-          last_updated?: string
-          latitude?: number
-          longitude?: number
-          red_duration?: number
-          yellow_duration?: number
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -776,9 +143,9 @@ export type Database = {
           model: string
           recall_date: string
           recall_reason: string
-          recommended_action: string
+          recommended_action: string | null
           year_from: number
-          year_to: number
+          year_to: number | null
         }
         Insert: {
           affected_parts?: string[] | null
@@ -790,9 +157,9 @@ export type Database = {
           model: string
           recall_date: string
           recall_reason: string
-          recommended_action: string
+          recommended_action?: string | null
           year_from: number
-          year_to: number
+          year_to?: number | null
         }
         Update: {
           affected_parts?: string[] | null
@@ -804,39 +171,9 @@ export type Database = {
           model?: string
           recall_date?: string
           recall_reason?: string
-          recommended_action?: string
+          recommended_action?: string | null
           year_from?: number
-          year_to?: number
-        }
-        Relationships: []
-      }
-      verification_methods: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean
-          method_type: string
-          reference_data: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          method_type: string
-          reference_data?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          method_type?: string
-          reference_data?: string | null
-          updated_at?: string
-          user_id?: string
+          year_to?: number | null
         }
         Relationships: []
       }
@@ -848,7 +185,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -963,8 +300,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "user"],
-    },
+    Enums: {},
   },
 } as const
