@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus, Search, Edit, Trash2, User, XCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { DriverData, TELANGANA_DISTRICTS } from "@/types/safety";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import DriverService from "@/services/driver-service";
 import { nanoid } from "nanoid";
 
