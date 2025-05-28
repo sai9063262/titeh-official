@@ -54,6 +54,147 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          address: string | null
+          age: string | null
+          blood_type: string | null
+          city: string | null
+          created_at: string | null
+          criminal_record_notes: string | null
+          criminal_record_status: string | null
+          date_of_birth: string | null
+          district: string | null
+          document_url: string | null
+          driver_experience_years: number | null
+          emergency_contact_name: string | null
+          emergency_phone_number: string | null
+          endorsements: string[] | null
+          fingerprint_data: string | null
+          health_conditions: string[] | null
+          height: string | null
+          id: string
+          last_verification: string | null
+          license_class: string | null
+          license_issue_date: string | null
+          license_number: string
+          license_points: number | null
+          license_restrictions: string[] | null
+          name: string
+          notes: string | null
+          organ_donor: boolean | null
+          phone_number: string | null
+          photo_url: string | null
+          previous_offenses: string[] | null
+          profile_image: string | null
+          restrictions: string[] | null
+          status: string | null
+          updated_at: string | null
+          valid_until: string | null
+          vehicle_class: string | null
+          vehicle_color: string | null
+          vehicle_make: string | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+          vehicle_type: string | null
+          vehicle_year: string | null
+          verification_status: string | null
+          weight: string | null
+        }
+        Insert: {
+          address?: string | null
+          age?: string | null
+          blood_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          criminal_record_notes?: string | null
+          criminal_record_status?: string | null
+          date_of_birth?: string | null
+          district?: string | null
+          document_url?: string | null
+          driver_experience_years?: number | null
+          emergency_contact_name?: string | null
+          emergency_phone_number?: string | null
+          endorsements?: string[] | null
+          fingerprint_data?: string | null
+          health_conditions?: string[] | null
+          height?: string | null
+          id?: string
+          last_verification?: string | null
+          license_class?: string | null
+          license_issue_date?: string | null
+          license_number: string
+          license_points?: number | null
+          license_restrictions?: string[] | null
+          name: string
+          notes?: string | null
+          organ_donor?: boolean | null
+          phone_number?: string | null
+          photo_url?: string | null
+          previous_offenses?: string[] | null
+          profile_image?: string | null
+          restrictions?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          valid_until?: string | null
+          vehicle_class?: string | null
+          vehicle_color?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
+          vehicle_year?: string | null
+          verification_status?: string | null
+          weight?: string | null
+        }
+        Update: {
+          address?: string | null
+          age?: string | null
+          blood_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          criminal_record_notes?: string | null
+          criminal_record_status?: string | null
+          date_of_birth?: string | null
+          district?: string | null
+          document_url?: string | null
+          driver_experience_years?: number | null
+          emergency_contact_name?: string | null
+          emergency_phone_number?: string | null
+          endorsements?: string[] | null
+          fingerprint_data?: string | null
+          health_conditions?: string[] | null
+          height?: string | null
+          id?: string
+          last_verification?: string | null
+          license_class?: string | null
+          license_issue_date?: string | null
+          license_number?: string
+          license_points?: number | null
+          license_restrictions?: string[] | null
+          name?: string
+          notes?: string | null
+          organ_donor?: boolean | null
+          phone_number?: string | null
+          photo_url?: string | null
+          previous_offenses?: string[] | null
+          profile_image?: string | null
+          restrictions?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          valid_until?: string | null
+          vehicle_class?: string | null
+          vehicle_color?: string | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
+          vehicle_year?: string | null
+          verification_status?: string | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           activity_type: string
