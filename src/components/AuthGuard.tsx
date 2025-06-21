@@ -11,6 +11,9 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ requireAuth = true, children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  // Check if user is a guest
+  const isGuestUser = localStorage.getItem('isGuestUser') === 'true';
 
   if (isLoading) {
     return (
@@ -20,7 +23,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ requireAuth = true, children }) =
     );
   }
 
-  if (requireAuth && !isAuthenticated) {
+  // If auth is required and user is neither authenticated nor a guest, redirect to auth
+  if (requireAuth && !isAuthenticated && !isGuestUser) {
     return <Navigate to="/auth" replace />;
   }
 

@@ -1,16 +1,17 @@
 
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Loader2, UserCheck } from "lucide-react";
 
 const Auth = () => {
   const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   
   // Form states
@@ -50,6 +51,12 @@ const Auth = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGuestAccess = () => {
+    // Store guest status in localStorage for the app to recognize
+    localStorage.setItem('isGuestUser', 'true');
+    navigate('/');
   };
 
   return (
@@ -186,6 +193,21 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          {/* Guest Access Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-600">Or continue without an account</p>
+            </div>
+            <Button 
+              onClick={handleGuestAccess}
+              variant="outline" 
+              className="w-full border-titeh-primary text-titeh-primary hover:bg-titeh-primary hover:text-white"
+            >
+              <UserCheck className="mr-2 h-4 w-4" />
+              Continue as Guest
+            </Button>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-xs text-gray-500 text-center">

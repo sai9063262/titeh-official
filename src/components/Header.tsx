@@ -1,106 +1,151 @@
 
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, User, Settings, Home, FileText, Car, AlertTriangle, BookOpen } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, User, LogOut, UserCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Header = () => {
-  const { isAuthenticated, user, signOut } = useAuth();
-  const location = useLocation();
-  
-  // Main navigation items
-  const navItems = [
-    { path: '/', label: 'Home', icon: <Home className="w-4 h-4 mr-1" /> },
-    { path: '/vehicle', label: 'Vehicle', icon: <Car className="w-4 h-4 mr-1" /> },
-    { path: '/traffic-safety', label: 'Safety', icon: <AlertTriangle className="w-4 h-4 mr-1" /> },
-    { path: '/rto-exam', label: 'Learning', icon: <BookOpen className="w-4 h-4 mr-1" /> },
-    { path: '/faq', label: 'FAQ', icon: <FileText className="w-4 h-4 mr-1" /> },
-  ];
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const isGuestUser = localStorage.getItem('isGuestUser') === 'true';
 
-  const getAvatarFallback = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name
-        .split(" ")
-        .map(name => name[0])
-        .join("")
-        .toUpperCase();
-    }
-    return user?.email?.charAt(0).toUpperCase() || "U";
+  const handleSignOut = async () => {
+    await signOut();
+    localStorage.removeItem('isGuestUser');
+    navigate('/auth');
   };
 
+  const handleGuestSignOut = () => {
+    localStorage.removeItem('isGuestUser');
+    navigate('/auth');
+  };
+
+  const menuItems = [
+    { href: "/", label: "Home" },
+    { href: "/vehicle", label: "Vehicle Services" },
+    { href: "/traffic-safety", label: "Traffic Safety" },
+    { href: "/rto-exam", label: "RTO Exam" },
+    { href: "/parivahan-services", label: "Parivahan Services" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/faq", label: "FAQ" },
+  ];
+
   return (
-    <header className="bg-white border-b border-gray-200 py-3">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-1 sm:space-x-4">
-            <Link to="/" className="text-xl font-bold text-titeh-primary mr-2">TITEH</Link>
-            
-            {/* Main navigation - hidden on mobile */}
-            <nav className="hidden md:flex space-x-1">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.path} 
-                  to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-                    location.pathname === item.path 
-                      ? 'bg-titeh-primary text-white' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link to="/" className="mr-6 flex items-center space-x-2">
+            <span className="font-bold text-titeh-primary">TITEH</span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="transition-colors hover:text-titeh-primary"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="pr-0">
+            <Link to="/" className="flex items-center">
+              <span className="font-bold text-titeh-primary">TITEH</span>
+            </Link>
+            <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+              <div className="flex flex-col space-y-3">
+                {menuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className="transition-colors hover:text-titeh-primary"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {/* Search could go here */}
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* User menu */}
+          <div className="flex items-center space-x-2">
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative rounded-full h-9 w-9 p-0">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || ""} />
-                      <AvatarFallback className="bg-titeh-primary text-white">
-                        {getAvatarFallback()}
-                      </AvatarFallback>
-                    </Avatar>
+                  <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+                    <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    {user?.user_metadata?.full_name || user?.email}
-                  </DropdownMenuLabel>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">{user?.email}</p>
+                    </div>
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="w-full cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
+                    <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/settings" className="w-full cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
+                    <Link to="/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => signOut()} 
-                    className="text-red-500 focus:bg-red-50 cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : isGuestUser ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+                    <UserCheck className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">Guest User</p>
+                      <p className="text-xs text-muted-foreground">Limited access</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleGuestSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Exit Guest Mode
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
