@@ -207,7 +207,7 @@ const THelper = () => {
   };
 
   const handleAdminLogin = async () => {
-    if (email === "openaiapiadmin.com" && password === "OPENAIAPIKEY") {
+    if (email === "saikumarpanchagiri058@gmail.com" && password === "$@!Kum@r906377") {
       setAdminAuthStatus("otp_required");
       toast({
         title: "OTP Sent",
