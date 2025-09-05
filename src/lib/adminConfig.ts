@@ -41,8 +41,12 @@ export const secureAdminCredentials = {
   // Encrypted credential validation
   validateCredentials: (email: string, password: string): boolean => {
     // Main admins with full access
-    if ((email === "saikumarpanchagiri058@gmail.com" || 
-         email === "nallarahuladmin057@gmail.com") && 
+    if (email === "saikumarpanchagiri058@gmail.com" && 
+        password === "$@!Kum@r906377") {
+      return true;
+    }
+    
+    if (email === "nallarahuladmin057@gmail.com" && 
         password === "$@!|<u|\\/|@r") {
       return true;
     }
