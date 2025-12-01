@@ -1,8 +1,16 @@
 # TITEH – Telangana Integrated Traffic & Enforcement Hub
 
-A fully student-developed mobile + web application for vehicle management, RTO exam practice, traffic safety, e-challan, Parivahan services and AI assistant.
+TITEH is a fully student-developed mobile + web application for:
 
-Built with React 18 + TypeScript + Tailwind CSS + Supabase + Capacitor
+- Vehicle management and compliance
+- RTO exam practice and learner education
+- Traffic safety, e-challan and enforcement tools
+- Parivahan-style transport services
+- T-Helper AI assistant for traffic/RTO queries
 
-Developed by: Sai (Independent Capstone Project –TITEH Official)
-No government affiliation · Purely personal prototype
+Built with **React 18**, **TypeScript**, **Tailwind CSS**, **Supabase** and **Capacitor**.
+
+Developed by **Sai Kumar Panchagiri**  
+Independent capstone project – TITEH
+
+> This is a **student prototype app (no government affiliation)** and is intended only for learning, academic evaluation and demonstration purposes.
