@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Shield, Eye, EyeOff, RefreshCw, KeyRound, Check, 
-  X, LockKeyhole, Calendar, User
+  LockKeyhole, Calendar, User
 } from "lucide-react";
 import AuthService from "@/services/auth-service";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -56,11 +55,11 @@ const PatentRightsDialog = ({ isOpen, onClose }: PatentRightsDialogProps) => {
     
     // Small delay to show loading state
     setTimeout(() => {
-      // Check if email is one of the admin emails
-      if (email !== "saikumarpanchagiri058@gmail.com" && email !== "nallarahuladmin057@gmail.com") {
+      // Check if email is the authorized admin email
+      if (email !== "saikumarpanchagiri058@gmail.com") {
         toast({
           title: "Access Denied",
-          description: "Only authorized patent holders can access this section",
+          description: "Only the authorized patent holder can access this section",
           variant: "destructive",
         });
         setIsVerifying(false);
@@ -377,28 +376,19 @@ const PatentRightsDialog = ({ isOpen, onClose }: PatentRightsDialogProps) => {
                 </span>
               </div>
               
-              {/* First Patent Holder */}
+              {/* Sole Patent Holder */}
               <div className="border rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center mb-4">
                   <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 sm:mb-0 sm:mr-4 flex items-center justify-center">
                     <User className="h-12 w-12 text-gray-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">PANCHAGIRI SAIKUMAR</h3>
-                    <p className="text-gray-600">Lead Developer and Primary Innovator</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Second Patent Holder */}
-              <div className="border rounded-lg p-4">
-                <div className="flex flex-col sm:flex-row items-center mb-4">
-                  <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 sm:mb-0 sm:mr-4 flex items-center justify-center">
-                    <User className="h-12 w-12 text-gray-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">NALLA RAHUL</h3>
-                    <p className="text-gray-600">Co-Developer and Key Contributor</p>
+                    <h3 className="font-bold text-lg tracking-wide">
+                      PANCHAGIRI SAI KUMAR
+                    </h3>
+                    <p className="text-gray-600">
+                      Founder, Lead Architect & Sole Patent Holder
+                    </p>
                   </div>
                 </div>
               </div>
@@ -406,9 +396,13 @@ const PatentRightsDialog = ({ isOpen, onClose }: PatentRightsDialogProps) => {
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <h4 className="font-medium mb-2">Patent Rights Declaration</h4>
                 <p className="text-sm">
-                  The primary patent rights of this app belong to PANCHAGIRI SAIKUMAR, followed by NALLA RAHUL. 
-                  Both have complete patent rights to this app, including intellectual property ownership, 
-                  modification rights, and distribution authority, effective as of April 16, 2025.
+                  The complete and exclusive patent rights of this application are held by{" "}
+                  <span className="font-semibold">PANCHAGIRI SAI KUMAR</span>. He retains full 
+                  ownership of all intellectual property associated with this app, including its 
+                  core concept, architecture, design, implementation, and future enhancements. All 
+                  rights to modify, enhance, commercialize, and distribute this application are 
+                  reserved solely by <span className="font-semibold">PANCHAGIRI SAI KUMAR</span>, 
+                  effective as of April 16, 2025.
                 </p>
               </div>
             </div>
