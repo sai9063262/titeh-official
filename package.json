@@ -1,8 +1,11 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "titeh-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Telangana Integrated Traffic & Enforcement Hub – Student Project",
   "type": "module",
+  "author": "Sai",
+"homepage": "https://titeh.in",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
